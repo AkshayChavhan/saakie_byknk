@@ -40,7 +40,7 @@ export function Header() {
             </button>
             
             <Link href="/" className="ml-4 lg:ml-0">
-              <h1 className="text-2xl font-bold text-red-600">SareeShop</h1>
+              <h1 className="text-2xl font-bold text-red-600">Saakie_byknk</h1>
             </Link>
           </div>
 
@@ -106,7 +106,7 @@ export function Header() {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search for sarees, colors, fabrics..."
+                placeholder="Search for fashion, colors, styles..."
                 className="w-full px-4 py-2 pr-12 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 autoFocus
               />

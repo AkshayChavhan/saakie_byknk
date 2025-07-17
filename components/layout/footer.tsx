@@ -4,9 +4,9 @@ import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin } from 'luci
 const footerLinks = {
   shop: [
     { name: 'New Arrivals', href: '/products?sort=newest' },
-    { name: 'Silk Sarees', href: '/categories/silk-sarees' },
-    { name: 'Cotton Sarees', href: '/categories/cotton-sarees' },
-    { name: 'Designer Sarees', href: '/categories/designer-sarees' },
+    { name: 'Premium Collection', href: '/categories/premium' },
+    { name: 'Casual Wear', href: '/categories/casual' },
+    { name: 'Designer Collection', href: '/categories/designer' },
     { name: 'Sale', href: '/products?sale=true' },
   ],
   help: [
@@ -45,18 +45,18 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           <div className="lg:col-span-2">
             <Link href="/" className="block mb-4">
-              <h2 className="text-2xl font-bold text-white">SareeShop</h2>
+              <h2 className="text-2xl font-bold text-white">Saakie_byknk</h2>
             </Link>
             <p className="text-gray-300 mb-6 leading-relaxed">
-              Your trusted destination for authentic, handwoven sarees. 
-              We bring you the finest collection of traditional and contemporary 
-              sarees from across India, crafted with love and precision.
+              Your trusted destination for premium fashion. 
+              We bring you the finest collection of contemporary and traditional 
+              fashion from across India, crafted with love and precision.
             </p>
             
             <div className="space-y-3">
               <div className="flex items-center text-gray-300">
                 <Mail size={18} className="mr-3 flex-shrink-0" />
-                <span>support@sareeshop.com</span>
+                <span>support@saakie-byknk.com</span>
               </div>
               <div className="flex items-center text-gray-300">
                 <Phone size={18} className="mr-3 flex-shrink-0" />
@@ -150,7 +150,7 @@ export function Footer() {
           </div>
 
           <div className="mt-8 pt-8 border-t border-gray-800 text-center text-gray-400 text-sm">
-            <p>&copy; 2024 SareeShop. All rights reserved. Made with ❤️ in India.</p>
+            <p>&copy; 2024 Saakie_byknk. All rights reserved. Made with ❤️ in India.</p>
           </div>
         </div>
       </div>

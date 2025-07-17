@@ -1,7 +1,7 @@
-# SareeShop - Claude Context File
+# Saakie_byknk - Claude Context File
 
 ## Project Overview
-A premium saree e-commerce platform built with Next.js 14, TypeScript, Prisma, MongoDB, and Clerk authentication. Features mobile-first design, comprehensive product management, user authentication, shopping cart, wishlist, order management, and admin dashboard.
+A premium fashion e-commerce platform built with Next.js 14, TypeScript, Prisma, MongoDB, and Clerk authentication. Features mobile-first design, comprehensive product management, user authentication, shopping cart, wishlist, order management, and admin dashboard.
 
 ## Development Commands
 
@@ -53,7 +53,7 @@ types/               # TypeScript type definitions
 
 ### Key Models
 - **User** - Customer accounts with Clerk integration
-- **Product** - Saree products with variants, colors, sizes, images
+- **Product** - Fashion products with variants, colors, sizes, images
 - **Category** - Hierarchical product categories
 - **Cart/CartItem** - Shopping cart functionality
 - **Order/OrderItem** - Order management system
