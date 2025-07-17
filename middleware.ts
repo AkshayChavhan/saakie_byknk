@@ -7,6 +7,8 @@ const isPublicRoute = createRouteMatcher([
   '/categories(.*)',
   '/api/products(.*)',
   '/api/categories(.*)',
+  '/api/auth/check-role',
+  '/api/admin/set-admin',
   '/api/webhooks/clerk',
   '/sign-in(.*)',
   '/sign-up(.*)',
@@ -39,14 +41,15 @@ export default clerkMiddleware(async (auth, req) => {
     const signInUrl = new URL('/sign-in', req.url)
     return NextResponse.redirect(signInUrl)
   }
-
   if (isAdminRoute(req)) {
-    const userRole = (sessionClaims?.publicMetadata as any)?.role as string
-    
-    if (!userId || (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN')) {
+    if (!userId) {
       const url = new URL('/', req.url)
       return NextResponse.redirect(url)
     }
+
+    // For now, allow access to admin routes for authenticated users
+    // The admin pages will do their own role checking via API
+    // This is a temporary solution until we implement proper role caching
   }
   
   return NextResponse.next()

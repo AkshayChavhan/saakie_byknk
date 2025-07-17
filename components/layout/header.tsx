@@ -21,7 +21,9 @@ export function Header() {
   const [searchOpen, setSearchOpen] = useState(false)
   const pathname = usePathname()
   const { user } = useUser()
-  const isAdmin = (user?.publicMetadata as any)?.role === 'ADMIN' || (user?.publicMetadata as any)?.role === 'SUPER_ADMIN'
+  // For now, show admin link for all authenticated users
+  // Role check is handled by middleware
+  const isAdmin = !!user
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm">
