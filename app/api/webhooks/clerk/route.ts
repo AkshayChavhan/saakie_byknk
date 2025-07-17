@@ -143,9 +143,13 @@ export async function POST(req: Request) {
     }
 
     return new Response('', { status: 200 })
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Database error:', error)
-    await logWebhook(eventType, 'error', { error: error.message })
+    if (error instanceof Error) {
+      await logWebhook(eventType, 'error', { error: error.message })
+    } else {
+      await logWebhook(eventType, 'error', { error: 'Unknown error occurred' })
+    }
     return new Response('Database error', { status: 500 })
   } finally {
     await prisma.$disconnect()
