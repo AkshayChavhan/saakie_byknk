@@ -49,6 +49,19 @@ export async function POST(req: Request) {
 
   console.log(`Webhook with an ID of ${id} and type of ${eventType}`)
   console.log('Webhook body:', body)
+  
+  // Log to API for UI display
+  const logWebhook = async (eventType: string, status: 'success' | 'error', data: any) => {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/webhook-logs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventType, status, data })
+      })
+    } catch (e) {
+      console.error('Failed to log webhook:', e)
+    }
+  }
 
   try {
     if (eventType === 'user.created') {
@@ -90,6 +103,7 @@ export async function POST(req: Request) {
       ])
 
       console.log('Cart and wishlist created for user:', user.id)
+      await logWebhook('user.created', 'success', { user, clerkId })
     }
 
     if (eventType === 'user.updated') {
@@ -114,6 +128,7 @@ export async function POST(req: Request) {
       })
 
       console.log('User updated in database:', user)
+      await logWebhook('user.updated', 'success', { user, clerkId })
     }
 
     if (eventType === 'user.deleted') {
@@ -124,11 +139,17 @@ export async function POST(req: Request) {
       })
 
       console.log('User deleted from database:', clerkId)
+      await logWebhook('user.deleted', 'success', { clerkId })
     }
 
     return new Response('', { status: 200 })
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Database error:', error)
+    if (error instanceof Error) {
+      await logWebhook(eventType, 'error', { error: error.message })
+    } else {
+      await logWebhook(eventType, 'error', { error: 'Unknown error occurred' })
+    }
     return new Response('Database error', { status: 500 })
   } finally {
     await prisma.$disconnect()
