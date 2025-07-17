@@ -65,12 +65,6 @@ export function Header() {
                 >
                   Admin
                 </Link>
-                <Link
-                  href="/webhook-logs"
-                  className="text-sm font-medium text-gray-700 hover:text-red-600 transition-colors"
-                >
-                  Webhook Logs
-                </Link>
               </>
             )}
           </div>
