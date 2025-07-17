@@ -6,8 +6,9 @@ const prisma = new PrismaClient()
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const { userId } = await auth()
     
@@ -28,7 +29,7 @@ export async function PATCH(
 
     // Update product
     const updatedProduct = await prisma.product.update({
-      where: { id: params.id },
+      where: { id },
       data: updates,
       include: {
         category: {
@@ -56,8 +57,9 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const { userId } = await auth()
     
@@ -76,7 +78,7 @@ export async function DELETE(
 
     // Delete product and all related data
     await prisma.product.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return NextResponse.json({ message: 'Product deleted successfully' })

@@ -6,8 +6,9 @@ const prisma = new PrismaClient()
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const { userId } = await auth()
     
@@ -28,7 +29,7 @@ export async function PATCH(
 
     // Update order status
     const updatedOrder = await prisma.order.update({
-      where: { id: params.id },
+      where: { id },
       data: { status },
       include: {
         user: {

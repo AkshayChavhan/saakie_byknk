@@ -6,8 +6,9 @@ const prisma = new PrismaClient()
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const { userId } = await auth()
     
@@ -28,7 +29,7 @@ export async function PATCH(
 
     // Update user role
     const updatedUser = await prisma.user.update({
-      where: { id: params.id },
+      where: { id },
       data: { role }
     })
 
@@ -43,8 +44,9 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const { userId } = await auth()
     
@@ -63,14 +65,14 @@ export async function DELETE(
 
     // Delete user and all related data
     await prisma.$transaction([
-      prisma.cartItem.deleteMany({ where: { cart: { userId: params.id } } }),
-      prisma.cart.deleteMany({ where: { userId: params.id } }),
-      prisma.wishlistItem.deleteMany({ where: { wishlist: { userId: params.id } } }),
-      prisma.wishlist.deleteMany({ where: { userId: params.id } }),
-      prisma.review.deleteMany({ where: { userId: params.id } }),
-      prisma.order.deleteMany({ where: { userId: params.id } }),
-      prisma.address.deleteMany({ where: { userId: params.id } }),
-      prisma.user.delete({ where: { id: params.id } })
+      prisma.cartItem.deleteMany({ where: { cart: { userId: id } } }),
+      prisma.cart.deleteMany({ where: { userId: id } }),
+      prisma.wishlistItem.deleteMany({ where: { wishlist: { userId: id } } }),
+      prisma.wishlist.deleteMany({ where: { userId: id } }),
+      prisma.review.deleteMany({ where: { userId: id } }),
+      prisma.order.deleteMany({ where: { userId: id } }),
+      prisma.address.deleteMany({ where: { userId: id } }),
+      prisma.user.delete({ where: { id } })
     ])
 
     return NextResponse.json({ message: 'User deleted successfully' })
