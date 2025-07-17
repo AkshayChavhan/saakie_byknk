@@ -66,7 +66,7 @@ export default function DebugAuthPage() {
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
           <h2 className="text-xl font-semibold mb-4 text-yellow-800">Troubleshooting Steps</h2>
           <ul className="space-y-2 text-yellow-700">
-            <li>1. If role is not 'ADMIN' or 'SUPER_ADMIN', you need to set the role in Clerk dashboard</li>
+            <li>1. If role is not &apos;ADMIN&apos; or &apos;SUPER_ADMIN&apos;, you need to set the role in Clerk dashboard</li>
             <li>2. Go to Clerk dashboard → Users → Select user → Public metadata</li>
             <li>3. Add: {JSON.stringify({role: 'ADMIN'}, null, 2)}</li>
             <li>4. Sign out and sign back in to refresh the session</li>
