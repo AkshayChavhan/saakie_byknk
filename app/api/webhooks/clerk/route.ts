@@ -52,11 +52,14 @@ export async function POST(req: Request) {
 
   try {
     if (eventType === 'user.created') {
-      const { id: clerkId, email_addresses, first_name, last_name, phone_numbers } = evt.data
+      const { id: clerkId, email_addresses, first_name, last_name, phone_numbers, image_url } = evt.data
 
       const primaryEmail = email_addresses?.[0]?.email_address
       const primaryPhone = phone_numbers?.[0]?.phone_number
       const name = first_name && last_name ? `${first_name} ${last_name}` : first_name || last_name || null
+      
+      // Gender might be in public_metadata or unsafe_metadata
+      const gender = (evt.data as any)?.public_metadata?.gender || (evt.data as any)?.unsafe_metadata?.gender || null
 
       if (!primaryEmail) {
         console.error('No email found for user')
@@ -69,6 +72,9 @@ export async function POST(req: Request) {
           email: primaryEmail,
           name,
           phone: primaryPhone || null,
+          imageUrl: image_url || null,
+          profileImageUrl: image_url || null,
+          gender: gender || null,
           role: 'USER',
         },
       })
@@ -93,11 +99,14 @@ export async function POST(req: Request) {
     }
 
     if (eventType === 'user.updated') {
-      const { id: clerkId, email_addresses, first_name, last_name, phone_numbers } = evt.data
+      const { id: clerkId, email_addresses, first_name, last_name, phone_numbers, image_url } = evt.data
 
       const primaryEmail = email_addresses?.[0]?.email_address
       const primaryPhone = phone_numbers?.[0]?.phone_number
       const name = first_name && last_name ? `${first_name} ${last_name}` : first_name || last_name || null
+      
+      // Gender might be in public_metadata or unsafe_metadata
+      const gender = (evt.data as any)?.public_metadata?.gender || (evt.data as any)?.unsafe_metadata?.gender || null
 
       if (!primaryEmail) {
         console.error('No email found for user update')
@@ -110,6 +119,9 @@ export async function POST(req: Request) {
           email: primaryEmail,
           name,
           phone: primaryPhone || null,
+          imageUrl: image_url || null,
+          profileImageUrl: image_url || null,
+          gender: gender || null,
         },
       })
 

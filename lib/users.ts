@@ -7,6 +7,9 @@ interface CreateUserData {
   email: string;
   name: string | null;
   phone: string | null;
+  imageUrl: string | null;
+  profileImageUrl: string | null;
+  gender: string | null;
   role: UserRole;
 }
 
@@ -26,6 +29,9 @@ interface UpdateUserData {
   email: string;
   name: string | null;
   phone: string | null;
+  imageUrl: string | null;
+  profileImageUrl: string | null;
+  gender: string | null;
 }
 
 export async function updateUser(clerkId: string, data: UpdateUserData) {
