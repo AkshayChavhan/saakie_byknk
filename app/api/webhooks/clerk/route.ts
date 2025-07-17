@@ -6,13 +6,14 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 export async function POST(req: Request) {
+  
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET
 
   if (!WEBHOOK_SECRET) {
     throw new Error('Please add CLERK_WEBHOOK_SECRET from Clerk Dashboard to .env or .env.local')
   }
 
-  const headerPayload = headers()
+  const headerPayload = await headers()
   const svix_id = headerPayload.get("svix-id")
   const svix_timestamp = headerPayload.get("svix-timestamp")
   const svix_signature = headerPayload.get("svix-signature")
@@ -51,11 +52,14 @@ export async function POST(req: Request) {
 
   try {
     if (eventType === 'user.created') {
-      const { id: clerkId, email_addresses, first_name, last_name, phone_numbers } = evt.data
+      const { id: clerkId, email_addresses, first_name, last_name, phone_numbers, image_url } = evt.data
 
       const primaryEmail = email_addresses?.[0]?.email_address
       const primaryPhone = phone_numbers?.[0]?.phone_number
       const name = first_name && last_name ? `${first_name} ${last_name}` : first_name || last_name || null
+      
+      // Gender might be in public_metadata or unsafe_metadata
+      const gender = (evt.data as any)?.public_metadata?.gender || (evt.data as any)?.unsafe_metadata?.gender || null
 
       if (!primaryEmail) {
         console.error('No email found for user')
@@ -68,6 +72,9 @@ export async function POST(req: Request) {
           email: primaryEmail,
           name,
           phone: primaryPhone || null,
+          imageUrl: image_url || null,
+          profileImageUrl: image_url || null,
+          gender: gender || null,
           role: 'USER',
         },
       })
@@ -92,11 +99,14 @@ export async function POST(req: Request) {
     }
 
     if (eventType === 'user.updated') {
-      const { id: clerkId, email_addresses, first_name, last_name, phone_numbers } = evt.data
+      const { id: clerkId, email_addresses, first_name, last_name, phone_numbers, image_url } = evt.data
 
       const primaryEmail = email_addresses?.[0]?.email_address
       const primaryPhone = phone_numbers?.[0]?.phone_number
       const name = first_name && last_name ? `${first_name} ${last_name}` : first_name || last_name || null
+      
+      // Gender might be in public_metadata or unsafe_metadata
+      const gender = (evt.data as any)?.public_metadata?.gender || (evt.data as any)?.unsafe_metadata?.gender || null
 
       if (!primaryEmail) {
         console.error('No email found for user update')
@@ -109,6 +119,9 @@ export async function POST(req: Request) {
           email: primaryEmail,
           name,
           phone: primaryPhone || null,
+          imageUrl: image_url || null,
+          profileImageUrl: image_url || null,
+          gender: gender || null,
         },
       })
 
@@ -126,7 +139,7 @@ export async function POST(req: Request) {
     }
 
     return new Response('', { status: 200 })
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Database error:', error)
     return new Response('Database error', { status: 500 })
   } finally {

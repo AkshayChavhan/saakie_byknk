@@ -9,6 +9,7 @@ const isPublicRoute = createRouteMatcher([
   '/api/categories(.*)',
   '/api/auth/check-role',
   '/api/admin/set-admin',
+  '/api/webhooks/clerk',
   '/sign-in(.*)',
   '/sign-up(.*)',
 ])
@@ -19,6 +20,21 @@ const isAdminRoute = createRouteMatcher([
 ])
 
 export default clerkMiddleware(async (auth, req) => {
+  // Log webhook requests for debugging
+  if (req.nextUrl.pathname === '/api/webhooks/clerk') {
+    console.log('Webhook request to middleware:', {
+      method: req.method,
+      pathname: req.nextUrl.pathname,
+      headers: {
+        'svix-id': req.headers.get('svix-id'),
+        'svix-timestamp': req.headers.get('svix-timestamp'),
+        'svix-signature': req.headers.get('svix-signature'),
+      }
+    });
+    // Allow webhook requests to pass through
+    return NextResponse.next();
+  }
+
   const { userId, sessionClaims } = await auth()
   
   if (!isPublicRoute(req) && !userId) {

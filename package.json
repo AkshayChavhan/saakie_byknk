@@ -1,16 +1,17 @@
 {
-  "name": "saree-shop",
+  "name": "saakie-byknk",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "ngrok": "ngrok http 3001"
   },
   "keywords": [],
   "author": "",
