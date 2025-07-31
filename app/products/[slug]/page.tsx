@@ -17,7 +17,11 @@ import {
   RotateCcw,
   ChevronRight,
   ChevronLeft,
-  Zap
+  CreditCard,
+  QrCode,
+  X,
+  Copy,
+  Check
 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 
@@ -130,6 +134,21 @@ export default function ProductDetailPage() {
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [activeTab, setActiveTab] = useState<'description' | 'details' | 'reviews'>('description')
   const [showFullDescription, setShowFullDescription] = useState(false)
+  
+  // Payment Modal State
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [orderDetails, setOrderDetails] = useState<any>(null)
+  const [paymentStep, setPaymentStep] = useState<'details' | 'qr' | 'success'>('details')
+  const [copied, setCopied] = useState(false)
+  
+  // Order Form State
+  const [customerInfo, setCustomerInfo] = useState({
+    name: '',
+    phone: '',
+    address: '',
+    city: '',
+    pincode: ''
+  })
 
   useEffect(() => {
     fetchProduct()
@@ -168,6 +187,64 @@ export default function ProductDetailPage() {
       quantity
     })
     // TODO: Implement cart functionality
+  }
+
+  const handleCashOnDelivery = () => {
+    if (!product) return
+    
+    const orderData = {
+      productId: product.id,
+      productName: product.name,
+      productImage: product.images[0]?.url || '/images/placeholder-product.jpg',
+      selectedColor: product.colors.find(c => c.id === selectedColor)?.name || 'Default',
+      selectedSize: product.sizes.find(s => s.id === selectedSize)?.name || 'Free Size',
+      quantity,
+      price: product.price,
+      total: product.price * quantity
+    }
+    
+    setOrderDetails(orderData)
+    setShowPaymentModal(true)
+    setPaymentStep('details')
+  }
+
+  const handlePlaceOrder = async () => {
+    try {
+      const orderPayload = {
+        ...orderDetails,
+        ...customerInfo,
+        paymentMethod: 'COD'
+      }
+
+      console.log('Placing order:', orderPayload)
+      
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(orderPayload)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to place order')
+      }
+
+      const result = await response.json()
+      console.log('Order placed successfully:', result)
+      
+      setPaymentStep('qr')
+    } catch (error) {
+      console.error('Error placing order:', error)
+      alert('Failed to place order. Please try again.')
+    }
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   const discount = (price: number, comparePrice: number) => {
@@ -528,13 +605,24 @@ export default function ProductDetailPage() {
             {/* Action Buttons */}
             <div className="space-y-3 pt-4">
               {product.inStock ? (
-                <button
-                  onClick={handleAddToCart}
-                  className="w-full bg-primary text-white py-4 px-6 rounded-lg font-medium text-lg hover:bg-primary/90 transition-colors flex items-center justify-center space-x-2"
-                >
-                  <ShoppingCart size={20} />
-                  <span>Add to Cart - {formatPrice(product.price * quantity)}</span>
-                </button>
+                <>
+                  <button
+                    onClick={handleAddToCart}
+                    className="w-full bg-primary text-white py-4 px-6 rounded-lg font-medium text-lg hover:bg-primary/90 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <ShoppingCart size={20} />
+                    <span>Add to Cart - {formatPrice(product.price * quantity)}</span>
+                  </button>
+                  
+                  <button
+                    onClick={handleCashOnDelivery}
+                    disabled
+                    className="w-full bg-green-600 text-white py-4 px-6 rounded-lg font-medium text-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <CreditCard size={20} />
+                    <span>Cash on Delivery - {formatPrice(product.price * quantity)}</span>
+                  </button>
+                </>
               ) : (
                 <button
                   disabled
@@ -871,7 +959,7 @@ export default function ProductDetailPage() {
 
       {/* Mobile Sticky Bottom Bar */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-40">
-        <div className="flex space-x-3">
+        <div className="flex space-x-2">
           <button
             onClick={() => setIsWishlisted(!isWishlisted)}
             className={`flex-shrink-0 p-3 border rounded-lg ${
@@ -884,13 +972,23 @@ export default function ProductDetailPage() {
           </button>
           
           {product.inStock ? (
-            <button
-              onClick={handleAddToCart}
-              className="flex-1 bg-primary text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center space-x-2"
-            >
-              <ShoppingCart size={20} />
-              <span>Add to Cart</span>
-            </button>
+            <>
+              <button
+                onClick={handleAddToCart}
+                className="flex-1 bg-primary text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center space-x-2"
+              >
+                <ShoppingCart size={16} />
+                <span>Cart</span>
+              </button>
+              
+              <button
+                onClick={handleCashOnDelivery}
+                className="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center space-x-2"
+              >
+                <CreditCard size={16} />
+                <span>COD</span>
+              </button>
+            </>
           ) : (
             <button
               disabled
@@ -901,6 +999,257 @@ export default function ProductDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+            {paymentStep === 'details' && (
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-gray-900">Order Details</h2>
+                  <button
+                    onClick={() => setShowPaymentModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Product Summary */}
+                <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                      <Image
+                        src={orderDetails?.productImage || '/images/placeholder-product.jpg'}
+                        alt={orderDetails?.productName || 'Product'}
+                        width={64}
+                        height={64}
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-medium text-gray-900 mb-1">
+                        {orderDetails?.productName}
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-1">
+                        Color: {orderDetails?.selectedColor} | Size: {orderDetails?.selectedSize}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Quantity: {orderDetails?.quantity}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-gray-900">
+                        {formatPrice(orderDetails?.total || 0)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Customer Information Form */}
+                <div className="space-y-4 mb-6">
+                  <h3 className="font-medium text-gray-900">Delivery Information</h3>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={customerInfo.name}
+                      onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="Enter your full name"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone Number *
+                    </label>
+                    <input
+                      type="tel"
+                      value={customerInfo.phone}
+                      onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="Enter phone number"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Address *
+                    </label>
+                    <textarea
+                      value={customerInfo.address}
+                      onChange={(e) => setCustomerInfo(prev => ({ ...prev, address: e.target.value }))}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="Enter complete address"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        City *
+                      </label>
+                      <input
+                        type="text"
+                        value={customerInfo.city}
+                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, city: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        placeholder="City"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Pincode *
+                      </label>
+                      <input
+                        type="text"
+                        value={customerInfo.pincode}
+                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, pincode: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        placeholder="Pincode"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Order Summary */}
+                <div className="border-t border-gray-200 pt-4 mb-6">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-gray-600">Subtotal:</span>
+                    <span className="font-medium">{formatPrice(orderDetails?.total || 0)}</span>
+                  </div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-gray-600">Delivery:</span>
+                    <span className="font-medium text-green-600">FREE</span>
+                  </div>
+                  <div className="flex justify-between items-center text-lg font-bold border-t border-gray-200 pt-2">
+                    <span>Total:</span>
+                    <span>{formatPrice(orderDetails?.total || 0)}</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handlePlaceOrder}
+                  disabled={!customerInfo.name || !customerInfo.phone || !customerInfo.address || !customerInfo.city || !customerInfo.pincode}
+                  className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  Place Order (Cash on Delivery)
+                </button>
+              </div>
+            )}
+
+            {paymentStep === 'qr' && (
+              <div className="p-6 text-center">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-gray-900">Payment QR Code</h2>
+                  <button
+                    onClick={() => setShowPaymentModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="bg-green-50 p-4 rounded-lg mb-6">
+                  <div className="flex items-center justify-center mb-2">
+                    <Check className="text-green-600 mr-2" size={20} />
+                    <span className="text-green-800 font-medium">Order Placed Successfully!</span>
+                  </div>
+                  <p className="text-sm text-green-700">
+                    Order ID: #COD{Date.now().toString().slice(-6)}
+                  </p>
+                </div>
+
+                <div className="mb-6">
+                  <p className="text-gray-700 mb-4">
+                    Scan this QR code to make payment via UPI/PhonePe/GooglePay
+                  </p>
+                  
+                  {/* Sample QR Code */}
+                  <div className="bg-white p-4 border-2 border-gray-200 rounded-lg inline-block mb-4">
+                    <div className="w-48 h-48 bg-gray-100 flex items-center justify-center rounded-lg">
+                      <div className="text-center">
+                        <QrCode size={48} className="mx-auto mb-2 text-gray-400" />
+                        <p className="text-xs text-gray-500">Sample QR Code</p>
+                        <p className="text-xs text-gray-500">Amount: {formatPrice(orderDetails?.total || 0)}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Details */}
+                  <div className="bg-gray-50 p-4 rounded-lg text-left mb-4">
+                    <h4 className="font-medium text-gray-900 mb-3">Payment Details</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">UPI ID:</span>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-mono">merchant@upi</span>
+                          <button
+                            onClick={() => copyToClipboard('merchant@upi')}
+                            className="p-1 hover:bg-gray-200 rounded"
+                          >
+                            {copied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Amount:</span>
+                        <span className="font-medium">{formatPrice(orderDetails?.total || 0)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Order ID:</span>
+                        <span className="font-mono text-sm">#COD{Date.now().toString().slice(-6)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="bg-blue-50 p-4 rounded-lg text-sm">
+                    <p className="text-blue-800 font-medium mb-1">Next Steps:</p>
+                    <ol className="text-blue-700 text-left list-decimal list-inside space-y-1">
+                      <li>Scan the QR code or use the UPI ID above</li>
+                      <li>Complete the payment of {formatPrice(orderDetails?.total || 0)}</li>
+                      <li>Your order will be confirmed and shipped within 24 hours</li>
+                      <li>You'll receive a tracking number via SMS</li>
+                    </ol>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setShowPaymentModal(false)
+                      setPaymentStep('details')
+                      // Reset form
+                      setCustomerInfo({
+                        name: '',
+                        phone: '',
+                        address: '',
+                        city: '',
+                        pincode: ''
+                      })
+                    }}
+                    className="w-full bg-primary text-white py-3 px-4 rounded-lg font-medium hover:bg-primary/90 transition-colors"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Bottom padding for mobile sticky bar */}
       <div className="lg:hidden h-20"></div>

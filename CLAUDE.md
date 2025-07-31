@@ -101,12 +101,31 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 
 ## Environment Variables
 
-Required environment variables:
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Clerk authentication
-- `CLERK_SECRET_KEY` - Clerk secret
-- `CLERK_WEBHOOK_SECRET` - Clerk webhook verification
-- `DATABASE_URL` - MongoDB connection string
-- `NEXT_PUBLIC_APP_URL` - Application URL
+### Database
+- `DATABASE_URL` - MongoDB connection string (required)
+
+### Authentication (Clerk)
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Clerk publishable key (required)
+- `CLERK_SECRET_KEY` - Clerk secret key (required)
+- `CLERK_WEBHOOK_SECRET` - Clerk webhook signature verification (required)
+- `NEXT_PUBLIC_CLERK_SIGN_IN_URL` - Sign-in page URL (default: /sign-in)
+- `NEXT_PUBLIC_CLERK_SIGN_UP_URL` - Sign-up page URL (default: /sign-up)
+- `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` - Redirect after sign-in (default: /)
+- `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL` - Redirect after sign-up (default: /)
+
+### Application
+- `NEXT_PUBLIC_APP_URL` - Application base URL (required)
+
+### Payment Gateways
+
+#### Stripe
+- `STRIPE_SECRET_KEY` - Stripe secret key (optional - required for Stripe payments)
+- `STRIPE_WEBHOOK_SECRET` - Stripe webhook signature verification (optional - required for Stripe webhooks)
+
+#### Razorpay
+- `RAZORPAY_KEY_ID` - Razorpay key ID (optional - required for Razorpay payments)
+- `RAZORPAY_KEY_SECRET` - Razorpay key secret (optional - required for Razorpay payments)
+- `RAZORPAY_WEBHOOK_SECRET` - Razorpay webhook signature verification (optional - required for Razorpay webhooks)
 
 ## Tech Stack
 - **Framework**: Next.js 14 (App Router)
