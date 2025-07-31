@@ -13,6 +13,27 @@ import {
   ShoppingCart
 } from 'lucide-react'
 
+interface Product {
+  id: string
+  name: string
+  price: number
+  stock: number
+  images: { url: string }[]
+  _count: { orderItems: number }
+}
+
+interface Order {
+  id: string
+  orderNumber: string
+  total: number
+  status: string
+  createdAt: string
+  user: {
+    name: string | null
+    email: string
+  }
+}
+
 interface DashboardStats {
   totalUsers: number
   totalOrders: number
@@ -22,6 +43,8 @@ interface DashboardStats {
   pendingOrders: number
   activeUsers: number
   lowStockProducts: number
+  topProducts: Product[]
+  recentOrders: Order[]
 }
 
 export default function AdminDashboard() {
@@ -34,7 +57,9 @@ export default function AdminDashboard() {
     monthlyRevenue: 0,
     pendingOrders: 0,
     activeUsers: 0,
-    lowStockProducts: 0
+    lowStockProducts: 0,
+    topProducts: [],
+    recentOrders: []
   })
   const [loading, setLoading] = useState(true)
   const [authorized, setAuthorized] = useState(false)
@@ -143,6 +168,26 @@ export default function AdminDashboard() {
     { name: 'Manage Categories', href: '/admin/categories', icon: Calendar },
   ]
 
+  // Helper function to format time ago
+  const formatTimeAgo = (date: string) => {
+    const now = new Date()
+    const then = new Date(date)
+    const diffInMs = now.getTime() - then.getTime()
+    const diffInMinutes = Math.floor(diffInMs / (1000 * 60))
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60))
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24))
+
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} minute${diffInMinutes !== 1 ? 's' : ''} ago`
+    } else if (diffInHours < 24) {
+      return `${diffInHours} hour${diffInHours !== 1 ? 's' : ''} ago`
+    } else if (diffInDays < 7) {
+      return `${diffInDays} day${diffInDays !== 1 ? 's' : ''} ago`
+    } else {
+      return then.toLocaleDateString()
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -210,36 +255,62 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Orders</h2>
             <div className="space-y-3">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex items-center justify-between p-3 border border-gray-200 rounded">
-                  <div>
-                    <p className="font-medium text-gray-900">Order #{1000 + i}</p>
-                    <p className="text-sm text-gray-500">Customer {i}</p>
+              {stats.recentOrders.length > 0 ? (
+                stats.recentOrders.map((order) => (
+                  <div key={order.id} className="flex items-center justify-between p-3 border border-gray-200 rounded">
+                    <div>
+                      <p className="font-medium text-gray-900">Order #{order.orderNumber}</p>
+                      <p className="text-sm text-gray-500">{order.user.name || order.user.email}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-gray-900">₹{order.total.toFixed(2)}</p>
+                      <p className="text-sm text-gray-500">{formatTimeAgo(order.createdAt)}</p>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium mt-1 ${
+                        order.status === 'DELIVERED' ? 'bg-green-100 text-green-800' :
+                        order.status === 'SHIPPED' ? 'bg-blue-100 text-blue-800' :
+                        order.status === 'PROCESSING' ? 'bg-yellow-100 text-yellow-800' :
+                        order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {order.status}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium text-gray-900">₹{(Math.random() * 5000 + 1000).toFixed(2)}</p>
-                    <p className="text-sm text-gray-500">2 hours ago</p>
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-gray-500 text-center py-4">No recent orders</p>
+              )}
             </div>
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Top Products</h2>
             <div className="space-y-3">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex items-center justify-between p-3 border border-gray-200 rounded">
-                  <div>
-                    <p className="font-medium text-gray-900">Product {i}</p>
-                    <p className="text-sm text-gray-500">{Math.floor(Math.random() * 100 + 10)} sold</p>
+              {stats.topProducts.length > 0 ? (
+                stats.topProducts.map((product) => (
+                  <div key={product.id} className="flex items-center justify-between p-3 border border-gray-200 rounded">
+                    <div className="flex items-center">
+                      {product.images.length > 0 && (
+                        <img 
+                          src={product.images[0].url} 
+                          alt={product.name}
+                          className="w-10 h-10 object-cover rounded mr-3"
+                        />
+                      )}
+                      <div>
+                        <p className="font-medium text-gray-900">{product.name}</p>
+                        <p className="text-sm text-gray-500">{product._count.orderItems} sold</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-gray-900">₹{product.price.toFixed(2)}</p>
+                      <p className="text-sm text-gray-500">In stock: {product.stock}</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium text-gray-900">₹{(Math.random() * 3000 + 500).toFixed(2)}</p>
-                    <p className="text-sm text-gray-500">In stock: {Math.floor(Math.random() * 50 + 5)}</p>
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-gray-500 text-center py-4">No products yet</p>
+              )}
             </div>
           </div>
         </div>
