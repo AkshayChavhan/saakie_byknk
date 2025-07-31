@@ -63,7 +63,12 @@ export default function CategoriesManagement() {
       })
       if (response.ok) {
         const newCategory = await response.json()
-        setCategories([...categories, newCategory])
+        // Ensure children array exists
+        const categoryWithChildren = {
+          ...newCategory,
+          children: newCategory.children || []
+        }
+        setCategories([...categories, categoryWithChildren])
         setIsModalOpen(false)
         setFormData({
           name: '',
@@ -88,8 +93,13 @@ export default function CategoriesManagement() {
       })
       if (response.ok) {
         const updatedCategory = await response.json()
+        // Ensure children array exists
+        const categoryWithChildren = {
+          ...updatedCategory,
+          children: updatedCategory.children || []
+        }
         setCategories(categories.map(cat => 
-          cat.id === categoryId ? updatedCategory : cat
+          cat.id === categoryId ? categoryWithChildren : cat
         ))
       }
     } catch (error) {
@@ -132,7 +142,7 @@ export default function CategoriesManagement() {
       <tr key={category.id} className="hover:bg-gray-50">
         <td className="px-6 py-4 whitespace-nowrap">
           <div className="flex items-center" style={{ paddingLeft: `${level * 20}px` }}>
-            {category.children.length > 0 ? (
+            {category.children && category.children.length > 0 ? (
               <FolderOpen className="h-5 w-5 text-gray-500 mr-2" />
             ) : (
               <Folder className="h-5 w-5 text-gray-500 mr-2" />
@@ -185,7 +195,7 @@ export default function CategoriesManagement() {
           </div>
         </td>
       </tr>
-      {category.children.map(child => (
+      {category.children && category.children.map(child => (
         <CategoryRow key={child.id} category={child} level={level + 1} />
       ))}
     </>

@@ -30,7 +30,9 @@ export async function GET() {
       monthlyRevenue,
       pendingOrders,
       activeUsers,
-      lowStockProducts
+      lowStockProducts,
+      topProducts,
+      recentOrders
     ] = await Promise.all([
       prisma.user.count(),
       prisma.order.count(),
@@ -62,6 +64,48 @@ export async function GET() {
         where: {
           stock: { lte: prisma.product.fields.lowStockAlert }
         }
+      }),
+      // Get top 5 products by order count
+      prisma.product.findMany({
+        select: {
+          id: true,
+          name: true,
+          price: true,
+          stock: true,
+          images: {
+            select: { url: true },
+            take: 1
+          },
+          _count: {
+            select: { orderItems: true }
+          }
+        },
+        orderBy: {
+          orderItems: {
+            _count: 'desc'
+          }
+        },
+        take: 5
+      }),
+      // Get recent 5 orders
+      prisma.order.findMany({
+        select: {
+          id: true,
+          orderNumber: true,
+          total: true,
+          status: true,
+          createdAt: true,
+          user: {
+            select: {
+              name: true,
+              email: true
+            }
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        take: 5
       })
     ])
 
@@ -73,7 +117,9 @@ export async function GET() {
       monthlyRevenue: monthlyRevenue._sum.total || 0,
       pendingOrders,
       activeUsers,
-      lowStockProducts
+      lowStockProducts,
+      topProducts,
+      recentOrders
     })
   } catch (error) {
     console.error('Dashboard API error:', error)
