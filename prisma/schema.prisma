@@ -110,6 +110,10 @@ model Size {
 model Image {
   id        String  @id @default(auto()) @map("_id") @db.ObjectId
   url       String
+  publicId  String? // Cloudinary public ID for deletion
+  width     Int?
+  height    Int?
+  format    String?
   alt       String?
   isPrimary Boolean @default(false)
   productId String  @db.ObjectId
