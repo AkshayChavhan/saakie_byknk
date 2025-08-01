@@ -4,8 +4,9 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/nextjs'
-import { Menu, Search, ShoppingCart, Heart, X } from 'lucide-react'
+import { Menu, Search, Heart, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { CartIcon } from '@/components/cart'
 
 const navigation = [
   { name: 'Home', href: '/' },
@@ -84,12 +85,7 @@ export function Header() {
                 <Heart size={20} />
               </Link>
               
-              <Link href="/cart" className="p-2 rounded-md text-gray-700 hover:bg-gray-100 relative">
-                <ShoppingCart size={20} />
-                <span className="absolute -top-1 -right-1 bg-primary text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                  0
-                </span>
-              </Link>
+              <CartIcon />
               
               <UserButton afterSignOutUrl="/" />
             </SignedIn>

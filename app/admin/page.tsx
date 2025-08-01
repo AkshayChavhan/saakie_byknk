@@ -63,9 +63,14 @@ export default function AdminDashboard() {
   })
   const [loading, setLoading] = useState(true)
   const [authorized, setAuthorized] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     checkAuthorization()
+  }, [])
+
+  useEffect(() => {
+    setMounted(true)
   }, [])
 
   const checkAuthorization = async () => {
@@ -264,7 +269,9 @@ export default function AdminDashboard() {
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-gray-900">₹{order.total.toFixed(2)}</p>
-                      <p className="text-sm text-gray-500">{formatTimeAgo(order.createdAt)}</p>
+                      <p className="text-sm text-gray-500">
+                        {mounted ? formatTimeAgo(order.createdAt) : new Date(order.createdAt).toLocaleDateString()}
+                      </p>
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium mt-1 ${
                         order.status === 'DELIVERED' ? 'bg-green-100 text-green-800' :
                         order.status === 'SHIPPED' ? 'bg-blue-100 text-blue-800' :

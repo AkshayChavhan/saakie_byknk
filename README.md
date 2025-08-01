@@ -79,13 +79,22 @@ npm install
 
 ### 3. Environment Setup
 
-Create a `.env.local` file in the root directory:
+Copy the `.env.example` file to `.env.local` and update with your values:
+
+```bash
+cp .env.example .env.local
+```
+
+Then edit `.env.local` with your actual values:
 
 ```env
+# Database
+DATABASE_URL="mongodb+srv://username:password@cluster.mongodb.net/saree-shop?retryWrites=true&w=majority"
+
 # Clerk Authentication
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
-CLERK_SECRET_KEY=your_clerk_secret_key
-CLERK_WEBHOOK_SECRET=your_clerk_webhook_secret
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_your_clerk_publishable_key
+CLERK_SECRET_KEY=sk_test_your_clerk_secret_key
+CLERK_WEBHOOK_SECRET=whsec_your_clerk_webhook_secret
 
 # Clerk URLs
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
@@ -93,13 +102,19 @@ NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/
 NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/
 
-# Database
-DATABASE_URL="mongodb://localhost:27017/saakie"
-# or MongoDB Atlas
-# DATABASE_URL="mongodb+srv://username:password@cluster.mongodb.net/saakie"
-
-# App URL
+# Application URL
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Payment Gateways (Optional)
+
+# Stripe
+STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
+STRIPE_WEBHOOK_SECRET=whsec_your_stripe_webhook_secret
+
+# Razorpay
+RAZORPAY_KEY_ID=rzp_test_your_razorpay_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+RAZORPAY_WEBHOOK_SECRET=your_razorpay_webhook_secret
 ```
 
 ### 4. Database Setup
@@ -385,13 +400,29 @@ npm start
 
 ### Environment Variables for Production
 
-| Variable | Description | Required |
+#### Required Variables
+
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | MongoDB connection string |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key |
+| `CLERK_SECRET_KEY` | Clerk secret key |
+| `CLERK_WEBHOOK_SECRET` | Clerk webhook secret |
+| `NEXT_PUBLIC_APP_URL` | Application URL |
+
+#### Optional Variables
+
+| Variable | Description | Used For |
 |----------|-------------|----------|
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key | Yes |
-| `CLERK_SECRET_KEY` | Clerk secret key | Yes |
-| `CLERK_WEBHOOK_SECRET` | Clerk webhook secret | Yes |
-| `DATABASE_URL` | MongoDB connection string | Yes |
-| `NEXT_PUBLIC_APP_URL` | Application URL | Yes |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | Sign-in page URL (default: /sign-in) | Custom auth flows |
+| `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | Sign-up page URL (default: /sign-up) | Custom auth flows |
+| `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` | Redirect after sign-in (default: /) | Post-auth redirects |
+| `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL` | Redirect after sign-up (default: /) | Post-auth redirects |
+| `STRIPE_SECRET_KEY` | Stripe secret key | Stripe payments |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signature | Stripe webhooks |
+| `RAZORPAY_KEY_ID` | Razorpay key ID | Razorpay payments |
+| `RAZORPAY_KEY_SECRET` | Razorpay key secret | Razorpay payments |
+| `RAZORPAY_WEBHOOK_SECRET` | Razorpay webhook signature | Razorpay webhooks |
 
 ## 🧪 Testing
 
