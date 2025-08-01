@@ -5,7 +5,7 @@ import { prisma as db } from '@/lib/db';
 // PATCH /api/cart/items/[itemId] - Update cart item quantity
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { itemId: string } }
+  { params }: { params: Promise<{ itemId: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -30,9 +30,10 @@ export async function PATCH(
     }
 
     // Find cart item and verify ownership
+    const { itemId } = await params;
     const cartItem = await db.cartItem.findFirst({
       where: {
-        id: params.itemId,
+        id: itemId,
         cart: {
           userId: user.id
         }
@@ -60,7 +61,7 @@ export async function PATCH(
 
     // Update cart item
     await db.cartItem.update({
-      where: { id: params.itemId },
+      where: { id: itemId },
       data: { 
         quantity,
         price: cartItem.product.price // Update to current price
@@ -110,7 +111,7 @@ export async function PATCH(
 // DELETE /api/cart/items/[itemId] - Remove cart item
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { itemId: string } }
+  { params }: { params: Promise<{ itemId: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -129,9 +130,10 @@ export async function DELETE(
     }
 
     // Verify cart item ownership and delete
+    const { itemId } = await params;
     const cartItem = await db.cartItem.findFirst({
       where: {
-        id: params.itemId,
+        id: itemId,
         cart: {
           userId: user.id
         }
@@ -143,7 +145,7 @@ export async function DELETE(
     }
 
     await db.cartItem.delete({
-      where: { id: params.itemId }
+      where: { id: itemId }
     });
 
     // Return updated cart

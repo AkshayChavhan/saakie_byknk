@@ -25,17 +25,41 @@ export async function POST(request: NextRequest) {
 
     console.log('Creating order:', body)
 
+    // Try to get authenticated user
+    const { userId: clerkUserId } = await auth()
+    
     // Generate order number
     const orderNumber = `COD${Date.now()}`
 
-    // For COD orders, we don't need user authentication
-    // Create order without user association for now
+    // If user is logged in, get their database user
+    let dbUserId = null
+    if (clerkUserId) {
+      const user = await prisma.user.findUnique({
+        where: { clerkId: clerkUserId }
+      })
+      dbUserId = user?.id
+    }
+
+    // For guest checkout, create a temporary address without user association
+    const tempAddress = await prisma.address.create({
+      data: {
+        name,
+        phone,
+        addressLine1: address,
+        city,
+        pincode,
+        state: 'Unknown', // You might want to add state to the form
+        country: 'India',
+        isDefault: false,
+        ...(dbUserId ? { userId: dbUserId } : {})
+      }
+    })
+
+    // Create order without requiring user
     const order = await prisma.order.create({
       data: {
         orderNumber,
-        // For now, we'll create orders without user association
-        // In production, you'd want to either require login or create a guest system
-        userId: 'guest', // This will need to be updated based on your user system
+        ...(dbUserId ? { userId: dbUserId } : {}),
         status: 'PENDING',
         paymentStatus: 'PENDING',
         paymentMethod: paymentMethod || 'COD',
@@ -44,20 +68,8 @@ export async function POST(request: NextRequest) {
         shipping: 0,
         discount: 0,
         total: total,
-        // Create address inline for COD orders
-        shippingAddress: {
-          create: {
-            userId: 'guest',
-            name,
-            phone,
-            addressLine1: address,
-            city,
-            pincode,
-            state: 'Unknown', // You might want to add state to the form
-            country: 'India',
-            isDefault: false
-          }
-        },
+        shippingAddressId: tempAddress.id,
+        billingAddressId: tempAddress.id,
         items: {
           create: [
             {

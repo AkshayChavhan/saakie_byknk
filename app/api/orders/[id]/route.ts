@@ -6,11 +6,11 @@ const prisma = new PrismaClient()
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth()
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
     const { status, paymentStatus } = body
 
@@ -66,10 +66,10 @@ export async function PATCH(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
 
     const order = await prisma.order.findUnique({
       where: { id },

@@ -110,14 +110,16 @@ async function handlePaymentCaptured(payment: any) {
       })
     }
 
-    // Clear user's cart
-    await db.cartItem.deleteMany({
-      where: {
-        cart: {
-          userId: order.userId
+    // Clear user's cart (only if user is logged in)
+    if (order.userId) {
+      await db.cartItem.deleteMany({
+        where: {
+          cart: {
+            userId: order.userId
+          }
         }
-      }
-    })
+      })
+    }
 
     console.log(`Razorpay payment captured for order ${order.orderNumber}`)
 

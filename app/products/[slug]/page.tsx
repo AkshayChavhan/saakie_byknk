@@ -140,6 +140,7 @@ export default function ProductDetailPage() {
   const [orderDetails, setOrderDetails] = useState<any>(null)
   const [paymentStep, setPaymentStep] = useState<'details' | 'qr' | 'success'>('details')
   const [copied, setCopied] = useState(false)
+  const [orderId, setOrderId] = useState<string>('')
   
   // Order Form State
   const [customerInfo, setCustomerInfo] = useState({
@@ -234,6 +235,8 @@ export default function ProductDetailPage() {
       const result = await response.json()
       console.log('Order placed successfully:', result)
       
+      // Store the order ID from the response
+      setOrderId(result.order?.orderNumber || `COD${Date.now()}`)
       setPaymentStep('qr')
     } catch (error) {
       console.error('Error placing order:', error)
@@ -292,7 +295,7 @@ export default function ProductDetailPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h1>
-          <p className="text-gray-600 mb-6">The product you're looking for doesn't exist.</p>
+          <p className="text-gray-600 mb-6">The product you&apos;re looking for doesn&apos;t exist.</p>
           <Link 
             href="/products"
             className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90"
@@ -616,7 +619,6 @@ export default function ProductDetailPage() {
                   
                   <button
                     onClick={handleCashOnDelivery}
-                    disabled
                     className="w-full bg-green-600 text-white py-4 px-6 rounded-lg font-medium text-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
                   >
                     <CreditCard size={20} />
@@ -783,7 +785,7 @@ export default function ProductDetailPage() {
                     <div>
                       <h4 className="font-medium text-gray-900 mb-2">Dimensions</h4>
                       <p className="text-gray-700 text-sm">
-                        {product.dimensions.length}" L × {product.dimensions.width}" W × {product.dimensions.height}" H
+                        {product.dimensions.length}&quot; L × {product.dimensions.width}&quot; W × {product.dimensions.height}&quot; H
                       </p>
                     </div>
                   )}
@@ -1168,7 +1170,7 @@ export default function ProductDetailPage() {
                     <span className="text-green-800 font-medium">Order Placed Successfully!</span>
                   </div>
                   <p className="text-sm text-green-700">
-                    Order ID: #COD{Date.now().toString().slice(-6)}
+                    Order ID: {orderId}
                   </p>
                 </div>
 
@@ -1210,7 +1212,7 @@ export default function ProductDetailPage() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Order ID:</span>
-                        <span className="font-mono text-sm">#COD{Date.now().toString().slice(-6)}</span>
+                        <span className="font-mono text-sm">{orderId}</span>
                       </div>
                     </div>
                   </div>
@@ -1223,7 +1225,7 @@ export default function ProductDetailPage() {
                       <li>Scan the QR code or use the UPI ID above</li>
                       <li>Complete the payment of {formatPrice(orderDetails?.total || 0)}</li>
                       <li>Your order will be confirmed and shipped within 24 hours</li>
-                      <li>You'll receive a tracking number via SMS</li>
+                      <li>You&apos;ll receive a tracking number via SMS</li>
                     </ol>
                   </div>
 

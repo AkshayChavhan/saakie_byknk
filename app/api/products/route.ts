@@ -1,17 +1,72 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
     console.log('Products API called')
     
-    // First, let's try a very simple query
+    // Get query parameters
+    const searchParams = request.nextUrl.searchParams
+    const category = searchParams.get('category')
+    const sort = searchParams.get('sort') || 'newest'
+    const minPrice = parseInt(searchParams.get('minPrice') || '0')
+    const maxPrice = parseInt(searchParams.get('maxPrice') || '999999')
+    const inStock = searchParams.get('inStock') === 'true'
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '12')
+    
+    // Build where clause
+    const where: any = {
+      isActive: true
+    }
+    
+    if (category) {
+      const categoryRecord = await prisma.category.findUnique({
+        where: { slug: category },
+        select: { id: true }
+      })
+      if (categoryRecord) {
+        where.categoryId = categoryRecord.id
+      }
+    }
+    
+    if (minPrice > 0 || maxPrice < 999999) {
+      where.price = {
+        gte: minPrice,
+        lte: maxPrice
+      }
+    }
+    
+    if (inStock) {
+      where.stock = { gt: 0 }
+    }
+    
+    // Build orderBy
+    let orderBy: any = {}
+    switch (sort) {
+      case 'price-low':
+        orderBy = { price: 'asc' }
+        break
+      case 'price-high':
+        orderBy = { price: 'desc' }
+        break
+      case 'popular':
+        orderBy = { orderItems: { _count: 'desc' } }
+        break
+      case 'rating':
+        orderBy = { reviews: { _count: 'desc' } }
+        break
+      case 'newest':
+      default:
+        orderBy = { createdAt: 'desc' }
+    }
+    
+    // Get total count
+    const totalCount = await prisma.product.count({ where })
+    
+    // Get products
     const products = await prisma.product.findMany({
-      where: {
-        isActive: true
-      },
+      where,
       select: {
         id: true,
         name: true,
@@ -29,12 +84,17 @@ export async function GET(request: NextRequest) {
             name: true,
             slug: true
           }
+        },
+        _count: {
+          select: {
+            reviews: true,
+            orderItems: true
+          }
         }
       },
-      take: 12,
-      orderBy: {
-        createdAt: 'desc'
-      }
+      skip: (page - 1) * limit,
+      take: limit,
+      orderBy
     })
 
     console.log('Found products:', products.length)
@@ -45,26 +105,28 @@ export async function GET(request: NextRequest) {
       slug: product.slug,
       price: product.price,
       comparePrice: product.comparePrice || product.price * 1.3,
-      rating: 4.5, // Hardcoded for now
-      reviews: 0, // Hardcoded for now
+      rating: product._count.reviews > 0 ? 4.5 : 0, // TODO: Calculate actual average
+      reviews: product._count.reviews,
       image: product.images[0]?.url || '/images/placeholder-product.jpg',
-      colors: ['#000000'], // Hardcoded for now
+      colors: ['#000000'], // TODO: Get actual colors
       category: product.category,
       stock: product.stock,
       isNew: new Date(product.createdAt).getTime() > Date.now() - (30 * 24 * 60 * 60 * 1000),
-      isBestseller: false, // Hardcoded for now
+      isBestseller: product._count.orderItems > 10,
       inStock: product.stock > 0
     }))
+
+    const totalPages = Math.ceil(totalCount / limit)
 
     return NextResponse.json({
       products: formattedProducts,
       pagination: {
-        page: 1,
-        limit: 12,
-        totalCount: products.length,
-        totalPages: 1,
-        hasNext: false,
-        hasPrev: false
+        page,
+        limit,
+        totalCount,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
       }
     })
   } catch (error) {
@@ -73,7 +135,5 @@ export async function GET(request: NextRequest) {
       error: 'Internal server error',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 })
-  } finally {
-    await prisma.$disconnect()
   }
 }
