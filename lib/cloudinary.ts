@@ -6,7 +6,15 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export const uploadToCloudinary = async (file: File, folder: string = 'products') => {
+export interface CloudinaryUploadResult {
+  url: string
+  publicId: string
+  width?: number
+  height?: number
+  format?: string
+}
+
+export const uploadToCloudinary = async (file: File, folder: string = 'products'): Promise<CloudinaryUploadResult> => {
   try {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
@@ -27,8 +35,8 @@ export const uploadToCloudinary = async (file: File, folder: string = 'products'
             reject(error);
           } else {
             resolve({
-              url: result?.secure_url,
-              publicId: result?.public_id,
+              url: result?.secure_url || '',
+              publicId: result?.public_id || '',
               width: result?.width,
               height: result?.height,
               format: result?.format,

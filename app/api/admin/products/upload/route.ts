@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { PrismaClient } from '@prisma/client'
-import { uploadToCloudinary } from '@/lib/cloudinary'
+import { uploadToCloudinary, type CloudinaryUploadResult } from '@/lib/cloudinary'
 
 const prisma = new PrismaClient()
 
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     
     // Upload to Cloudinary
     console.log('☁️ Uploading to Cloudinary...')
-    const uploadedImage = await uploadToCloudinary(firstImage, 'products')
+    const uploadedImage: CloudinaryUploadResult = await uploadToCloudinary(firstImage, 'products')
     console.log('✅ Upload successful:', uploadedImage)
 
     // Create simple product
