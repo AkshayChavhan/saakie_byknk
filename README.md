@@ -482,4 +482,4 @@ For support, email support@saakie-byknk.com or create an issue in the repository
 
 ---
 
-**Built with ❤️ by [Your Name]**
+**Built with ❤️ by Akshay Chavhan**
