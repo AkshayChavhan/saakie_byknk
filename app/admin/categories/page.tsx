@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Plus, Edit, Trash2, Eye, Folder, FolderOpen } from 'lucide-react'
+import { Search, Plus, Edit, Trash2, Eye, Folder, FolderOpen, Upload, Image as ImageIcon } from 'lucide-react'
 
 interface Category {
   id: string
@@ -9,6 +9,10 @@ interface Category {
   slug: string
   description: string | null
   image: string | null
+  imagePublicId?: string | null
+  imageWidth?: number | null
+  imageHeight?: number | null
+  imageFormat?: string | null
   parentId: string | null
   parent: Category | null
   children: Category[]
@@ -34,6 +38,7 @@ export default function CategoriesManagement() {
     parentId: '',
     isActive: true
   })
+  const [selectedImage, setSelectedImage] = useState<File | null>(null)
 
   useEffect(() => {
     fetchCategories()
@@ -56,32 +61,64 @@ export default function CategoriesManagement() {
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const response = await fetch('/api/admin/categories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      })
-      if (response.ok) {
-        const newCategory = await response.json()
-        // Ensure children array exists
-        const categoryWithChildren = {
-          ...newCategory,
-          children: newCategory.children || []
-        }
-        setCategories([...categories, categoryWithChildren])
-        setIsModalOpen(false)
-        setFormData({
-          name: '',
-          slug: '',
-          description: '',
-          image: '',
-          parentId: '',
-          isActive: true
+      if (selectedImage) {
+        // Use upload API for categories with images
+        const uploadFormData = new FormData()
+        uploadFormData.append('image', selectedImage)
+        uploadFormData.append('data', JSON.stringify(formData))
+
+        const response = await fetch('/api/admin/categories/upload', {
+          method: 'POST',
+          body: uploadFormData
         })
+
+        if (response.ok) {
+          const newCategory = await response.json()
+          const categoryWithChildren = {
+            ...newCategory,
+            children: newCategory.children || []
+          }
+          setCategories([...categories, categoryWithChildren])
+          setIsModalOpen(false)
+          resetForm()
+        } else {
+          const error = await response.json()
+          alert(error.error || 'Failed to create category')
+        }
+      } else {
+        // Use regular API for categories without images
+        const response = await fetch('/api/admin/categories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        })
+        if (response.ok) {
+          const newCategory = await response.json()
+          const categoryWithChildren = {
+            ...newCategory,
+            children: newCategory.children || []
+          }
+          setCategories([...categories, categoryWithChildren])
+          setIsModalOpen(false)
+          resetForm()
+        }
       }
     } catch (error) {
       console.error('Failed to create category:', error)
+      alert('Failed to create category')
     }
+  }
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      slug: '',
+      description: '',
+      image: '',
+      parentId: '',
+      isActive: true
+    })
+    setSelectedImage(null)
   }
 
   const handleUpdateCategory = async (categoryId: string, updates: Partial<Category>) => {
@@ -155,6 +192,19 @@ export default function CategoriesManagement() {
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
           {category.description || 'No description'}
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap">
+          {category.image ? (
+            <img 
+              src={category.image} 
+              alt={category.name}
+              className="h-10 w-10 rounded-lg object-cover"
+            />
+          ) : (
+            <div className="h-10 w-10 rounded-lg bg-gray-200 flex items-center justify-center">
+              <ImageIcon className="h-5 w-5 text-gray-400" />
+            </div>
+          )}
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
           {category._count.products}
@@ -298,6 +348,9 @@ export default function CategoriesManagement() {
                     Description
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Image
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Products
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -382,6 +435,48 @@ export default function CategoriesManagement() {
                     ))}
                   </select>
                 </div>
+                
+                {/* Image Upload Section */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Category Image
+                  </label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
+                      onChange={(e) => setSelectedImage(e.target.files?.[0] || null)}
+                      className="hidden"
+                      id="category-image-upload"
+                    />
+                    <label
+                      htmlFor="category-image-upload"
+                      className="cursor-pointer flex flex-col items-center"
+                    >
+                      <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                      <span className="text-sm text-gray-600">
+                        Click to upload category image
+                      </span>
+                      <span className="text-xs text-gray-500 mt-1">
+                        JPEG, PNG, WebP up to 5MB
+                      </span>
+                    </label>
+                    {selectedImage && (
+                      <div className="mt-3">
+                        <p className="text-sm text-gray-600">
+                          Selected: {selectedImage.name}
+                        </p>
+                        <div className="mt-2">
+                          <img
+                            src={URL.createObjectURL(selectedImage)}
+                            alt="Preview"
+                            className="h-16 w-16 object-cover rounded-lg"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <div className="flex items-center">
                   <input
                     type="checkbox"
@@ -400,7 +495,10 @@ export default function CategoriesManagement() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setIsModalOpen(false)}
+                    onClick={() => {
+                      setIsModalOpen(false)
+                      resetForm()
+                    }}
                     className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors"
                   >
                     Cancel

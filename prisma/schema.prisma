@@ -34,6 +34,10 @@ model Category {
   slug        String    @unique
   description String?
   image       String?
+  imagePublicId String? // Cloudinary public ID for deletion
+  imageWidth    Int?
+  imageHeight   Int?
+  imageFormat   String?
   parentId    String?   @db.ObjectId
   parent      Category? @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   children    Category[] @relation("CategoryToCategory")
