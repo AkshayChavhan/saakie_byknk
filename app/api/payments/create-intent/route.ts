@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma as db } from '@/lib/db'
-import { stripe, formatAmountForStripe } from '@/lib/stripe'
-import { razorpay, formatAmountForRazorpay } from '@/lib/razorpay'
+import { stripe, formatAmountForStripe, isStripeEnabled } from '@/lib/stripe'
+import { razorpay, formatAmountForRazorpay, isRazorpayEnabled } from '@/lib/razorpay'
 import { validateCart } from '@/lib/cart'
 
 export async function POST(request: NextRequest) {
@@ -145,6 +145,14 @@ export async function POST(request: NextRequest) {
     let paymentIntent
 
     if (paymentGateway === 'stripe') {
+      // Check if Stripe is enabled
+      if (!isStripeEnabled() || !stripe) {
+        return NextResponse.json(
+          { error: 'Stripe payment is not available. Please use another payment method.' },
+          { status: 503 }
+        )
+      }
+
       // Create Stripe payment intent
       paymentIntent = await stripe.paymentIntents.create({
         amount: formatAmountForStripe(total),
@@ -173,6 +181,14 @@ export async function POST(request: NextRequest) {
       })
 
     } else if (paymentGateway === 'razorpay') {
+      // Check if Razorpay is enabled
+      if (!isRazorpayEnabled() || !razorpay) {
+        return NextResponse.json(
+          { error: 'Razorpay payment is not available. Please use another payment method.' },
+          { status: 503 }
+        )
+      }
+
       // Create Razorpay order
       const razorpayOrder = await razorpay.orders.create({
         amount: formatAmountForRazorpay(total),

@@ -1,13 +1,18 @@
 import Stripe from 'stripe'
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not set')
-}
+// Make Stripe optional - only initialize if keys are provided
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2025-07-30.basil',
-  typescript: true,
-})
+export const stripe = stripeSecretKey 
+  ? new Stripe(stripeSecretKey, {
+      apiVersion: '2025-07-30.basil',
+      typescript: true,
+    })
+  : null
+
+export const isStripeEnabled = () => {
+  return !!stripeSecretKey && !!process.env.STRIPE_WEBHOOK_SECRET
+}
 
 export const formatAmountForStripe = (amount: number): number => {
   // Stripe expects amounts in the smallest currency unit (paise for INR)

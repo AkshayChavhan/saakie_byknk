@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma as db } from '@/lib/db'
-import { stripe } from '@/lib/stripe'
-import { razorpay } from '@/lib/razorpay'
+import { stripe, isStripeEnabled } from '@/lib/stripe'
+import { razorpay, isRazorpayEnabled } from '@/lib/razorpay'
 import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
@@ -58,6 +58,14 @@ export async function POST(request: NextRequest) {
         )
       }
 
+      // Check if Stripe is enabled
+      if (!isStripeEnabled() || !stripe) {
+        return NextResponse.json(
+          { error: 'Stripe payment is not available' },
+          { status: 503 }
+        )
+      }
+
       try {
         // Retrieve payment intent from Stripe
         const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId)
@@ -78,6 +86,14 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { error: 'Razorpay payment details are incomplete' },
           { status: 400 }
+        )
+      }
+
+      // Check if Razorpay is enabled
+      if (!isRazorpayEnabled() || !razorpay) {
+        return NextResponse.json(
+          { error: 'Razorpay payment is not available' },
+          { status: 503 }
         )
       }
 

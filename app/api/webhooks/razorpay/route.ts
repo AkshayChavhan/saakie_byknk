@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import crypto from 'crypto'
-import { razorpay } from '@/lib/razorpay'
+import { razorpay, isRazorpayEnabled } from '@/lib/razorpay'
 import { prisma as db } from '@/lib/db'
 
-const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET!
+const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Razorpay is enabled
+    if (!isRazorpayEnabled() || !webhookSecret) {
+      return NextResponse.json(
+        { error: 'Razorpay is not configured' },
+        { status: 503 }
+      )
+    }
     const body = await request.text()
     const signature = (await headers()).get('x-razorpay-signature')
 
