@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -51,11 +51,7 @@ export default function CategoryPage() {
   const [selectedColors, setSelectedColors] = useState<string[]>([])
   const [inStockOnly, setInStockOnly] = useState(false)
   
-  useEffect(() => {
-    fetchCategoryAndProducts()
-  }, [slug, sortBy, priceRange, selectedColors, inStockOnly])
-
-  const fetchCategoryAndProducts = async () => {
+  const fetchCategoryAndProducts = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -93,7 +89,11 @@ export default function CategoryPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [slug, sortBy, priceRange, selectedColors, inStockOnly])
+
+  useEffect(() => {
+    fetchCategoryAndProducts()
+  }, [fetchCategoryAndProducts])
 
   const clearFilters = () => {
     setPriceRange({ min: 0, max: 10000 })
@@ -127,7 +127,7 @@ export default function CategoryPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Category Not Found</h1>
-          <p className="text-gray-600 mb-6">The category you're looking for doesn't exist.</p>
+          <p className="text-gray-600 mb-6">The category you&apos;re looking for doesn&apos;t exist.</p>
           <Link 
             href="/products"
             className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90"
