@@ -54,7 +54,7 @@ export default function ProductsManagement() {
     blouseIncluded: false,
     isActive: true,
     isFeatured: false,
-    images: [] as string[]
+    images: [] as File[]
   })
 
   useEffect(() => {
@@ -139,23 +139,49 @@ export default function ProductsManagement() {
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
     try {
-      const productData = {
-        ...formData,
-        price: parseFloat(formData.price),
-        compareAtPrice: formData.compareAtPrice ? parseFloat(formData.compareAtPrice) : null,
-        stock: parseInt(formData.stock),
-        lowStockAlert: parseInt(formData.lowStockAlert),
-        weight: formData.weight ? parseFloat(formData.weight) : null,
-        length: formData.length ? parseFloat(formData.length) : null,
-        width: formData.width ? parseFloat(formData.width) : null,
-        occasion: formData.occasion || null,
+      // Check if images are selected
+      if (!formData.images || formData.images.length === 0) {
+        alert('Please select at least one image')
+        return
       }
 
-      const response = await fetch('/api/admin/products', {
+      // Create FormData for multipart upload
+      const uploadFormData = new FormData()
+      
+      // Add images to FormData
+      formData.images.forEach((file) => {
+        uploadFormData.append('images', file)
+      })
+
+      // Add product data as JSON
+      const productData = {
+        name: formData.name,
+        slug: formData.slug,
+        description: formData.description,
+        price: formData.price,
+        compareAtPrice: formData.compareAtPrice,
+        stock: formData.stock,
+        lowStockAlert: formData.lowStockAlert,
+        categoryId: formData.categoryId,
+        material: formData.material,
+        pattern: formData.pattern,
+        careInstructions: formData.careInstructions,
+        weight: formData.weight,
+        blouseIncluded: formData.blouseIncluded,
+        isActive: formData.isActive,
+        isFeatured: formData.isFeatured,
+        length: formData.length,
+        width: formData.width,
+        occasion: formData.occasion,
+      }
+      
+      uploadFormData.append('data', JSON.stringify(productData))
+
+      const response = await fetch('/api/admin/products/upload', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(productData)
+        body: uploadFormData
       })
 
       if (response.ok) {
@@ -164,10 +190,12 @@ export default function ProductsManagement() {
         setShowAddModal(false)
         resetForm()
       } else {
-        console.error('Failed to create product')
+        const error = await response.json()
+        alert(error.error || 'Failed to create product')
       }
     } catch (error) {
       console.error('Error creating product:', error)
+      alert('Failed to create product')
     }
   }
 
@@ -736,6 +764,49 @@ export default function ProductsManagement() {
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                         placeholder="Enter care instructions"
                       />
+                    </div>
+
+                    {/* Image Upload Section */}
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Product Images
+                      </label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/jpeg,image/jpg,image/png,image/webp"
+                          onChange={(e) => setFormData({ ...formData, images: e.target.files ? Array.from(e.target.files) : [] })}
+                          className="hidden"
+                          id="image-upload"
+                        />
+                        <label
+                          htmlFor="image-upload"
+                          className="cursor-pointer flex flex-col items-center"
+                        >
+                          <Upload className="h-12 w-12 text-gray-400 mb-3" />
+                          <span className="text-sm text-gray-600">
+                            Click to upload images or drag and drop
+                          </span>
+                          <span className="text-xs text-gray-500 mt-1">
+                            JPEG, PNG, WebP up to 5MB each
+                          </span>
+                        </label>
+                        {formData.images && formData.images.length > 0 && (
+                          <div className="mt-4">
+                            <p className="text-sm text-gray-600 mb-2">
+                              Selected: {formData.images.length} image(s)
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {formData.images.map((file, index) => (
+                                <span key={index} className="text-xs bg-gray-100 px-2 py-1 rounded">
+                                  {file.name}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="md:col-span-2">
