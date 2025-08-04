@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/nextjs'
 import { Menu, Search, Heart, X } from 'lucide-react'
@@ -42,8 +43,15 @@ export function Header() {
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
             
-            <Link href="/" className="ml-4 lg:ml-0">
-              <h1 className="text-2xl font-bold text-red-600">Saakie_byknk</h1>
+            <Link href="/" className="ml-4 lg:ml-0 flex items-center">
+              <Image 
+                src="/images/saakie.jpg" 
+                alt="Saakie by KNK" 
+                width={150} 
+                height={50} 
+                className="h-8 w-auto sm:h-10 lg:h-12"
+                priority
+              />
             </Link>
           </div>
 
