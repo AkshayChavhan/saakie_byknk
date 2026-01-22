@@ -133,8 +133,11 @@ Colors: ${colors}
 
 function extractProductRecommendations(message: string, products: any[]): RecommendedProduct[] {
   const productIdRegex = /\[PRODUCT:([^\]]+)\]/g
-  const matches = [...message.matchAll(productIdRegex)]
-  const recommendedIds = matches.map(m => m[1])
+  const recommendedIds: string[] = []
+  let match: RegExpExecArray | null
+  while ((match = productIdRegex.exec(message)) !== null) {
+    recommendedIds.push(match[1])
+  }
 
   const recommendations: RecommendedProduct[] = []
 
