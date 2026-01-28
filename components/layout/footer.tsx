@@ -20,7 +20,6 @@ const footerLinks = {
     { name: 'About Us', href: '/about' },
     { name: 'Our Story', href: '/our-story' },
     { name: 'Careers', href: '/careers' },
-    { name: 'Press', href: '/press' },
     { name: 'Blog', href: '/blog' },
   ],
   legal: [

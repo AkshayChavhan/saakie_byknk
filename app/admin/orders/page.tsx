@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Search, Filter, Eye, Package, Truck, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react'
+import { SareeLoader } from '@/components/ui/saree-loader'
 
 interface Order {
   id: string
@@ -133,7 +134,7 @@ export default function OrdersManagement() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600"></div>
+        <SareeLoader size="lg" text="Loading orders..." />
       </div>
     )
   }

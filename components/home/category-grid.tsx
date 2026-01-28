@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { SareeLoader } from '@/components/ui/saree-loader'
 
 interface Category {
   id: string
@@ -51,12 +52,8 @@ export function CategoryGrid() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            {[...Array(6)].map((_, index) => (
-              <div key={index} className="animate-pulse">
-                <div className="aspect-[3/4] bg-gray-200 rounded-lg"></div>
-              </div>
-            ))}
+          <div className="flex items-center justify-center py-16">
+            <SareeLoader size="md" text="Loading categories..." />
           </div>
         ) : error ? (
           <div className="text-center py-12">

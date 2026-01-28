@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/nextjs'
-import { Menu, Search, Heart, X } from 'lucide-react'
+import { Search, Heart } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { CartIcon } from '@/components/cart'
 
@@ -15,16 +16,81 @@ const navigation = [
   { name: 'Cotton Sarees', href: '/categories/cotton-sarees' },
   { name: 'Designer', href: '/categories/designer' },
   { name: 'Sale', href: '/products?sale=true' },
+  { name: 'Posts', href: '/post' },
 ]
+
+// Animated Hamburger Component
+function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
+  return (
+    <div className={cn("flex flex-col justify-center items-center w-6 h-6 gap-1.5", isOpen && "hamburger-open")}>
+      <span className="hamburger-line" />
+      <span className="hamburger-line" />
+      <span className="hamburger-line" />
+    </div>
+  )
+}
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isClosing, setIsClosing] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const pathname = usePathname()
   const { user } = useUser()
   // For now, show admin link for all authenticated users
   // Role check is handled by middleware
   const isAdmin = !!user
+  const [isScrolled, setIsScrolled] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  // Handle menu close with animation
+  const handleCloseMenu = useCallback(() => {
+    setIsClosing(true)
+    // Wait for exit animation to complete
+    setTimeout(() => {
+      setMobileMenuOpen(false)
+      setIsClosing(false)
+    }, 300)
+  }, [])
+
+  // Toggle menu
+  const toggleMenu = () => {
+    if (mobileMenuOpen) {
+      handleCloseMenu()
+    } else {
+      setMobileMenuOpen(true)
+    }
+  }
+
+  // Close menu when pressing Escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && mobileMenuOpen) {
+        handleCloseMenu()
+      }
+    }
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [mobileMenuOpen, handleCloseMenu])
+
+  // Prevent body scroll when menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [mobileMenuOpen])
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm">
@@ -35,15 +101,41 @@ export function Header() {
       <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
+            {/* Mobile: Animated hamburger menu button */}
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100"
+              onClick={toggleMenu}
+              className="lg:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             >
-              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              {isScrolled && !mobileMenuOpen ? (
+                <Image
+                  src="/images/saakie.jpg"
+                  alt="Saakie by KNK"
+                  width={100}
+                  height={32}
+                  className="h-6 w-auto"
+                />
+              ) : (
+                <HamburgerIcon isOpen={mobileMenuOpen || isClosing} />
+              )}
             </button>
-            
-            <Link href="/" className="ml-4 lg:ml-0">
-              <h1 className="text-2xl font-bold text-red-600">Saakie_byknk</h1>
+
+            {/* Desktop: Always show logo. Mobile: Only show when not scrolled */}
+            <Link
+              href="/"
+              className={cn(
+                "ml-4 lg:ml-0 flex items-center transition-opacity duration-300",
+                isScrolled ? "lg:opacity-100 opacity-0 pointer-events-none lg:pointer-events-auto" : "opacity-100"
+              )}
+            >
+              <Image
+                src="/images/saakie.jpg"
+                alt="Saakie by KNK"
+                width={150}
+                height={50}
+                className="h-8 w-auto sm:h-10 lg:h-12"
+                priority
+              />
             </Link>
           </div>
 
@@ -117,37 +209,135 @@ export function Header() {
           </div>
         )}
 
-        {mobileMenuOpen && (
-          <div className="lg:hidden py-4 border-t">
-            <div className="flex flex-col space-y-3">
-              {navigation.map((item) => (
+      </nav>
+
+      {/* Mobile Menu Overlay & Sidebar */}
+      {mobileMenuOpen && (
+        <>
+          {/* Dark Overlay - Click to close */}
+          <div
+            className={cn(
+              "lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm",
+              isClosing ? "animate-fade-out" : "animate-fade-in"
+            )}
+            onClick={handleCloseMenu}
+            aria-hidden="true"
+          />
+
+          {/* Slide-in Menu Panel */}
+          <div
+            ref={menuRef}
+            className={cn(
+              "lg:hidden fixed top-0 left-0 z-50 h-full w-[280px] sm:w-[320px] bg-gray-900 shadow-2xl overflow-y-auto",
+              isClosing ? "sidebar-slide-out" : "sidebar-slide-in"
+            )}
+          >
+            {/* Menu Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-800">
+              <Link href="/" onClick={handleCloseMenu}>
+                <Image
+                  src="/images/saakie.jpg"
+                  alt="Saakie by KNK"
+                  width={120}
+                  height={40}
+                  className="h-8 w-auto brightness-0 invert"
+                />
+              </Link>
+              <button
+                onClick={handleCloseMenu}
+                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+                aria-label="Close menu"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Navigation Links */}
+            <nav className="p-4">
+              <div className="flex flex-col space-y-1">
+                {navigation.map((item, index) => (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={handleCloseMenu}
+                    className={cn(
+                      'text-base font-medium py-3 px-4 rounded-xl transition-all duration-200',
+                      pathname === item.href
+                        ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30'
+                        : 'text-gray-300 hover:bg-gray-800 hover:text-white',
+                      isClosing
+                        ? `menu-item-exit menu-stagger-exit-${index + 1}`
+                        : `menu-item-enter menu-stagger-${index + 1}`
+                    )}
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    onClick={handleCloseMenu}
+                    className={cn(
+                      "text-base font-medium py-3 px-4 rounded-xl text-gray-300 hover:bg-gray-800 hover:text-white transition-all duration-200",
+                      isClosing
+                        ? `menu-item-exit menu-stagger-exit-${navigation.length + 1}`
+                        : `menu-item-enter menu-stagger-${navigation.length + 1}`
+                    )}
+                  >
+                    Admin Dashboard
+                  </Link>
+                )}
+              </div>
+
+              {/* Divider */}
+              <div className="my-6 border-t border-gray-800" />
+
+              {/* Additional Links */}
+              <div className="flex flex-col space-y-1">
                 <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
+                  href="/about"
+                  onClick={handleCloseMenu}
                   className={cn(
-                    'text-base font-medium py-2 px-4 rounded-md transition-colors',
-                    pathname === item.href
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-gray-700 hover:bg-gray-100'
+                    "text-sm font-medium py-2.5 px-4 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition-all duration-200",
+                    isClosing ? "menu-item-exit menu-stagger-exit-7" : "menu-item-enter menu-stagger-7"
                   )}
                 >
-                  {item.name}
+                  About Us
                 </Link>
-              ))}
-              {isAdmin && (
                 <Link
-                  href="/admin"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-base font-medium py-2 px-4 rounded-md text-gray-700 hover:bg-gray-100"
+                  href="/our-story"
+                  onClick={handleCloseMenu}
+                  className={cn(
+                    "text-sm font-medium py-2.5 px-4 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition-all duration-200",
+                    isClosing ? "menu-item-exit menu-stagger-exit-8" : "menu-item-enter menu-stagger-8"
+                  )}
                 >
-                  Admin Dashboard
+                  Our Story
                 </Link>
-              )}
+                <Link
+                  href="/blog"
+                  onClick={handleCloseMenu}
+                  className={cn(
+                    "text-sm font-medium py-2.5 px-4 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition-all duration-200",
+                    isClosing ? "menu-item-exit menu-stagger-exit-8" : "menu-item-enter menu-stagger-8"
+                  )}
+                >
+                  Blog
+                </Link>
+              </div>
+            </nav>
+
+            {/* Footer */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800 bg-gray-900">
+              <p className="text-xs text-gray-500 text-center">
+                © 2024 Saakie_byknk. All rights reserved.
+              </p>
             </div>
           </div>
-        )}
-      </nav>
+        </>
+      )}
     </header>
   )
 }
