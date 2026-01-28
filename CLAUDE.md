@@ -127,6 +127,9 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - `RAZORPAY_KEY_SECRET` - Razorpay key secret (optional - required for Razorpay payments)
 - `RAZORPAY_WEBHOOK_SECRET` - Razorpay webhook signature verification (optional - required for Razorpay webhooks)
 
+### Instagram Integration
+- `INSTAGRAM_ACCESS_TOKEN` - Instagram Basic Display API long-lived access token (optional - required for Instagram feed display on /post page)
+
 ## Tech Stack
 - **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript
