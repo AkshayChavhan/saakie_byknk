@@ -1,19 +1,25 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { 
-  Search, 
-  Filter, 
-  Heart, 
-  ShoppingCart, 
-  Star, 
-  Grid3X3, 
+import {
+  Search,
+  Filter,
+  Heart,
+  ShoppingCart,
+  Star,
+  Grid3X3,
   LayoutGrid,
-  X
+  X,
+  Home,
+  ChevronRight
 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
+import { Header } from '@/components/layout/header'
+import { Footer } from '@/components/layout/footer'
+import { SareeLoader } from '@/components/ui/saree-loader'
 
 interface Product {
   id: string
@@ -53,25 +59,28 @@ interface ApiResponse {
   }
 }
 
-export default function ProductsPage() {
+function ProductsContent() {
+  const searchParams = useSearchParams()
+
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  
-  // Filter states
+
+  // Filter states - initialize from URL params
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
   const [sortBy, setSortBy] = useState('newest')
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
-  
+  const [initialized, setInitialized] = useState(false)
+
   // UI states
   const [showFilters, setShowFilters] = useState(false)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [wishlist, setWishlist] = useState<string[]>([])
-  
+
   // Pagination
   const [pagination, setPagination] = useState({
     page: 1,
@@ -82,13 +91,39 @@ export default function ProductsPage() {
     hasPrev: false
   })
 
+  // Initialize filters from URL params
+  useEffect(() => {
+    const sort = searchParams.get('sort')
+    const category = searchParams.get('category')
+    const search = searchParams.get('search')
+    const min = searchParams.get('minPrice')
+    const max = searchParams.get('maxPrice')
+    const page = searchParams.get('page')
+    const sale = searchParams.get('sale')
+
+    if (sort) setSortBy(sort)
+    if (category) setSelectedCategory(category)
+    if (search) setSearchQuery(search)
+    if (min) setMinPrice(min)
+    if (max) setMaxPrice(max)
+    if (page) setCurrentPage(parseInt(page))
+    // If sale=true, we could filter for products on sale
+    if (sale === 'true') {
+      // Products with comparePrice are on sale - this is handled in the API
+    }
+
+    setInitialized(true)
+  }, [searchParams])
+
   useEffect(() => {
     fetchCategories()
   }, [])
 
   useEffect(() => {
-    fetchProducts()
-  }, [searchQuery, selectedCategory, sortBy, minPrice, maxPrice, currentPage])
+    if (initialized) {
+      fetchProducts()
+    }
+  }, [searchQuery, selectedCategory, sortBy, minPrice, maxPrice, currentPage, initialized])
 
   const fetchCategories = async () => {
     try {
@@ -169,8 +204,24 @@ export default function ProductsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm sticky top-0 z-40">
+      <Header />
+
+      {/* Breadcrumb */}
+      <div className="bg-white border-b">
+        <div className="container mx-auto px-4 py-3">
+          <nav className="flex items-center text-sm text-gray-600">
+            <Link href="/" className="flex items-center hover:text-rose-600 transition-colors">
+              <Home size={16} className="mr-1" />
+              Home
+            </Link>
+            <ChevronRight size={16} className="mx-2 text-gray-400" />
+            <span className="text-gray-900 font-medium">Products</span>
+          </nav>
+        </div>
+      </div>
+
+      {/* Filter Header */}
+      <div className="bg-white shadow-sm sticky top-16 z-40">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-bold text-gray-900">Products</h1>
@@ -340,15 +391,8 @@ export default function ProductsPage() {
 
             {/* Loading State */}
             {loading && (
-              <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' : 'grid-cols-1'}`}>
-                {[...Array(8)].map((_, index) => (
-                  <div key={index} className="animate-pulse">
-                    <div className={`${viewMode === 'grid' ? 'aspect-[3/4]' : 'h-32'} bg-gray-200 rounded-lg mb-3`}></div>
-                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded mb-2 w-3/4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                  </div>
-                ))}
+              <div className="flex items-center justify-center py-16">
+                <SareeLoader size="lg" text="Loading products..." />
               </div>
             )}
 
@@ -636,6 +680,25 @@ export default function ProductsPage() {
           </div>
         </div>
       )}
+
+      <Footer />
     </div>
+  )
+}
+
+// Loading fallback for Suspense
+function ProductsPageLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <SareeLoader size="lg" text="Loading products..." />
+    </div>
+  )
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<ProductsPageLoading />}>
+      <ProductsContent />
+    </Suspense>
   )
 }

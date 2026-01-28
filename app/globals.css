@@ -191,6 +191,135 @@
     }
   }
 
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(244, 63, 94, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 40px rgba(244, 63, 94, 0.5);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  @keyframes bounceSoft {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+
+  @keyframes spinSlow {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .animate-slide-left {
+    animation: slideInLeft 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-slide-right {
+    animation: slideInRight 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  .animate-bounce-soft {
+    animation: bounceSoft 2s ease-in-out infinite;
+  }
+
+  .animate-spin-slow {
+    animation: spinSlow 8s linear infinite;
+  }
+
+  .animation-delay-600 {
+    animation-delay: 600ms;
+  }
+
+  .animation-delay-700 {
+    animation-delay: 700ms;
+  }
+
+  .animation-delay-800 {
+    animation-delay: 800ms;
+  }
+
+  .animation-delay-1000 {
+    animation-delay: 1000ms;
+  }
+
+  .hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  }
+
+  .gradient-text-rose {
+    background: linear-gradient(135deg, #e11d48 0%, #f43f5e 50%, #fb7185 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -206,7 +335,157 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-  
+
+  /* Hamburger Menu Animation */
+  .hamburger-line {
+    @apply block w-6 h-0.5 bg-gray-700 transition-all duration-300 ease-in-out;
+  }
+
+  .hamburger-open .hamburger-line:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+  }
+
+  .hamburger-open .hamburger-line:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+
+  .hamburger-open .hamburger-line:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+  }
+
+  /* Mobile Menu Animations */
+  .mobile-menu-enter {
+    animation: mobileMenuSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .mobile-menu-exit {
+    animation: mobileMenuSlideOut 0.3s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+  }
+
+  @keyframes mobileMenuSlideIn {
+    from {
+      opacity: 0;
+      max-height: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      max-height: 500px;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes mobileMenuSlideOut {
+    from {
+      opacity: 1;
+      max-height: 500px;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      max-height: 0;
+      transform: translateY(-10px);
+    }
+  }
+
+  /* Menu Item Stagger Animation */
+  .menu-item-enter {
+    animation: menuItemSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+  }
+
+  .menu-item-exit {
+    animation: menuItemSlideOut 0.25s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+  }
+
+  @keyframes menuItemSlideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes menuItemSlideOut {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+  }
+
+  /* Stagger delays for menu items */
+  .menu-stagger-1 { animation-delay: 50ms; }
+  .menu-stagger-2 { animation-delay: 100ms; }
+  .menu-stagger-3 { animation-delay: 150ms; }
+  .menu-stagger-4 { animation-delay: 200ms; }
+  .menu-stagger-5 { animation-delay: 250ms; }
+  .menu-stagger-6 { animation-delay: 300ms; }
+  .menu-stagger-7 { animation-delay: 350ms; }
+  .menu-stagger-8 { animation-delay: 400ms; }
+
+  /* Reverse stagger for exit */
+  .menu-stagger-exit-1 { animation-delay: 200ms; }
+  .menu-stagger-exit-2 { animation-delay: 175ms; }
+  .menu-stagger-exit-3 { animation-delay: 150ms; }
+  .menu-stagger-exit-4 { animation-delay: 125ms; }
+  .menu-stagger-exit-5 { animation-delay: 100ms; }
+  .menu-stagger-exit-6 { animation-delay: 75ms; }
+  .menu-stagger-exit-7 { animation-delay: 50ms; }
+  .menu-stagger-exit-8 { animation-delay: 0ms; }
+
+  /* Sidebar Slide Animations */
+  .sidebar-slide-in {
+    animation: sidebarSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .sidebar-slide-out {
+    animation: sidebarSlideOut 0.3s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+  }
+
+  @keyframes sidebarSlideIn {
+    from {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes sidebarSlideOut {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+  }
+
+  /* Fade Animations for Overlay */
+  .animate-fade-out {
+    animation: fadeOut 0.3s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+  }
+
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+
   .gradient-border {
     position: relative;
     background: linear-gradient(to right, #f3f4f6, #e5e7eb);
@@ -217,6 +496,221 @@
   .gradient-border > * {
     background: white;
     border-radius: inherit;
+  }
+
+  /* ============================================
+     Saree-Themed Loader Animations
+     ============================================ */
+
+  /* Main spinning animation */
+  .saree-spin {
+    animation: sareeSpin 3s linear infinite;
+  }
+
+  .saree-spin-reverse {
+    animation: sareeSpinReverse 2s linear infinite;
+  }
+
+  @keyframes sareeSpin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes sareeSpinReverse {
+    from {
+      transform: rotate(360deg);
+    }
+    to {
+      transform: rotate(0deg);
+    }
+  }
+
+  /* Flowing drape animation */
+  .saree-drape-outer {
+    animation: sareeDrapeFloat 4s ease-in-out infinite;
+  }
+
+  @keyframes sareeDrapeFloat {
+    0%, 100% {
+      transform: rotate(-5deg) scale(1);
+    }
+    50% {
+      transform: rotate(5deg) scale(1.05);
+    }
+  }
+
+  /* Individual flow paths */
+  .saree-flow-1 {
+    animation: sareeFlow1 2s ease-in-out infinite;
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+  }
+
+  .saree-flow-2 {
+    animation: sareeFlow2 2s ease-in-out infinite;
+    animation-delay: 0.3s;
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+  }
+
+  .saree-flow-3 {
+    animation: sareeFlow3 1.5s ease-in-out infinite;
+    animation-delay: 0.6s;
+    stroke-dasharray: 50;
+    stroke-dashoffset: 50;
+  }
+
+  @keyframes sareeFlow1 {
+    0%, 100% {
+      stroke-dashoffset: 100;
+      opacity: 0.5;
+    }
+    50% {
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+  }
+
+  @keyframes sareeFlow2 {
+    0%, 100% {
+      stroke-dashoffset: 100;
+      opacity: 0.5;
+    }
+    50% {
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+  }
+
+  @keyframes sareeFlow3 {
+    0%, 100% {
+      stroke-dashoffset: 50;
+      opacity: 0.3;
+    }
+    50% {
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+  }
+
+  /* Border pattern animation */
+  .saree-border {
+    animation: sareeBorderRotate 8s linear infinite;
+    transform-origin: center;
+  }
+
+  @keyframes sareeBorderRotate {
+    from {
+      stroke-dashoffset: 0;
+    }
+    to {
+      stroke-dashoffset: 75;
+    }
+  }
+
+  /* Motifs pulse animation */
+  .saree-motifs {
+    animation: sareeMotifsGlow 2s ease-in-out infinite;
+  }
+
+  @keyframes sareeMotifsGlow {
+    0%, 100% {
+      opacity: 0.6;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+  }
+
+  /* Center glow animation */
+  .saree-center-glow {
+    animation: sareeCenterPulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes sareeCenterPulse {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+    }
+    50% {
+      transform: scale(1.2);
+      box-shadow: 0 0 20px rgba(251, 191, 36, 0.8), 0 0 30px rgba(251, 191, 36, 0.4);
+    }
+  }
+
+  /* Shimmer effect */
+  .saree-shimmer {
+    background: linear-gradient(
+      135deg,
+      transparent 0%,
+      transparent 40%,
+      rgba(255, 255, 255, 0.4) 50%,
+      transparent 60%,
+      transparent 100%
+    );
+    background-size: 200% 200%;
+    animation: sareeShimmer 2s ease-in-out infinite;
+  }
+
+  @keyframes sareeShimmer {
+    0% {
+      background-position: -100% -100%;
+    }
+    100% {
+      background-position: 100% 100%;
+    }
+  }
+
+  /* Text wave animation */
+  .saree-text-wave {
+    display: inline-block;
+    animation: sareeTextWave 1.5s ease-in-out infinite;
+  }
+
+  @keyframes sareeTextWave {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-4px);
+    }
+  }
+
+  /* Fabric strip animation for drape loader */
+  .saree-fabric-strip {
+    animation: sareeFabricWave 2s ease-in-out infinite;
+  }
+
+  @keyframes sareeFabricWave {
+    0%, 100% {
+      transform: scaleY(0.8) translateY(10%);
+      opacity: 0.7;
+    }
+    50% {
+      transform: scaleY(1) translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* Gold shimmer effect */
+  .saree-gold-shimmer {
+    background-size: 200% 100%;
+    animation: sareeGoldShimmer 1.5s linear infinite;
+  }
+
+  @keyframes sareeGoldShimmer {
+    0% {
+      background-position: -100% 0;
+    }
+    100% {
+      background-position: 100% 0;
+    }
   }
 }
 

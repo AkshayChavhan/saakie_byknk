@@ -3,6 +3,21 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
+// Available category images in public/images folder
+const categoryImages: Record<string, string> = {
+  'cotton': '/images/category-cotton.jpg',
+  'georgette': '/images/category-georgette.jpg',
+  'kanjivaram': '/images/category-kanjivaram.jpg',
+  'banarasi': '/images/category-banarasi.jpg',
+  'silk': '/images/category-silk.jpg',
+  'designer': '/images/category-designer.jpg',
+}
+
+// Get category image with fallback
+function getCategoryImage(slug: string): string {
+  return categoryImages[slug] || '/images/hero-1.jpg'
+}
+
 export async function GET() {
   try {
     // Get top selling products
@@ -210,7 +225,7 @@ export async function GET() {
         title: `${topCategory.name} Collection`,
         subtitle: `${topCategory._count.products} Products`,
         description: `Explore our complete range of ${topCategory.name.toLowerCase()}`,
-        image: `/images/category-${topCategory.slug}.jpg`,
+        image: getCategoryImage(topCategory.slug),
         link: `/categories/${topCategory.slug}`,
         cta: 'Browse Collection',
         badge: 'COLLECTION',
