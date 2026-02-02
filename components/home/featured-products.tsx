@@ -1,61 +1,51 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Heart, ShoppingCart, Star } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
+import { SareeLoader } from '@/components/ui/saree-loader'
+import { productApi } from '@/lib/api'
 
-const products = [
-  {
-    id: 1,
-    name: 'Pure Silk Kanjivaram Saree',
-    price: 12999,
-    comparePrice: 18999,
-    rating: 4.8,
-    reviews: 124,
-    image: '/images/product-1.jpg',
-    colors: ['#FFD700', '#DC143C', '#4B0082'],
-    isNew: true,
-  },
-  {
-    id: 2,
-    name: 'Banarasi Georgette Saree',
-    price: 8999,
-    comparePrice: 12999,
-    rating: 4.6,
-    reviews: 89,
-    image: '/images/product-2.jpg',
-    colors: ['#FF69B4', '#00CED1', '#FF6347'],
-    isBestseller: true,
-  },
-  {
-    id: 3,
-    name: 'Designer Cotton Silk Saree',
-    price: 5999,
-    comparePrice: 8999,
-    rating: 4.7,
-    reviews: 156,
-    image: '/images/product-3.jpg',
-    colors: ['#9370DB', '#20B2AA', '#FF1493'],
-  },
-  {
-    id: 4,
-    name: 'Embroidered Chiffon Saree',
-    price: 6999,
-    comparePrice: 9999,
-    rating: 4.5,
-    reviews: 67,
-    image: '/images/product-4.jpg',
-    colors: ['#000080', '#8B0000', '#006400'],
-  },
-]
+interface Product {
+  id: string
+  name: string
+  price: number
+  comparePrice: number
+  rating: number
+  reviews: number
+  image: string
+  colors: string[]
+  isNew?: boolean
+  isBestseller?: boolean
+}
 
 export function FeaturedProducts() {
-  const [hoveredProduct, setHoveredProduct] = useState<number | null>(null)
-  const [wishlist, setWishlist] = useState<number[]>([])
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [hoveredProduct, setHoveredProduct] = useState<string | null>(null)
+  const [wishlist, setWishlist] = useState<string[]>([])
 
-  const toggleWishlist = (productId: number) => {
+  useEffect(() => {
+    fetchFeaturedProducts()
+  }, [])
+
+  const fetchFeaturedProducts = async () => {
+    try {
+      setLoading(true)
+      const data = await productApi.getFeatured()
+      setProducts(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+      console.error('Error fetching featured products:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const toggleWishlist = (productId: string) => {
     setWishlist((prev) =>
       prev.includes(productId)
         ? prev.filter((id) => id !== productId)
@@ -87,8 +77,27 @@ export function FeaturedProducts() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          {products.map((product) => (
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <SareeLoader size="md" text="Loading featured sarees..." />
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 mb-4">Failed to load featured products</p>
+            <button 
+              onClick={fetchFeaturedProducts}
+              className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : products.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500">No featured products available</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {products.map((product) => (
             <div
               key={product.id}
               className="group relative"
@@ -97,6 +106,12 @@ export function FeaturedProducts() {
             >
               <Link href={`/products/${product.id}`}>
                 <div className="relative aspect-[3/4] mb-3 overflow-hidden rounded-lg bg-gray-100">
+                  <Image
+                    src={product.image}
+                    alt={product.name}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
                   {product.isNew && (
                     <span className="absolute top-2 left-2 z-10 bg-primary text-white text-xs px-2 py-1 rounded">
                       NEW
@@ -175,8 +190,9 @@ export function FeaturedProducts() {
                 />
               </button>
             </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )

@@ -7,14 +7,14 @@ import { Providers } from '@/components/providers'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Saree Shop - Premium Sarees Online',
-  description: 'Shop the finest collection of traditional and designer sarees online. Premium quality, authentic designs, and fast delivery across India.',
-  keywords: 'sarees, online saree shopping, designer sarees, traditional sarees, silk sarees, cotton sarees',
+  title: 'Saakie_byknk - Premium Fashion Online',
+  description: 'Shop the finest collection of premium fashion online. Premium quality, authentic designs, and fast delivery across India.',
+  keywords: 'fashion, online fashion shopping, designer fashion, premium clothing, style, trends',
   openGraph: {
-    title: 'Saree Shop - Premium Sarees Online',
-    description: 'Shop the finest collection of traditional and designer sarees online',
-    url: 'https://sareeshop.com',
-    siteName: 'Saree Shop',
+    title: 'Saakie_byknk - Premium Fashion Online',
+    description: 'Shop the finest collection of premium fashion online',
+    url: 'https://saakie-byknk.com',
+    siteName: 'Saakie_byknk',
     images: [
       {
         url: '/og-image.jpg',

@@ -1,52 +1,41 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { SareeLoader } from '@/components/ui/saree-loader'
+import { categoryApi } from '@/lib/api'
 
-const categories = [
-  {
-    id: 1,
-    name: 'Silk Sarees',
-    slug: 'silk-sarees',
-    image: '/images/category-silk.jpg',
-    count: 250,
-  },
-  {
-    id: 2,
-    name: 'Cotton Sarees',
-    slug: 'cotton-sarees',
-    image: '/images/category-cotton.jpg',
-    count: 180,
-  },
-  {
-    id: 3,
-    name: 'Designer Sarees',
-    slug: 'designer-sarees',
-    image: '/images/category-designer.jpg',
-    count: 120,
-  },
-  {
-    id: 4,
-    name: 'Banarasi Sarees',
-    slug: 'banarasi-sarees',
-    image: '/images/category-banarasi.jpg',
-    count: 95,
-  },
-  {
-    id: 5,
-    name: 'Kanjivaram Sarees',
-    slug: 'kanjivaram-sarees',
-    image: '/images/category-kanjivaram.jpg',
-    count: 110,
-  },
-  {
-    id: 6,
-    name: 'Georgette Sarees',
-    slug: 'georgette-sarees',
-    image: '/images/category-georgette.jpg',
-    count: 140,
-  },
-]
+interface Category {
+  id: string
+  name: string
+  slug: string
+  image: string
+  count: number
+}
 
 export function CategoryGrid() {
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchCategories()
+  }, [])
+
+  const fetchCategories = async () => {
+    try {
+      setLoading(true)
+      const data = await categoryApi.list()
+      setCategories(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+      console.error('Error fetching categories:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <section className="py-12 sm:py-16 bg-gray-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -59,14 +48,39 @@ export function CategoryGrid() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-          {categories.map((category) => (
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <SareeLoader size="md" text="Loading categories..." />
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 mb-4">Failed to load categories</p>
+            <button 
+              onClick={fetchCategories}
+              className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : categories.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500">No categories available</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+            {categories.map((category) => (
             <Link
               key={category.id}
               href={`/categories/${category.slug}`}
               className="group relative overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-shadow"
             >
               <div className="aspect-[3/4] relative bg-gray-200">
+                <Image
+                  src={category.image}
+                  alt={category.name}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent z-10" />
                 <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
                   <h3 className="text-white font-semibold text-lg sm:text-xl mb-1">
@@ -79,8 +93,9 @@ export function CategoryGrid() {
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors z-5" />
               </div>
             </Link>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )
