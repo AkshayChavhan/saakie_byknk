@@ -1,4 +1,4 @@
-// API Configuration for Backend
+// API Configuration for Backend - v2
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const MASTER_API_KEY = process.env.NEXT_PUBLIC_MASTER_API_KEY || '';
 
