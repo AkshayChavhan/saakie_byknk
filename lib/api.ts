@@ -1,5 +1,6 @@
 // API Configuration for Backend - v2
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// Remove trailing slash from API URL to prevent double slashes
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/$/, '');
 const MASTER_API_KEY = process.env.NEXT_PUBLIC_MASTER_API_KEY || '';
 
 interface ApiOptions extends RequestInit {
