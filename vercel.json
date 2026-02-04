@@ -1,5 +1,13 @@
 {
   "buildCommand": "npm run build",
   "installCommand": "npm install",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "functions": {
+    "app/**/*.ts": {
+      "runtime": "nodejs20.x"
+    },
+    "app/**/*.tsx": {
+      "runtime": "nodejs20.x"
+    }
+  }
 }
