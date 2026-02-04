@@ -47,10 +47,20 @@ export function PromotionalBanner() {
         const response = await fetchApi('/api/promotional-data')
         if (response.ok) {
           const result = await response.json()
-          setData(result)
+          // Handle API response - map to expected format or use defaults
+          // The API returns {banners: [], offers: []} but we need {bestSellers, saleProducts, featuredProducts}
+          if (result.bestSellers && result.saleProducts && result.featuredProducts) {
+            setData(result)
+          } else {
+            // Use default promotional data if API returns different structure
+            setData(getDefaultData())
+          }
+        } else {
+          setData(getDefaultData())
         }
       } catch (error) {
         console.error('Failed to fetch promotional data:', error)
+        setData(getDefaultData())
       } finally {
         setLoading(false)
       }
@@ -58,6 +68,22 @@ export function PromotionalBanner() {
 
     fetchPromotionalData()
   }, [])
+
+  const getDefaultData = (): PromotionalData => ({
+    bestSellers: {
+      count: 0,
+      products: []
+    },
+    saleProducts: {
+      count: 0,
+      maxDiscount: 0,
+      products: []
+    },
+    featuredProducts: {
+      count: 0,
+      products: []
+    }
+  })
 
   if (loading) {
     return (
@@ -75,6 +101,11 @@ export function PromotionalBanner() {
 
   if (!data) return null
 
+  // Safe access with fallbacks
+  const bestSellers = data.bestSellers || { count: 0, products: [] }
+  const saleProducts = data.saleProducts || { count: 0, maxDiscount: 0, products: [] }
+  const featuredProducts = data.featuredProducts || { count: 0, products: [] }
+
   return (
     <section className="py-8 bg-gray-50">
       <div className="container mx-auto px-4">
@@ -83,7 +114,7 @@ export function PromotionalBanner() {
           <PromotionalCard
             title="Best Sellers"
             icon={TrendingUp}
-            mainStat={data.bestSellers.count}
+            mainStat={bestSellers.count || 0}
             subtitle="Top selling products"
             href="/products?sort=bestselling"
             gradientFrom="from-green-500"
@@ -91,11 +122,11 @@ export function PromotionalBanner() {
             textColorLight="text-green-100"
             textColorExtraLight="text-green-200"
             details={
-              data.bestSellers.products.length > 0
+              bestSellers.products?.length > 0
                 ? {
                     label: "Most popular:",
-                    value: data.bestSellers.products[0].name,
-                    extra: `${data.bestSellers.products[0].totalSales} sold`,
+                    value: bestSellers.products[0].name,
+                    extra: `${bestSellers.products[0].totalSales || 0} sold`,
                   }
                 : undefined
             }
@@ -106,13 +137,13 @@ export function PromotionalBanner() {
             title="Sale Products"
             icon={Tag}
             mainStat={
-              data.saleProducts.maxDiscount > 0 
-                ? `${data.saleProducts.maxDiscount}%` 
-                : data.saleProducts.count
+              (saleProducts.maxDiscount || 0) > 0
+                ? `${saleProducts.maxDiscount}%`
+                : (saleProducts.count || 0)
             }
             subtitle={
-              data.saleProducts.maxDiscount > 0 
-                ? 'Maximum discount' 
+              (saleProducts.maxDiscount || 0) > 0
+                ? 'Maximum discount'
                 : 'Products on sale'
             }
             href="/products?sale=true"
@@ -121,11 +152,11 @@ export function PromotionalBanner() {
             textColorLight="text-red-100"
             textColorExtraLight="text-red-200"
             details={
-              data.saleProducts.products.length > 0
+              saleProducts.products?.length > 0
                 ? {
                     label: "Featured deal:",
-                    value: data.saleProducts.products[0].name,
-                    extra: `${data.saleProducts.products[0].discount}% off`,
+                    value: saleProducts.products[0].name,
+                    extra: `${saleProducts.products[0].discount || 0}% off`,
                   }
                 : undefined
             }
@@ -135,7 +166,7 @@ export function PromotionalBanner() {
           <PromotionalCard
             title="Featured Products"
             icon={Star}
-            mainStat={data.featuredProducts.count}
+            mainStat={featuredProducts.count || 0}
             subtitle="Curated collection"
             href="/products?featured=true"
             gradientFrom="from-purple-500"
@@ -143,11 +174,11 @@ export function PromotionalBanner() {
             textColorLight="text-purple-100"
             textColorExtraLight="text-purple-200"
             details={
-              data.featuredProducts.products.length > 0
+              featuredProducts.products?.length > 0
                 ? {
                     label: "Latest addition:",
-                    value: data.featuredProducts.products[0].name,
-                    extra: data.featuredProducts.products[0].category,
+                    value: featuredProducts.products[0].name,
+                    extra: featuredProducts.products[0].category || '',
                   }
                 : undefined
             }
