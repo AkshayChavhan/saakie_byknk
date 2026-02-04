@@ -4,9 +4,7 @@ import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin } from 'luci
 const footerLinks = {
   shop: [
     { name: 'New Arrivals', href: '/products?sort=newest' },
-    { name: 'Premium Collection', href: '/categories/premium' },
-    { name: 'Casual Wear', href: '/categories/casual' },
-    { name: 'Designer Collection', href: '/categories/designer' },
+    { name: 'All Products', href: '/products' },
     { name: 'Sale', href: '/products?sale=true' },
   ],
   help: [

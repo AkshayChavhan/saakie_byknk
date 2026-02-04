@@ -12,9 +12,7 @@ import { CartIcon } from '@/components/cart'
 const navigation = [
   { name: 'Home', href: '/' },
   { name: 'New Arrivals', href: '/products?sort=newest' },
-  { name: 'Silk Sarees', href: '/categories/silk-sarees' },
-  { name: 'Cotton Sarees', href: '/categories/cotton-sarees' },
-  { name: 'Designer', href: '/categories/designer' },
+  { name: 'All Products', href: '/products' },
   { name: 'Sale', href: '/products?sale=true' },
   { name: 'Posts', href: '/post' },
 ]
