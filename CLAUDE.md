@@ -1,5 +1,46 @@
 # Saakie_byknk - Claude Context File
 
+## Git & Code Management Rules (MANDATORY)
+
+### Commit Rules
+- **NEVER commit code without explicit user permission** - Always ask before running `git commit`
+- **NEVER push code without explicit user permission** - Always ask before running `git push`
+- **NEVER merge code without explicit user permission** - Always ask before running `git merge`
+- **After completing any code implementation or bug fix**, suggest a commit message with:
+  - A concise commit title (50 chars max)
+  - A descriptive body explaining what was changed and why
+  - Wait for user approval before committing
+
+### Pre-Commit Checklist
+Before suggesting a commit, always verify:
+1. Run `npm run build` to check for build errors
+2. Run `npm run lint` to check for linting issues
+3. Check Vercel deployment status if connected
+4. Check GitHub Actions/build status if applicable
+5. Report any errors to the user before proceeding
+
+### Commit Message Format
+```
+<type>: <short description>
+
+<detailed description of changes>
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+```
+
+Types: feat, fix, docs, style, refactor, test, chore
+
+### Example Workflow
+1. Complete code implementation
+2. Run build and lint checks
+3. Report results to user
+4. Suggest commit name and description
+5. **Wait for explicit permission** to commit
+6. **Wait for explicit permission** to push
+7. Verify deployment status after push
+
+---
+
 ## Project Overview
 A premium fashion e-commerce platform built with Next.js 14, TypeScript, Prisma, MongoDB, and Clerk authentication. Features mobile-first design, comprehensive product management, user authentication, shopping cart, wishlist, order management, and a comprehensive admin dashboard with full CRUD operations.
 
