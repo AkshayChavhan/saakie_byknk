@@ -20,6 +20,7 @@ import { formatPrice } from '@/lib/utils'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { SareeLoader } from '@/components/ui/saree-loader'
+import { fetchApi } from '@/lib/api'
 
 interface Product {
   id: string
@@ -127,7 +128,7 @@ function ProductsContent() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/categories')
+      const response = await fetchApi('/api/categories')
       if (response.ok) {
         const data = await response.json()
         setCategories(data)
@@ -146,23 +147,23 @@ function ProductsContent() {
         limit: '12',
         sort: sortBy
       })
-      
+
       if (searchQuery) params.append('search', searchQuery)
       if (selectedCategory) params.append('category', selectedCategory)
       if (minPrice) params.append('minPrice', minPrice)
       if (maxPrice) params.append('maxPrice', maxPrice)
 
       console.log('Fetching products with params:', params.toString())
-      const response = await fetch(`/api/products?${params}`)
-      
+      const response = await fetchApi(`/api/products?${params}`)
+
       console.log('Response status:', response.status, response.statusText)
-      
+
       if (!response.ok) {
         const errorText = await response.text()
         console.error('API Error Response:', errorText)
         throw new Error(`Failed to fetch products: ${response.status} ${response.statusText}`)
       }
-      
+
       const data: ApiResponse = await response.json()
       console.log('Products data:', data)
       setProducts(data.products)

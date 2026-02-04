@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Search, Filter, Edit, Trash2, Eye, UserPlus, MoreVertical } from 'lucide-react'
 import { SareeLoader } from '@/components/ui/saree-loader'
+import { fetchApi } from '@/lib/api'
 
 interface User {
   id: string
@@ -34,7 +35,7 @@ export default function UsersManagement() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/admin/users')
+      const response = await fetchApi('/api/admin/users')
       if (response.ok) {
         const data = await response.json()
         setUsers(data)
@@ -49,7 +50,7 @@ export default function UsersManagement() {
   const handleDeleteUser = async (userId: string) => {
     if (confirm('Are you sure you want to delete this user?')) {
       try {
-        const response = await fetch(`/api/admin/users/${userId}`, {
+        const response = await fetchApi(`/api/admin/users/${userId}`, {
           method: 'DELETE'
         })
         if (response.ok) {
@@ -63,7 +64,7 @@ export default function UsersManagement() {
 
   const handleUpdateUserRole = async (userId: string, newRole: string) => {
     try {
-      const response = await fetch(`/api/admin/users/${userId}`, {
+      const response = await fetchApi(`/api/admin/users/${userId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: newRole })

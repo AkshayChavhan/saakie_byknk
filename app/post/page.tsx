@@ -20,6 +20,7 @@ import {
   RefreshCw
 } from 'lucide-react'
 import { formatInstagramDate } from '@/lib/instagram'
+import { fetchApi } from '@/lib/api'
 
 // Instagram profile info
 const INSTAGRAM_HANDLE = 'saakie_byknk'
@@ -64,7 +65,7 @@ export default function InstagramPostsPage() {
       setLoading(true)
       setError(null)
 
-      const response = await fetch('/api/instagram?limit=24')
+      const response = await fetchApi('/api/instagram?limit=24')
       const data = await response.json()
 
       if (!response.ok) {

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ShoppingCart } from 'lucide-react'
 import { useUser } from '@clerk/nextjs'
+import { fetchApi } from '@/lib/api'
 
 export function CartIcon() {
   const [itemCount, setItemCount] = useState(0)
@@ -21,7 +22,7 @@ export function CartIcon() {
 
   const fetchCartCount = async () => {
     try {
-      const response = await fetch('/api/cart')
+      const response = await fetchApi('/api/cart')
       if (response.ok) {
         const cart = await response.json()
         setItemCount(cart.itemCount || 0)

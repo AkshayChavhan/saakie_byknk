@@ -8,6 +8,7 @@ import { Heart, ShoppingCart, Trash2, ArrowRight, Package } from 'lucide-react'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { formatPrice } from '@/lib/utils'
+import { fetchApi } from '@/lib/api'
 
 interface WishlistItem {
   id: string
@@ -46,7 +47,7 @@ export default function WishlistPage() {
 
   const fetchWishlist = async () => {
     try {
-      const response = await fetch('/api/wishlist')
+      const response = await fetchApi('/api/wishlist')
       if (response.ok) {
         const data = await response.json()
         setWishlistItems(data.items || [])
@@ -61,7 +62,7 @@ export default function WishlistPage() {
   const removeFromWishlist = async (itemId: string) => {
     setRemoving(itemId)
     try {
-      const response = await fetch(`/api/wishlist/${itemId}`, {
+      const response = await fetchApi(`/api/wishlist/${itemId}`, {
         method: 'DELETE',
       })
       if (response.ok) {
@@ -77,7 +78,7 @@ export default function WishlistPage() {
   const addToCart = async (productId: string) => {
     setAddingToCart(productId)
     try {
-      const response = await fetch('/api/cart', {
+      const response = await fetchApi('/api/cart', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

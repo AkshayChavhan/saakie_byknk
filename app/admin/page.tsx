@@ -2,16 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
-import { 
-  Users, 
-  ShoppingBag, 
-  Package, 
-  TrendingUp, 
-  DollarSign, 
+import {
+  Users,
+  ShoppingBag,
+  Package,
+  TrendingUp,
+  DollarSign,
   Eye,
   Calendar,
   ShoppingCart
 } from 'lucide-react'
+import { fetchApi } from '@/lib/api'
 
 interface Product {
   id: string
@@ -75,7 +76,7 @@ export default function AdminDashboard() {
 
   const checkAuthorization = async () => {
     try {
-      const response = await fetch('/api/auth/check-role')
+      const response = await fetchApi('/api/auth/check-role')
       if (response.ok) {
         const data = await response.json()
         if (data.role === 'ADMIN' || data.role === 'SUPER_ADMIN') {
@@ -95,7 +96,7 @@ export default function AdminDashboard() {
 
   const fetchDashboardStats = async () => {
     try {
-      const response = await fetch('/api/admin/dashboard')
+      const response = await fetchApi('/api/admin/dashboard')
       if (response.ok) {
         const data = await response.json()
         setStats(data)

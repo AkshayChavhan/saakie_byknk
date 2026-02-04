@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { SareeLoader } from '@/components/ui/saree-loader'
+import { fetchApi } from '@/lib/api'
 
 interface Category {
   id: string
@@ -25,7 +26,7 @@ export function CategoryGrid() {
   const fetchCategories = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/categories')
+      const response = await fetchApi('/api/categories')
       if (!response.ok) {
         throw new Error('Failed to fetch categories')
       }

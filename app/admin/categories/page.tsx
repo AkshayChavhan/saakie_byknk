@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Search, Plus, Edit, Trash2, Eye, Folder, FolderOpen, Upload, Image as ImageIcon } from 'lucide-react'
+import { fetchApi } from '@/lib/api'
 
 interface Category {
   id: string
@@ -46,7 +47,7 @@ export default function CategoriesManagement() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/admin/categories')
+      const response = await fetchApi('/api/admin/categories')
       if (response.ok) {
         const data = await response.json()
         setCategories(data)
@@ -67,7 +68,7 @@ export default function CategoriesManagement() {
         uploadFormData.append('image', selectedImage)
         uploadFormData.append('data', JSON.stringify(formData))
 
-        const response = await fetch('/api/admin/categories/upload', {
+        const response = await fetchApi('/api/admin/categories/upload', {
           method: 'POST',
           body: uploadFormData
         })
@@ -87,7 +88,7 @@ export default function CategoriesManagement() {
         }
       } else {
         // Use regular API for categories without images
-        const response = await fetch('/api/admin/categories', {
+        const response = await fetchApi('/api/admin/categories', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData)
@@ -123,7 +124,7 @@ export default function CategoriesManagement() {
 
   const handleUpdateCategory = async (categoryId: string, updates: Partial<Category>) => {
     try {
-      const response = await fetch(`/api/admin/categories/${categoryId}`, {
+      const response = await fetchApi(`/api/admin/categories/${categoryId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
@@ -147,7 +148,7 @@ export default function CategoriesManagement() {
   const handleDeleteCategory = async (categoryId: string) => {
     if (confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
       try {
-        const response = await fetch(`/api/admin/categories/${categoryId}`, {
+        const response = await fetchApi(`/api/admin/categories/${categoryId}`, {
           method: 'DELETE'
         })
         if (response.ok) {

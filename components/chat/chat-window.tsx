@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { ChatMessage } from './chat-message'
 import { ProductCardMini } from './product-card-mini'
 import type { ChatMessage as ChatMessageType } from '@/types/chat'
+import { fetchApi } from '@/lib/api'
 
 interface ChatWindowProps {
   onClose: () => void
@@ -64,7 +65,7 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
     setIsLoading(true)
 
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetchApi('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

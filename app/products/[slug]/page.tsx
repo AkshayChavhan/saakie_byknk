@@ -24,6 +24,7 @@ import {
   Check
 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
+import { fetchApi } from '@/lib/api'
 
 interface ProductImage {
   id: string
@@ -167,7 +168,7 @@ export default function ProductDetailPage() {
   const fetchProduct = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/products/${slug}`)
+      const response = await fetchApi(`/api/products/${slug}`)
       if (!response.ok) {
         throw new Error('Product not found')
       }
@@ -219,7 +220,7 @@ export default function ProductDetailPage() {
 
       console.log('Placing order:', orderPayload)
       
-      const response = await fetch('/api/orders', {
+      const response = await fetchApi('/api/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

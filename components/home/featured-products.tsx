@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { Heart, ShoppingCart, Star } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { SareeLoader } from '@/components/ui/saree-loader'
+import { fetchApi } from '@/lib/api'
 
 interface Product {
   id: string
@@ -34,7 +35,7 @@ export function FeaturedProducts() {
   const fetchFeaturedProducts = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/products/featured')
+      const response = await fetchApi('/api/products/featured')
       if (!response.ok) {
         throw new Error('Failed to fetch products')
       }

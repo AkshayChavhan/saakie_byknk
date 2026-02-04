@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight, Star, TrendingUp, Tag, Sparkles } from 'lucide-react'
+import { fetchApi } from '@/lib/api'
 
 interface HeroSlide {
   id: string
@@ -33,7 +34,7 @@ export function HeroSection() {
   useEffect(() => {
     const fetchSlides = async () => {
       try {
-        const response = await fetch('/api/hero-slides')
+        const response = await fetchApi('/api/hero-slides')
         if (response.ok) {
           const data = await response.json()
           setSlides(data.slides)

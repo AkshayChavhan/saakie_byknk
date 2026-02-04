@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Search, Filter, Eye, Package, Truck, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react'
 import { SareeLoader } from '@/components/ui/saree-loader'
+import { fetchApi } from '@/lib/api'
 
 interface Order {
   id: string
@@ -41,7 +42,7 @@ export default function OrdersManagement() {
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch('/api/admin/orders')
+      const response = await fetchApi('/api/admin/orders')
       if (response.ok) {
         const data = await response.json()
         setOrders(data)
@@ -55,7 +56,7 @@ export default function OrdersManagement() {
 
   const handleStatusUpdate = async (orderId: string, newStatus: string) => {
     try {
-      const response = await fetch(`/api/admin/orders/${orderId}`, {
+      const response = await fetchApi(`/api/admin/orders/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })

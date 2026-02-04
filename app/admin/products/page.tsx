@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Search, Filter, Edit, Trash2, Eye, Plus, Package, AlertTriangle, X, Upload } from 'lucide-react'
 import { SareeLoader } from '@/components/ui/saree-loader'
+import { fetchApi } from '@/lib/api'
 
 interface Product {
   id: string
@@ -65,7 +66,7 @@ export default function ProductsManagement() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('/api/admin/products')
+      const response = await fetchApi('/api/admin/products')
       if (response.ok) {
         const data = await response.json()
         setProducts(data)
@@ -79,7 +80,7 @@ export default function ProductsManagement() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/admin/categories')
+      const response = await fetchApi('/api/admin/categories')
       if (response.ok) {
         const data = await response.json()
         setCategories(data)
@@ -92,7 +93,7 @@ export default function ProductsManagement() {
   const handleDeleteProduct = async (productId: string) => {
     if (confirm('Are you sure you want to delete this product?')) {
       try {
-        const response = await fetch(`/api/admin/products/${productId}`, {
+        const response = await fetchApi(`/api/admin/products/${productId}`, {
           method: 'DELETE'
         })
         if (response.ok) {
@@ -106,7 +107,7 @@ export default function ProductsManagement() {
 
   const handleToggleProductStatus = async (productId: string, isActive: boolean) => {
     try {
-      const response = await fetch(`/api/admin/products/${productId}`, {
+      const response = await fetchApi(`/api/admin/products/${productId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive })
@@ -123,7 +124,7 @@ export default function ProductsManagement() {
 
   const handleToggleFeatured = async (productId: string, isFeatured: boolean) => {
     try {
-      const response = await fetch(`/api/admin/products/${productId}`, {
+      const response = await fetchApi(`/api/admin/products/${productId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isFeatured })
@@ -180,7 +181,7 @@ export default function ProductsManagement() {
       
       uploadFormData.append('data', JSON.stringify(productData))
 
-      const response = await fetch('/api/admin/products/upload', {
+      const response = await fetchApi('/api/admin/products/upload', {
         method: 'POST',
         body: uploadFormData
       })

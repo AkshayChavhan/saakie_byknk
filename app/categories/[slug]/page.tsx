@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronRight, Filter, X, Grid, List } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
+import { fetchApi } from '@/lib/api'
 
 interface Product {
   id: string
@@ -54,15 +55,15 @@ export default function CategoryPage() {
   const fetchCategoryAndProducts = useCallback(async () => {
     try {
       setLoading(true)
-      
-      // Fetch category details
-      const categoryRes = await fetch(`/api/categories/${slug}`)
+
+      // Fetch category details from backend API
+      const categoryRes = await fetchApi(`/api/categories/${slug}`)
       if (!categoryRes.ok) {
         throw new Error('Category not found')
       }
       const categoryData = await categoryRes.json()
       setCategory(categoryData)
-      
+
       // Build query params for products
       const queryParams = new URLSearchParams({
         category: slug,
@@ -71,19 +72,19 @@ export default function CategoryPage() {
         maxPrice: priceRange.max.toString(),
         inStock: inStockOnly.toString()
       })
-      
+
       if (selectedColors.length > 0) {
         queryParams.append('colors', selectedColors.join(','))
       }
-      
-      // Fetch products
-      const productsRes = await fetch(`/api/products?${queryParams}`)
+
+      // Fetch products from backend API
+      const productsRes = await fetchApi(`/api/products?${queryParams}`)
       if (!productsRes.ok) {
         throw new Error('Failed to fetch products')
       }
       const productsData = await productsRes.json()
       setProducts(productsData.products || [])
-      
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load category')
     } finally {

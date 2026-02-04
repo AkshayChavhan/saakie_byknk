@@ -6,6 +6,7 @@ import { ShoppingCart } from 'lucide-react'
 import { CartItem } from './cart-item'
 import { CartSummary } from './cart-summary'
 import { SareeLoader } from '@/components/ui/saree-loader'
+import { fetchApi } from '@/lib/api'
 
 interface CartItemType {
   id: string
@@ -51,7 +52,7 @@ export function Cart({ initialCart }: CartProps) {
   const fetchCart = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('/api/cart')
+      const response = await fetchApi('/api/cart')
       if (response.ok) {
         const cartData = await response.json()
         setCart(cartData)
@@ -68,7 +69,7 @@ export function Cart({ initialCart }: CartProps) {
   const updateItemQuantity = async (itemId: string, quantity: number) => {
     try {
       setIsUpdating(true)
-      const response = await fetch(`/api/cart/items/${itemId}`, {
+      const response = await fetchApi(`/api/cart/items/${itemId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -94,7 +95,7 @@ export function Cart({ initialCart }: CartProps) {
   const removeItem = async (itemId: string) => {
     try {
       setIsUpdating(true)
-      const response = await fetch(`/api/cart/items/${itemId}`, {
+      const response = await fetchApi(`/api/cart/items/${itemId}`, {
         method: 'DELETE',
       })
 
@@ -120,7 +121,7 @@ export function Cart({ initialCart }: CartProps) {
 
     try {
       setIsUpdating(true)
-      const response = await fetch('/api/cart', {
+      const response = await fetchApi('/api/cart', {
         method: 'DELETE',
       })
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { TrendingUp, Tag, Star } from 'lucide-react'
 import { PromotionalCard } from './promotional-card'
 import { PromotionalCardSkeleton } from './promotional-card-skeleton'
+import { fetchApi } from '@/lib/api'
 
 interface PromotionalData {
   bestSellers: {
@@ -43,7 +44,7 @@ export function PromotionalBanner() {
   useEffect(() => {
     const fetchPromotionalData = async () => {
       try {
-        const response = await fetch('/api/promotional-data')
+        const response = await fetchApi('/api/promotional-data')
         if (response.ok) {
           const result = await response.json()
           setData(result)

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ShoppingCart, Check } from 'lucide-react'
 import { useUser } from '@clerk/nextjs'
+import { fetchApi } from '@/lib/api'
 
 interface AddToCartButtonProps {
   productId: string
@@ -48,7 +49,7 @@ export function AddToCartButton({
 
     try {
       setIsLoading(true)
-      const response = await fetch('/api/cart', {
+      const response = await fetchApi('/api/cart', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
