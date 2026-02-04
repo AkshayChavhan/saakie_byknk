@@ -1,5 +1,6 @@
 // API Configuration for Backend
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const MASTER_API_KEY = process.env.NEXT_PUBLIC_MASTER_API_KEY || '';
 
 interface ApiOptions extends RequestInit {
   token?: string;
@@ -22,7 +23,20 @@ export function getApiUrl(endpoint: string): string {
  */
 export async function fetchApi(endpoint: string, options: RequestInit = {}): Promise<Response> {
   const url = getApiUrl(endpoint);
-  return fetch(url, options);
+
+  // Add master API key header if available
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string> || {}),
+  };
+
+  if (MASTER_API_KEY) {
+    headers['X-API-Key'] = MASTER_API_KEY;
+  }
+
+  return fetch(url, {
+    ...options,
+    headers,
+  });
 }
 
 /**
@@ -31,10 +45,14 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}): Pro
 async function apiFetch<T>(endpoint: string, options: ApiOptions = {}): Promise<T> {
   const { token, ...fetchOptions } = options;
 
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
   };
+
+  // Add master API key for backend authentication
+  if (MASTER_API_KEY) {
+    headers['X-API-Key'] = MASTER_API_KEY;
+  }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;

@@ -5,8 +5,32 @@ import { useRouter } from 'next/navigation'
 import { ShoppingCart } from 'lucide-react'
 import { CartItem } from './cart-item'
 import { CartSummary } from './cart-summary'
-import { Cart as CartType } from '@/lib/cart'
 import { SareeLoader } from '@/components/ui/saree-loader'
+
+interface CartItemType {
+  id: string
+  quantity: number
+  price: number
+  product: {
+    id: string
+    name: string
+    slug: string
+    price: number
+    stock: number
+    images: Array<{
+      url: string
+      alt?: string
+      isPrimary: boolean
+    }>
+  }
+}
+
+interface CartType {
+  id: string
+  items: CartItemType[]
+  subtotal: number
+  itemCount: number
+}
 
 interface CartProps {
   initialCart?: CartType | null

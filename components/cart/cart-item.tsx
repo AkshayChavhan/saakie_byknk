@@ -4,7 +4,24 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Minus, Plus, Trash2 } from 'lucide-react'
-import { CartItem as CartItemType } from '@/lib/cart'
+
+interface CartItemType {
+  id: string
+  quantity: number
+  price: number
+  product: {
+    id: string
+    name: string
+    slug: string
+    price: number
+    stock: number
+    images: Array<{
+      url: string
+      alt?: string
+      isPrimary: boolean
+    }>
+  }
+}
 
 interface CartItemProps {
   item: CartItemType
