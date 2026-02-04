@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ShoppingCart, Check } from 'lucide-react'
-import { useUser } from '@clerk/nextjs'
-import { fetchApi } from '@/lib/api'
+import { useAuth } from '@clerk/nextjs'
+import { cartApi } from '@/lib/api'
 
 interface AddToCartButtonProps {
   productId: string
@@ -15,17 +15,17 @@ interface AddToCartButtonProps {
   children?: React.ReactNode
 }
 
-export function AddToCartButton({ 
-  productId, 
-  className = '', 
+export function AddToCartButton({
+  productId,
+  className = '',
   size = 'md',
   variant = 'primary',
   showIcon = true,
-  children 
+  children
 }: AddToCartButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [isAdded, setIsAdded] = useState(false)
-  const { user, isLoaded } = useUser()
+  const { isLoaded, isSignedIn, getToken } = useAuth()
   const router = useRouter()
 
   const sizeClasses = {
@@ -42,35 +42,30 @@ export function AddToCartButton({
   const handleAddToCart = async () => {
     if (!isLoaded) return
 
-    if (!user) {
+    if (!isSignedIn) {
       router.push('/sign-in')
       return
     }
 
     try {
       setIsLoading(true)
-      const response = await fetchApi('/api/cart', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          productId,
-          quantity: 1
-        }),
+      const token = await getToken()
+      if (!token) {
+        router.push('/sign-in')
+        return
+      }
+
+      await cartApi.addItem(token, {
+        productId,
+        quantity: 1
       })
 
-      if (response.ok) {
-        setIsAdded(true)
-        // Reset the "added" state after 2 seconds
-        setTimeout(() => setIsAdded(false), 2000)
-        
-        // Trigger a custom event to update cart count in header
-        window.dispatchEvent(new CustomEvent('cartUpdated'))
-      } else {
-        const error = await response.json()
-        alert(error.error || 'Failed to add item to cart')
-      }
+      setIsAdded(true)
+      // Reset the "added" state after 2 seconds
+      setTimeout(() => setIsAdded(false), 2000)
+
+      // Trigger a custom event to update cart count in header
+      window.dispatchEvent(new CustomEvent('cartUpdated'))
     } catch (error) {
       console.error('Failed to add to cart:', error)
       alert('Failed to add item to cart')

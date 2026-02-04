@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ShoppingCart } from 'lucide-react'
+import { useAuth } from '@clerk/nextjs'
 import { CartItem } from './cart-item'
 import { CartSummary } from './cart-summary'
 import { SareeLoader } from '@/components/ui/saree-loader'
-import { fetchApi } from '@/lib/api'
+import { cartApi } from '@/lib/api'
 
 interface CartItemType {
   id: string
@@ -42,23 +43,28 @@ export function Cart({ initialCart }: CartProps) {
   const [isLoading, setIsLoading] = useState(!initialCart)
   const [isUpdating, setIsUpdating] = useState(false)
   const router = useRouter()
+  const { isLoaded, isSignedIn, getToken } = useAuth()
 
   useEffect(() => {
-    if (!initialCart) {
-      fetchCart()
+    if (!initialCart && isLoaded) {
+      if (isSignedIn) {
+        fetchCart()
+      } else {
+        router.push('/sign-in')
+      }
     }
-  }, [initialCart])
+  }, [initialCart, isLoaded, isSignedIn])
 
   const fetchCart = async () => {
     try {
       setIsLoading(true)
-      const response = await fetchApi('/api/cart')
-      if (response.ok) {
-        const cartData = await response.json()
-        setCart(cartData)
-      } else if (response.status === 401) {
+      const token = await getToken()
+      if (!token) {
         router.push('/sign-in')
+        return
       }
+      const cartData = await cartApi.get(token)
+      setCart(cartData)
     } catch (error) {
       console.error('Failed to fetch cart:', error)
     } finally {
@@ -69,21 +75,13 @@ export function Cart({ initialCart }: CartProps) {
   const updateItemQuantity = async (itemId: string, quantity: number) => {
     try {
       setIsUpdating(true)
-      const response = await fetchApi(`/api/cart/items/${itemId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ quantity }),
-      })
-
-      if (response.ok) {
-        const updatedCart = await response.json()
-        setCart(updatedCart)
-      } else {
-        const error = await response.json()
-        alert(error.error || 'Failed to update item quantity')
+      const token = await getToken()
+      if (!token) {
+        router.push('/sign-in')
+        return
       }
+      const updatedCart = await cartApi.updateItem(token, itemId, quantity)
+      setCart(updatedCart)
     } catch (error) {
       console.error('Failed to update quantity:', error)
       alert('Failed to update item quantity')
@@ -95,17 +93,13 @@ export function Cart({ initialCart }: CartProps) {
   const removeItem = async (itemId: string) => {
     try {
       setIsUpdating(true)
-      const response = await fetchApi(`/api/cart/items/${itemId}`, {
-        method: 'DELETE',
-      })
-
-      if (response.ok) {
-        const updatedCart = await response.json()
-        setCart(updatedCart)
-      } else {
-        const error = await response.json()
-        alert(error.error || 'Failed to remove item')
+      const token = await getToken()
+      if (!token) {
+        router.push('/sign-in')
+        return
       }
+      const updatedCart = await cartApi.removeItem(token, itemId)
+      setCart(updatedCart)
     } catch (error) {
       console.error('Failed to remove item:', error)
       alert('Failed to remove item')
@@ -121,16 +115,13 @@ export function Cart({ initialCart }: CartProps) {
 
     try {
       setIsUpdating(true)
-      const response = await fetchApi('/api/cart', {
-        method: 'DELETE',
-      })
-
-      if (response.ok) {
-        setCart({ ...cart!, items: [], subtotal: 0, itemCount: 0 })
-      } else {
-        const error = await response.json()
-        alert(error.error || 'Failed to clear cart')
+      const token = await getToken()
+      if (!token) {
+        router.push('/sign-in')
+        return
       }
+      await cartApi.clear(token)
+      setCart({ ...cart!, items: [], subtotal: 0, itemCount: 0 })
     } catch (error) {
       console.error('Failed to clear cart:', error)
       alert('Failed to clear cart')
@@ -139,7 +130,7 @@ export function Cart({ initialCart }: CartProps) {
     }
   }
 
-  if (isLoading) {
+  if (isLoading || !isLoaded) {
     return (
       <div className="container mx-auto px-4 py-16">
         <div className="flex items-center justify-center">
@@ -180,7 +171,7 @@ export function Cart({ initialCart }: CartProps) {
           <h1 className="text-2xl font-bold text-gray-900">
             Shopping Cart ({cart.itemCount} {cart.itemCount === 1 ? 'item' : 'items'})
           </h1>
-          
+
           {cart.items.length > 0 && (
             <button
               onClick={clearCart}

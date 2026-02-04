@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useUser } from '@clerk/nextjs'
+import { useAuth } from '@clerk/nextjs'
 import { Heart, ShoppingCart, Trash2, ArrowRight, Package } from 'lucide-react'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { formatPrice } from '@/lib/utils'
-import { fetchApi } from '@/lib/api'
+import { wishlistApi, cartApi } from '@/lib/api'
 
 interface WishlistItem {
   id: string
@@ -31,7 +31,7 @@ interface WishlistItem {
 }
 
 export default function WishlistPage() {
-  const { isSignedIn, isLoaded } = useUser()
+  const { isSignedIn, isLoaded, getToken } = useAuth()
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([])
   const [loading, setLoading] = useState(true)
   const [removing, setRemoving] = useState<string | null>(null)
@@ -47,11 +47,13 @@ export default function WishlistPage() {
 
   const fetchWishlist = async () => {
     try {
-      const response = await fetchApi('/api/wishlist')
-      if (response.ok) {
-        const data = await response.json()
-        setWishlistItems(data.items || [])
+      const token = await getToken()
+      if (!token) {
+        setLoading(false)
+        return
       }
+      const data = await wishlistApi.get(token)
+      setWishlistItems(data.items || [])
     } catch (error) {
       console.error('Error fetching wishlist:', error)
     } finally {
@@ -59,15 +61,13 @@ export default function WishlistPage() {
     }
   }
 
-  const removeFromWishlist = async (itemId: string) => {
-    setRemoving(itemId)
+  const removeFromWishlist = async (productId: string) => {
+    setRemoving(productId)
     try {
-      const response = await fetchApi(`/api/wishlist/${itemId}`, {
-        method: 'DELETE',
-      })
-      if (response.ok) {
-        setWishlistItems(prev => prev.filter(item => item.id !== itemId))
-      }
+      const token = await getToken()
+      if (!token) return
+      await wishlistApi.removeItem(token, productId)
+      setWishlistItems(prev => prev.filter(item => item.product.id !== productId))
     } catch (error) {
       console.error('Error removing from wishlist:', error)
     } finally {
@@ -78,20 +78,10 @@ export default function WishlistPage() {
   const addToCart = async (productId: string) => {
     setAddingToCart(productId)
     try {
-      const response = await fetchApi('/api/cart', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          productId,
-          quantity: 1,
-        }),
-      })
-      if (response.ok) {
-        // Optionally show a success message or update cart count
-        alert('Added to cart!')
-      }
+      const token = await getToken()
+      if (!token) return
+      await cartApi.addItem(token, { productId, quantity: 1 })
+      alert('Added to cart!')
     } catch (error) {
       console.error('Error adding to cart:', error)
     } finally {
@@ -259,12 +249,12 @@ export default function WishlistPage() {
 
                   {/* Remove Button */}
                   <button
-                    onClick={() => removeFromWishlist(item.id)}
-                    disabled={removing === item.id}
+                    onClick={() => removeFromWishlist(product.id)}
+                    disabled={removing === product.id}
                     className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-md hover:bg-rose-50 transition-colors disabled:opacity-50"
                     aria-label="Remove from wishlist"
                   >
-                    {removing === item.id ? (
+                    {removing === product.id ? (
                       <div className="w-5 h-5 border-2 border-rose-600 border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <Trash2 className="w-5 h-5 text-rose-600" />

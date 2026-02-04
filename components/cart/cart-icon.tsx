@@ -3,30 +3,33 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ShoppingCart } from 'lucide-react'
-import { useUser } from '@clerk/nextjs'
-import { fetchApi } from '@/lib/api'
+import { useAuth } from '@clerk/nextjs'
+import { cartApi } from '@/lib/api'
 
 export function CartIcon() {
   const [itemCount, setItemCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
-  const { user, isLoaded } = useUser()
+  const { isLoaded, isSignedIn, getToken } = useAuth()
 
   useEffect(() => {
-    if (isLoaded && user) {
+    if (isLoaded && isSignedIn) {
       fetchCartCount()
-    } else if (isLoaded && !user) {
+    } else if (isLoaded && !isSignedIn) {
       setItemCount(0)
       setIsLoading(false)
     }
-  }, [user, isLoaded])
+  }, [isSignedIn, isLoaded])
 
   const fetchCartCount = async () => {
     try {
-      const response = await fetchApi('/api/cart')
-      if (response.ok) {
-        const cart = await response.json()
-        setItemCount(cart.itemCount || 0)
+      const token = await getToken()
+      if (!token) {
+        setItemCount(0)
+        setIsLoading(false)
+        return
       }
+      const cart = await cartApi.get(token)
+      setItemCount(cart.itemCount || 0)
     } catch (error) {
       console.error('Failed to fetch cart count:', error)
     } finally {
@@ -34,7 +37,7 @@ export function CartIcon() {
     }
   }
 
-  if (!isLoaded || !user) {
+  if (!isLoaded || !isSignedIn) {
     return (
       <Link href="/sign-in" className="p-2 rounded-md text-gray-700 hover:bg-gray-100">
         <ShoppingCart size={20} />
