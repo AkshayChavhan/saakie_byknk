@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useAuth } from '@clerk/nextjs'
 import { Search, Plus, Edit, Trash2, Eye, Folder, FolderOpen, Upload, Image as ImageIcon } from 'lucide-react'
 import { fetchApi } from '@/lib/api'
 
@@ -26,6 +27,7 @@ interface Category {
 }
 
 export default function CategoriesManagement() {
+  const { getToken } = useAuth()
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -47,7 +49,12 @@ export default function CategoriesManagement() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetchApi('/api/admin/categories')
+      const token = await getToken()
+      const response = await fetchApi('/api/admin/categories', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       if (response.ok) {
         const data = await response.json()
         setCategories(data)
@@ -62,6 +69,7 @@ export default function CategoriesManagement() {
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      const token = await getToken()
       if (selectedImage) {
         // Use upload API for categories with images
         const uploadFormData = new FormData()
@@ -70,6 +78,9 @@ export default function CategoriesManagement() {
 
         const response = await fetchApi('/api/admin/categories/upload', {
           method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
           body: uploadFormData
         })
 
@@ -90,7 +101,10 @@ export default function CategoriesManagement() {
         // Use regular API for categories without images
         const response = await fetchApi('/api/admin/categories', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify(formData)
         })
         if (response.ok) {
@@ -124,9 +138,13 @@ export default function CategoriesManagement() {
 
   const handleUpdateCategory = async (categoryId: string, updates: Partial<Category>) => {
     try {
+      const token = await getToken()
       const response = await fetchApi(`/api/admin/categories/${categoryId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(updates)
       })
       if (response.ok) {
@@ -136,7 +154,7 @@ export default function CategoriesManagement() {
           ...updatedCategory,
           children: updatedCategory.children || []
         }
-        setCategories(categories.map(cat => 
+        setCategories(categories.map(cat =>
           cat.id === categoryId ? categoryWithChildren : cat
         ))
       }
@@ -148,8 +166,12 @@ export default function CategoriesManagement() {
   const handleDeleteCategory = async (categoryId: string) => {
     if (confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
       try {
+        const token = await getToken()
         const response = await fetchApi(`/api/admin/categories/${categoryId}`, {
-          method: 'DELETE'
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         })
         if (response.ok) {
           setCategories(categories.filter(cat => cat.id !== categoryId))

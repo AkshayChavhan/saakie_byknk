@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useAuth } from '@clerk/nextjs'
 import { Search, Filter, Edit, Trash2, Eye, Plus, Package, AlertTriangle, X, Upload } from 'lucide-react'
 import { SareeLoader } from '@/components/ui/saree-loader'
 import { fetchApi } from '@/lib/api'
@@ -26,6 +27,7 @@ interface Product {
 }
 
 export default function ProductsManagement() {
+  const { getToken } = useAuth()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -66,7 +68,12 @@ export default function ProductsManagement() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetchApi('/api/admin/products')
+      const token = await getToken()
+      const response = await fetchApi('/api/admin/products', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       if (response.ok) {
         const data = await response.json()
         setProducts(data)
@@ -80,7 +87,12 @@ export default function ProductsManagement() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetchApi('/api/admin/categories')
+      const token = await getToken()
+      const response = await fetchApi('/api/admin/categories', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       if (response.ok) {
         const data = await response.json()
         setCategories(data)
@@ -93,8 +105,12 @@ export default function ProductsManagement() {
   const handleDeleteProduct = async (productId: string) => {
     if (confirm('Are you sure you want to delete this product?')) {
       try {
+        const token = await getToken()
         const response = await fetchApi(`/api/admin/products/${productId}`, {
-          method: 'DELETE'
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         })
         if (response.ok) {
           setProducts(products.filter(product => product.id !== productId))
@@ -107,13 +123,17 @@ export default function ProductsManagement() {
 
   const handleToggleProductStatus = async (productId: string, isActive: boolean) => {
     try {
+      const token = await getToken()
       const response = await fetchApi(`/api/admin/products/${productId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ isActive })
       })
       if (response.ok) {
-        setProducts(products.map(product => 
+        setProducts(products.map(product =>
           product.id === productId ? { ...product, isActive } : product
         ))
       }
@@ -124,13 +144,17 @@ export default function ProductsManagement() {
 
   const handleToggleFeatured = async (productId: string, isFeatured: boolean) => {
     try {
+      const token = await getToken()
       const response = await fetchApi(`/api/admin/products/${productId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ isFeatured })
       })
       if (response.ok) {
-        setProducts(products.map(product => 
+        setProducts(products.map(product =>
           product.id === productId ? { ...product, isFeatured } : product
         ))
       }
@@ -181,8 +205,12 @@ export default function ProductsManagement() {
       
       uploadFormData.append('data', JSON.stringify(productData))
 
+      const token = await getToken()
       const response = await fetchApi('/api/admin/products/upload', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
         body: uploadFormData
       })
 

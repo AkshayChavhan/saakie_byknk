@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useAuth } from '@clerk/nextjs'
 import { Search, Filter, Eye, Package, Truck, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react'
 import { SareeLoader } from '@/components/ui/saree-loader'
 import { fetchApi } from '@/lib/api'
@@ -28,6 +29,7 @@ interface Order {
 }
 
 export default function OrdersManagement() {
+  const { getToken } = useAuth()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -42,7 +44,12 @@ export default function OrdersManagement() {
 
   const fetchOrders = async () => {
     try {
-      const response = await fetchApi('/api/admin/orders')
+      const token = await getToken()
+      const response = await fetchApi('/api/admin/orders', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       if (response.ok) {
         const data = await response.json()
         setOrders(data)
@@ -56,13 +63,17 @@ export default function OrdersManagement() {
 
   const handleStatusUpdate = async (orderId: string, newStatus: string) => {
     try {
+      const token = await getToken()
       const response = await fetchApi(`/api/admin/orders/${orderId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ status: newStatus })
       })
       if (response.ok) {
-        setOrders(orders.map(order => 
+        setOrders(orders.map(order =>
           order.id === orderId ? { ...order, status: newStatus as Order['status'] } : order
         ))
       }

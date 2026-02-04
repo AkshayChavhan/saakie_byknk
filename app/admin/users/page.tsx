@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useAuth } from '@clerk/nextjs'
 import { Search, Filter, Edit, Trash2, Eye, UserPlus, MoreVertical } from 'lucide-react'
 import { SareeLoader } from '@/components/ui/saree-loader'
 import { fetchApi } from '@/lib/api'
@@ -22,6 +23,7 @@ interface User {
 }
 
 export default function UsersManagement() {
+  const { getToken } = useAuth()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -35,7 +37,12 @@ export default function UsersManagement() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetchApi('/api/admin/users')
+      const token = await getToken()
+      const response = await fetchApi('/api/admin/users', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       if (response.ok) {
         const data = await response.json()
         setUsers(data)
@@ -50,8 +57,12 @@ export default function UsersManagement() {
   const handleDeleteUser = async (userId: string) => {
     if (confirm('Are you sure you want to delete this user?')) {
       try {
+        const token = await getToken()
         const response = await fetchApi(`/api/admin/users/${userId}`, {
-          method: 'DELETE'
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         })
         if (response.ok) {
           setUsers(users.filter(user => user.id !== userId))
@@ -64,13 +75,17 @@ export default function UsersManagement() {
 
   const handleUpdateUserRole = async (userId: string, newRole: string) => {
     try {
+      const token = await getToken()
       const response = await fetchApi(`/api/admin/users/${userId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ role: newRole })
       })
       if (response.ok) {
-        setUsers(users.map(user => 
+        setUsers(users.map(user =>
           user.id === userId ? { ...user, role: newRole as User['role'] } : user
         ))
       }

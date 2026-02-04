@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useUser } from '@clerk/nextjs'
+import { useUser, useAuth } from '@clerk/nextjs'
 import {
   Users,
   ShoppingBag,
@@ -50,6 +50,7 @@ interface DashboardStats {
 
 export default function AdminDashboard() {
   const { user } = useUser()
+  const { getToken } = useAuth()
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     totalOrders: 0,
@@ -76,7 +77,12 @@ export default function AdminDashboard() {
 
   const checkAuthorization = async () => {
     try {
-      const response = await fetchApi('/api/auth/check-role')
+      const token = await getToken()
+      const response = await fetchApi('/api/auth/check-role', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       if (response.ok) {
         const data = await response.json()
         if (data.role === 'ADMIN' || data.role === 'SUPER_ADMIN') {
@@ -96,7 +102,12 @@ export default function AdminDashboard() {
 
   const fetchDashboardStats = async () => {
     try {
-      const response = await fetchApi('/api/admin/dashboard')
+      const token = await getToken()
+      const response = await fetchApi('/api/admin/dashboard', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       if (response.ok) {
         const data = await response.json()
         setStats(data)
