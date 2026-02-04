@@ -75,7 +75,7 @@ export function HeroSection() {
       title: 'Premium Sarees',
       subtitle: 'Handcrafted Excellence',
       description: 'Discover our beautiful collection',
-      image: '/images/hero-1.jpg',
+      image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1920&h=1080&fit=crop',
       link: '/products',
       cta: 'Shop Now',
       badge: null,

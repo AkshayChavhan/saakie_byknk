@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@clerk/nextjs'
-import { Search, Filter, Edit, Trash2, Eye, UserPlus, MoreVertical } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Search, Filter, Edit, Trash2, Eye, UserPlus, MoreVertical, ArrowLeft } from 'lucide-react'
 import { SareeLoader } from '@/components/ui/saree-loader'
 import { fetchApi } from '@/lib/api'
 
@@ -24,6 +25,7 @@ interface User {
 
 export default function UsersManagement() {
   const { getToken } = useAuth()
+  const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -45,7 +47,9 @@ export default function UsersManagement() {
       })
       if (response.ok) {
         const data = await response.json()
-        setUsers(data)
+        // Handle both array response and object with users property
+        const usersData = Array.isArray(data) ? data : (data.users ?? data.data ?? [])
+        setUsers(usersData)
       }
     } catch (error) {
       console.error('Failed to fetch users:', error)
@@ -94,9 +98,9 @@ export default function UsersManagement() {
     }
   }
 
-  const filteredUsers = users.filter(user => {
+  const filteredUsers = (users ?? []).filter(user => {
     const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase())
+                         user.email?.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesRole = roleFilter === 'all' || user.role === roleFilter
     return matchesSearch && matchesRole
   })
@@ -128,9 +132,16 @@ export default function UsersManagement() {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">User Management</h1>
-          <p className="text-gray-600">Manage all users and their permissions</p>
+        <div className="mb-6 sm:mb-8">
+          <button
+            onClick={() => router.push('/admin')}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors group"
+          >
+            <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+            <span className="text-sm font-medium">Back to Dashboard</span>
+          </button>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">User Management</h1>
+          <p className="text-gray-600 text-sm sm:text-base">Manage all users and their permissions</p>
         </div>
 
         {/* Filters and Search */}
