@@ -37,26 +37,29 @@ export function HeroSection() {
         const response = await fetchApi('/api/hero-slides')
         if (response.ok) {
           const data = await response.json()
-          setSlides(data.slides)
+          // Handle both array response and {slides: [...]} response
+          const slidesData = Array.isArray(data) ? data : (data.slides || [])
+          // Map API response to expected format
+          const mappedSlides = slidesData.map((slide: any) => ({
+            id: slide.id,
+            type: slide.type || 'default',
+            title: slide.title,
+            subtitle: slide.subtitle,
+            description: slide.description,
+            image: slide.image,
+            link: slide.ctaLink || slide.link || '/products',
+            cta: slide.ctaText || slide.cta || 'Shop Now',
+            badge: slide.badge || null,
+            discount: slide.discount || null,
+            product: slide.product || null
+          }))
+          setSlides(mappedSlides.length > 0 ? mappedSlides : getDefaultSlides())
+        } else {
+          setSlides(getDefaultSlides())
         }
       } catch (error) {
         console.error('Failed to fetch hero slides:', error)
-        // Fallback to default slides
-        setSlides([
-          {
-            id: 'default',
-            type: 'default',
-            title: 'Premium Sarees',
-            subtitle: 'Handcrafted Excellence',
-            description: 'Discover our beautiful collection',
-            image: '/images/hero-1.jpg',
-            link: '/products',
-            cta: 'Shop Now',
-            badge: null,
-            discount: null,
-            product: null
-          }
-        ])
+        setSlides(getDefaultSlides())
       } finally {
         setLoading(false)
       }
@@ -64,6 +67,22 @@ export function HeroSection() {
 
     fetchSlides()
   }, [])
+
+  const getDefaultSlides = (): HeroSlide[] => [
+    {
+      id: 'default',
+      type: 'default',
+      title: 'Premium Sarees',
+      subtitle: 'Handcrafted Excellence',
+      description: 'Discover our beautiful collection',
+      image: '/images/hero-1.jpg',
+      link: '/products',
+      cta: 'Shop Now',
+      badge: null,
+      discount: null,
+      product: null
+    }
+  ]
 
   // Auto-slide functionality
   useEffect(() => {
