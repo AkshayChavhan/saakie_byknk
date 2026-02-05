@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { ShoppingCart } from 'lucide-react'
 import { useAuth } from '@clerk/nextjs'
@@ -11,16 +11,7 @@ export function CartIcon() {
   const [isLoading, setIsLoading] = useState(true)
   const { isLoaded, isSignedIn, getToken } = useAuth()
 
-  useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      fetchCartCount()
-    } else if (isLoaded && !isSignedIn) {
-      setItemCount(0)
-      setIsLoading(false)
-    }
-  }, [isSignedIn, isLoaded])
-
-  const fetchCartCount = async () => {
+  const fetchCartCount = useCallback(async () => {
     try {
       const token = await getToken()
       if (!token) {
@@ -35,7 +26,16 @@ export function CartIcon() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [getToken])
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      fetchCartCount()
+    } else if (isLoaded && !isSignedIn) {
+      setItemCount(0)
+      setIsLoading(false)
+    }
+  }, [isSignedIn, isLoaded, fetchCartCount])
 
   if (!isLoaded || !isSignedIn) {
     return (

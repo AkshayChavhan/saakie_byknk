@@ -189,7 +189,7 @@ Component.displayName = 'Component';
 
 // ✅ GOOD: Group hover effects
 <div className="group">
-  <img className="group-hover:scale-110 transition-transform" />
+  <Image className="group-hover:scale-110 transition-transform" />
   <h3 className="group-hover:text-primary-600 transition-colors" />
 </div>
 ```

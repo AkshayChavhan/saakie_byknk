@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useUser, useAuth } from '@clerk/nextjs'
+import Image from 'next/image'
+import Link from 'next/link'
 import {
   Users,
   ShoppingBag,
@@ -66,41 +68,9 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [authorized, setAuthorized] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [debugInfo, setDebugInfo] = useState<string>('')
 
-  useEffect(() => {
-    checkAuthorization()
-  }, [])
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  const checkAuthorization = async () => {
-    try {
-      const token = await getToken()
-      const response = await fetchApi('/api/auth/check-role', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        if (data.role === 'ADMIN' || data.role === 'SUPER_ADMIN') {
-          setAuthorized(true)
-          fetchDashboardStats()
-        } else {
-          window.location.href = '/'
-        }
-      } else {
-        window.location.href = '/'
-      }
-    } catch (error) {
-      console.error('Authorization check failed:', error)
-      window.location.href = '/'
-    }
-  }
-
-  const fetchDashboardStats = async () => {
+  const fetchDashboardStats = useCallback(async () => {
     try {
       const token = await getToken()
       const response = await fetchApi('/api/admin/dashboard', {
@@ -117,7 +87,66 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [getToken])
+
+  const checkAuthorization = useCallback(async () => {
+    try {
+      const token = await getToken()
+      console.log('[Admin] Token exists:', !!token)
+      setDebugInfo(prev => prev + `\nToken exists: ${!!token}`)
+
+      if (!token) {
+        console.log('[Admin] No token')
+        setDebugInfo(prev => prev + '\nNo token - not signed in')
+        setLoading(false)
+        return
+      }
+
+      setDebugInfo(prev => prev + '\nCalling /api/auth/check-role...')
+
+      const response = await fetchApi('/api/auth/check-role', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      console.log('[Admin] Response status:', response.status)
+      setDebugInfo(prev => prev + `\nResponse status: ${response.status}`)
+
+      if (response.ok) {
+        const data = await response.json()
+        console.log('[Admin] Role data:', data)
+        setDebugInfo(prev => prev + `\nRole data: ${JSON.stringify(data, null, 2)}`)
+
+        if (data.role === 'ADMIN' || data.role === 'SUPER_ADMIN') {
+          setAuthorized(true)
+          setDebugInfo(prev => prev + '\nAuthorized! Loading dashboard...')
+          fetchDashboardStats()
+        } else {
+          console.log('[Admin] Not admin role:', data.role)
+          setDebugInfo(prev => prev + `\nNot admin role: ${data.role}`)
+          setLoading(false)
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}))
+        console.log('[Admin] API error:', response.status, errorData)
+        setDebugInfo(prev => prev + `\nAPI error: ${response.status} - ${JSON.stringify(errorData)}`)
+        setLoading(false)
+      }
+    } catch (error) {
+      console.error('[Admin] Authorization check failed:', error)
+      setDebugInfo(prev => prev + `\nError: ${error instanceof Error ? error.message : String(error)}`)
+      setLoading(false)
+    }
+  }, [getToken, fetchDashboardStats])
+
+  useEffect(() => {
+    checkAuthorization()
+  }, [checkAuthorization])
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const statCards = [
     {
@@ -143,14 +172,14 @@ export default function AdminDashboard() {
     },
     {
       title: 'Total Revenue',
-      value: `₹${stats.totalRevenue.toLocaleString()}`,
+      value: `₹${(stats.totalRevenue ?? 0).toLocaleString()}`,
       icon: DollarSign,
       color: 'bg-yellow-500',
       change: '+15% from last month'
     },
     {
       title: 'Monthly Revenue',
-      value: `₹${stats.monthlyRevenue.toLocaleString()}`,
+      value: `₹${(stats.monthlyRevenue ?? 0).toLocaleString()}`,
       icon: TrendingUp,
       color: 'bg-red-500',
       change: '+23% from last month'
@@ -208,7 +237,35 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking authorization...</p>
+          {debugInfo && (
+            <pre className="mt-4 p-4 bg-gray-800 text-green-400 text-left text-xs rounded-lg max-w-xl overflow-auto">
+              {debugInfo}
+            </pre>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  if (!authorized) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-2xl w-full">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
+          <p className="text-gray-600 mb-4">You don&apos;t have permission to access the admin dashboard.</p>
+          <div className="bg-gray-100 rounded-lg p-4 mb-4">
+            <h2 className="font-semibold text-gray-800 mb-2">Debug Info:</h2>
+            <pre className="text-xs text-gray-600 whitespace-pre-wrap overflow-auto max-h-64">
+              {debugInfo || 'No debug info available'}
+            </pre>
+          </div>
+          <Link href="/" className="inline-block bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700">
+            Go to Home
+          </Link>
+        </div>
       </div>
     )
   }
@@ -254,14 +311,14 @@ export default function AdminDashboard() {
             {quickActions.map((action, index) => {
               const Icon = action.icon
               return (
-                <a
+                <Link
                   key={index}
                   href={action.href}
                   className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   <Icon className="h-8 w-8 text-red-600 mr-3" />
                   <span className="text-gray-900 font-medium">{action.name}</span>
-                </a>
+                </Link>
               )
             })}
           </div>
@@ -272,15 +329,15 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Orders</h2>
             <div className="space-y-3">
-              {stats.recentOrders.length > 0 ? (
-                stats.recentOrders.map((order) => (
+              {(stats.recentOrders ?? []).length > 0 ? (
+                (stats.recentOrders ?? []).map((order) => (
                   <div key={order.id} className="flex items-center justify-between p-3 border border-gray-200 rounded">
                     <div>
                       <p className="font-medium text-gray-900">Order #{order.orderNumber}</p>
                       <p className="text-sm text-gray-500">{order.user.name || order.user.email}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-gray-900">₹{order.total.toFixed(2)}</p>
+                      <p className="font-medium text-gray-900">₹{(order.total ?? 0).toFixed(2)}</p>
                       <p className="text-sm text-gray-500">
                         {mounted ? formatTimeAgo(order.createdAt) : new Date(order.createdAt).toLocaleDateString()}
                       </p>
@@ -305,25 +362,27 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Top Products</h2>
             <div className="space-y-3">
-              {stats.topProducts.length > 0 ? (
-                stats.topProducts.map((product) => (
+              {(stats.topProducts ?? []).length > 0 ? (
+                (stats.topProducts ?? []).map((product) => (
                   <div key={product.id} className="flex items-center justify-between p-3 border border-gray-200 rounded">
                     <div className="flex items-center">
-                      {product.images.length > 0 && (
-                        <img 
-                          src={product.images[0].url} 
+                      {(product.images ?? []).length > 0 && (
+                        <Image
+                          src={product.images[0].url}
                           alt={product.name}
+                          width={40}
+                          height={40}
                           className="w-10 h-10 object-cover rounded mr-3"
                         />
                       )}
                       <div>
                         <p className="font-medium text-gray-900">{product.name}</p>
-                        <p className="text-sm text-gray-500">{product._count.orderItems} sold</p>
+                        <p className="text-sm text-gray-500">{product._count?.orderItems ?? 0} sold</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-gray-900">₹{product.price.toFixed(2)}</p>
-                      <p className="text-sm text-gray-500">In stock: {product.stock}</p>
+                      <p className="font-medium text-gray-900">₹{(product.price ?? 0).toFixed(2)}</p>
+                      <p className="text-sm text-gray-500">In stock: {product.stock ?? 0}</p>
                     </div>
                   </div>
                 ))

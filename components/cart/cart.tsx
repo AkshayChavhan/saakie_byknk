@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { ShoppingCart } from 'lucide-react'
 import { useAuth } from '@clerk/nextjs'
@@ -45,17 +45,7 @@ export function Cart({ initialCart }: CartProps) {
   const router = useRouter()
   const { isLoaded, isSignedIn, getToken } = useAuth()
 
-  useEffect(() => {
-    if (!initialCart && isLoaded) {
-      if (isSignedIn) {
-        fetchCart()
-      } else {
-        router.push('/sign-in')
-      }
-    }
-  }, [initialCart, isLoaded, isSignedIn])
-
-  const fetchCart = async () => {
+  const fetchCart = useCallback(async () => {
     try {
       setIsLoading(true)
       const token = await getToken()
@@ -70,7 +60,17 @@ export function Cart({ initialCart }: CartProps) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [getToken, router])
+
+  useEffect(() => {
+    if (!initialCart && isLoaded) {
+      if (isSignedIn) {
+        fetchCart()
+      } else {
+        router.push('/sign-in')
+      }
+    }
+  }, [initialCart, isLoaded, isSignedIn, fetchCart, router])
 
   const updateItemQuantity = async (itemId: string, quantity: number) => {
     try {

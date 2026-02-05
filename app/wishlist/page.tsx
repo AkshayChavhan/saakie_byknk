@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@clerk/nextjs'
@@ -37,15 +37,7 @@ export default function WishlistPage() {
   const [removing, setRemoving] = useState<string | null>(null)
   const [addingToCart, setAddingToCart] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      fetchWishlist()
-    } else if (isLoaded) {
-      setLoading(false)
-    }
-  }, [isLoaded, isSignedIn])
-
-  const fetchWishlist = async () => {
+  const fetchWishlist = useCallback(async () => {
     try {
       const token = await getToken()
       if (!token) {
@@ -59,7 +51,15 @@ export default function WishlistPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [getToken])
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      fetchWishlist()
+    } else if (isLoaded) {
+      setLoading(false)
+    }
+  }, [isLoaded, isSignedIn, fetchWishlist])
 
   const removeFromWishlist = async (productId: string) => {
     setRemoving(productId)
