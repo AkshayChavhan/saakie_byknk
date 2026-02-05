@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import {
   Search, Edit, Trash2, Eye, Plus, Package, AlertTriangle, X, Upload,
   ArrowLeft, Star, ToggleLeft, ToggleRight, ChevronLeft, ChevronRight,
@@ -366,9 +367,11 @@ export default function ProductsManagement() {
             {/* Product Image */}
             <div className="flex-shrink-0">
               {primaryImage ? (
-                <img
+                <Image
                   src={primaryImage.url}
                   alt={product.name}
+                  width={96}
+                  height={96}
                   className="h-20 w-20 sm:h-24 sm:w-24 rounded-xl object-cover ring-1 ring-gray-100 group-hover:ring-2 group-hover:ring-red-200 transition-all duration-200"
                 />
               ) : (
@@ -489,9 +492,11 @@ export default function ProductsManagement() {
         <td className="px-6 py-4">
           <div className="flex items-center gap-4">
             {primaryImage ? (
-              <img
+              <Image
                 src={primaryImage.url}
                 alt={product.name}
+                width={56}
+                height={56}
                 className="h-14 w-14 rounded-xl object-cover ring-1 ring-gray-200"
               />
             ) : (
@@ -876,7 +881,7 @@ export default function ProductsManagement() {
                         <div>
                           <div className="flex flex-wrap gap-3">
                             {imagePreviews.map((url, idx) => (
-                              <img key={idx} src={url} alt={`Preview ${idx + 1}`} className="h-20 w-20 object-cover rounded-lg" />
+                              <Image key={idx} src={url} alt={`Preview ${idx + 1}`} width={80} height={80} className="h-20 w-20 object-cover rounded-lg" />
                             ))}
                           </div>
                           <label htmlFor="product-images" className="mt-3 inline-block text-sm text-red-600 hover:text-red-700 cursor-pointer">
@@ -1144,9 +1149,11 @@ export default function ProductsManagement() {
                 {/* Product Image */}
                 <div className="flex justify-center mb-6">
                   {selectedProduct.images?.[0] ? (
-                    <img
+                    <Image
                       src={selectedProduct.images[0].url}
                       alt={selectedProduct.name}
+                      width={192}
+                      height={192}
                       className="h-40 w-40 sm:h-48 sm:w-48 rounded-2xl object-cover ring-2 ring-gray-100"
                     />
                   ) : (

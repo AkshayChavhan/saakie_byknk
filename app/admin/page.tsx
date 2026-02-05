@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useUser, useAuth } from '@clerk/nextjs'
+import Image from 'next/image'
 import {
   Users,
   ShoppingBag,
@@ -365,9 +366,11 @@ export default function AdminDashboard() {
                   <div key={product.id} className="flex items-center justify-between p-3 border border-gray-200 rounded">
                     <div className="flex items-center">
                       {(product.images ?? []).length > 0 && (
-                        <img 
-                          src={product.images[0].url} 
+                        <Image
+                          src={product.images[0].url}
                           alt={product.name}
+                          width={40}
+                          height={40}
                           className="w-10 h-10 object-cover rounded mr-3"
                         />
                       )}

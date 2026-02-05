@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import {
   Search, Plus, Edit, Trash2, Eye, Folder, FolderOpen,
   Upload, Image as ImageIcon, X, ChevronDown, ChevronUp,
@@ -290,9 +291,11 @@ export default function CategoriesManagement() {
             {/* Category Image */}
             <div className="flex-shrink-0">
               {category.image ? (
-                <img
+                <Image
                   src={category.image}
                   alt={category.name}
+                  width={64}
+                  height={64}
                   className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl object-cover ring-1 ring-gray-100 group-hover:ring-2 group-hover:ring-red-200 transition-all duration-200"
                 />
               ) : (
@@ -446,9 +449,11 @@ export default function CategoriesManagement() {
         </td>
         <td className="px-6 py-4">
           {category.image ? (
-            <img
+            <Image
               src={category.image}
               alt={category.name}
+              width={48}
+              height={48}
               className="h-12 w-12 rounded-lg object-cover ring-1 ring-gray-200"
             />
           ) : (
@@ -802,9 +807,11 @@ export default function CategoriesManagement() {
 
                       {imagePreview ? (
                         <div className="flex items-center gap-4">
-                          <img
+                          <Image
                             src={imagePreview}
                             alt="Preview"
+                            width={80}
+                            height={80}
                             className="h-20 w-20 object-cover rounded-xl"
                           />
                           <div className="flex-1 min-w-0">
@@ -929,9 +936,11 @@ export default function CategoriesManagement() {
                 {/* Category Image */}
                 <div className="flex justify-center mb-6">
                   {selectedCategory.image ? (
-                    <img
+                    <Image
                       src={selectedCategory.image}
                       alt={selectedCategory.name}
+                      width={160}
+                      height={160}
                       className="h-32 w-32 sm:h-40 sm:w-40 rounded-2xl object-cover ring-2 ring-gray-100"
                     />
                   ) : (

@@ -170,7 +170,7 @@ function ProductCard({ product }: { product: Product }) {
 
   return (
     <div>
-      <img src={image} alt={product.name || 'Product'} />
+      <Image src={image} alt={product.name || 'Product'} width={200} height={200} />
       <h3>{product.name || 'Untitled Product'}</h3>
       <p>₹{price}</p>
     </div>

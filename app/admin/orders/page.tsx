@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Search, Filter, Eye, Package, Truck, CheckCircle, XCircle, Clock, AlertTriangle, ArrowLeft } from 'lucide-react'
 import { SareeLoader } from '@/components/ui/saree-loader'
 import { fetchApi } from '@/lib/api'
@@ -320,7 +321,13 @@ export default function OrdersManagement() {
                           return (
                             <div key={index} className="flex-shrink-0 -ml-1 first:ml-0">
                               {primaryImage ? (
-                                <img className="h-8 w-8 rounded-full border-2 border-white ring-1 ring-gray-100 hover:ring-2 hover:ring-red-200 transition-all duration-200" src={primaryImage.url} alt={item.product?.name ?? 'Product'} />
+                                <Image
+                                  src={primaryImage.url}
+                                  alt={item.product?.name ?? 'Product'}
+                                  width={32}
+                                  height={32}
+                                  className="h-8 w-8 rounded-full border-2 border-white ring-1 ring-gray-100 hover:ring-2 hover:ring-red-200 transition-all duration-200 object-cover"
+                                />
                               ) : (
                                 <div className="h-8 w-8 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-white flex items-center justify-center">
                                   <Package className="h-4 w-4 text-gray-400" />
