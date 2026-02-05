@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -83,19 +83,7 @@ export default function ProductsManagement() {
   })
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
 
-  useEffect(() => {
-    fetchProducts()
-    fetchCategories()
-  }, [])
-
-  // Cleanup image previews
-  useEffect(() => {
-    return () => {
-      imagePreviews.forEach(url => URL.revokeObjectURL(url))
-    }
-  }, [imagePreviews])
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       const token = await getToken()
       const response = await fetchApi('/api/admin/products', {
@@ -112,9 +100,9 @@ export default function ProductsManagement() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [getToken, toast])
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const token = await getToken()
       const response = await fetchApi('/api/admin/categories', {
@@ -128,7 +116,19 @@ export default function ProductsManagement() {
     } catch (error) {
       console.error('Failed to fetch categories:', error)
     }
-  }
+  }, [getToken])
+
+  useEffect(() => {
+    fetchProducts()
+    fetchCategories()
+  }, [fetchProducts, fetchCategories])
+
+  // Cleanup image previews
+  useEffect(() => {
+    return () => {
+      imagePreviews.forEach(url => URL.revokeObjectURL(url))
+    }
+  }, [imagePreviews])
 
   const handleDeleteProduct = async (productId: string, productName: string) => {
     if (confirm('Are you sure you want to delete this product?')) {

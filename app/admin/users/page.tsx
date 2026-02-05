@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -34,11 +34,7 @@ export default function UsersManagement() {
   const [currentPage, setCurrentPage] = useState(1)
   const usersPerPage = 10
 
-  useEffect(() => {
-    fetchUsers()
-  }, [])
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const token = await getToken()
       const response = await fetchApi('/api/admin/users', {
@@ -57,7 +53,11 @@ export default function UsersManagement() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [getToken])
+
+  useEffect(() => {
+    fetchUsers()
+  }, [fetchUsers])
 
   const handleDeleteUser = async (userId: string) => {
     if (confirm('Are you sure you want to delete this user?')) {

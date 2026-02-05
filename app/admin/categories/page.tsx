@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -58,20 +58,7 @@ export default function CategoriesManagement() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchCategories()
-  }, [])
-
-  // Clean up image preview URL
-  useEffect(() => {
-    return () => {
-      if (imagePreview) {
-        URL.revokeObjectURL(imagePreview)
-      }
-    }
-  }, [imagePreview])
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const token = await getToken()
       const response = await fetchApi('/api/admin/categories', {
@@ -90,7 +77,20 @@ export default function CategoriesManagement() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [getToken, toast])
+
+  useEffect(() => {
+    fetchCategories()
+  }, [fetchCategories])
+
+  // Clean up image preview URL
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview)
+      }
+    }
+  }, [imagePreview])
 
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault()

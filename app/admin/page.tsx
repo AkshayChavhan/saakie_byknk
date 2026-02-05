@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useUser, useAuth } from '@clerk/nextjs'
 import Image from 'next/image'
+import Link from 'next/link'
 import {
   Users,
   ShoppingBag,
@@ -69,15 +70,26 @@ export default function AdminDashboard() {
   const [mounted, setMounted] = useState(false)
   const [debugInfo, setDebugInfo] = useState<string>('')
 
-  useEffect(() => {
-    checkAuthorization()
-  }, [])
+  const fetchDashboardStats = useCallback(async () => {
+    try {
+      const token = await getToken()
+      const response = await fetchApi('/api/admin/dashboard', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setStats(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch dashboard stats:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [getToken])
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  const checkAuthorization = async () => {
+  const checkAuthorization = useCallback(async () => {
     try {
       const token = await getToken()
       console.log('[Admin] Token exists:', !!token)
@@ -126,26 +138,15 @@ export default function AdminDashboard() {
       setDebugInfo(prev => prev + `\nError: ${error instanceof Error ? error.message : String(error)}`)
       setLoading(false)
     }
-  }
+  }, [getToken, fetchDashboardStats])
 
-  const fetchDashboardStats = async () => {
-    try {
-      const token = await getToken()
-      const response = await fetchApi('/api/admin/dashboard', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setStats(data)
-      }
-    } catch (error) {
-      console.error('Failed to fetch dashboard stats:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  useEffect(() => {
+    checkAuthorization()
+  }, [checkAuthorization])
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const statCards = [
     {
@@ -261,9 +262,9 @@ export default function AdminDashboard() {
               {debugInfo || 'No debug info available'}
             </pre>
           </div>
-          <a href="/" className="inline-block bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700">
+          <Link href="/" className="inline-block bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700">
             Go to Home
-          </a>
+          </Link>
         </div>
       </div>
     )
@@ -310,14 +311,14 @@ export default function AdminDashboard() {
             {quickActions.map((action, index) => {
               const Icon = action.icon
               return (
-                <a
+                <Link
                   key={index}
                   href={action.href}
                   className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   <Icon className="h-8 w-8 text-red-600 mr-3" />
                   <span className="text-gray-900 font-medium">{action.name}</span>
-                </a>
+                </Link>
               )
             })}
           </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -41,11 +41,7 @@ export default function OrdersManagement() {
   const [currentPage, setCurrentPage] = useState(1)
   const ordersPerPage = 10
 
-  useEffect(() => {
-    fetchOrders()
-  }, [])
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       const token = await getToken()
       const response = await fetchApi('/api/admin/orders', {
@@ -64,7 +60,11 @@ export default function OrdersManagement() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [getToken])
+
+  useEffect(() => {
+    fetchOrders()
+  }, [fetchOrders])
 
   const handleStatusUpdate = async (orderId: string, newStatus: string) => {
     try {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -152,20 +152,7 @@ export default function ProductDetailPage() {
     pincode: ''
   })
 
-  useEffect(() => {
-    fetchProduct()
-  }, [slug])
-
-  useEffect(() => {
-    if (product?.colors.length && !selectedColor) {
-      setSelectedColor(product.colors[0].id)
-    }
-    if (product?.sizes.length && !selectedSize) {
-      setSelectedSize(product.sizes[0].id)
-    }
-  }, [product])
-
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetchApi(`/api/products/${slug}`)
@@ -179,7 +166,20 @@ export default function ProductDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [slug])
+
+  useEffect(() => {
+    fetchProduct()
+  }, [fetchProduct])
+
+  useEffect(() => {
+    if (product?.colors.length && !selectedColor) {
+      setSelectedColor(product.colors[0].id)
+    }
+    if (product?.sizes.length && !selectedSize) {
+      setSelectedSize(product.sizes[0].id)
+    }
+  }, [product, selectedColor, selectedSize])
 
   const handleAddToCart = () => {
     console.log('Add to cart:', {

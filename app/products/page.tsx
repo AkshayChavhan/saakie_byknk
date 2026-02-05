@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -121,17 +121,7 @@ function ProductsContent() {
     setInitialized(true)
   }, [searchParams])
 
-  useEffect(() => {
-    fetchCategories()
-  }, [])
-
-  useEffect(() => {
-    if (initialized) {
-      fetchProducts()
-    }
-  }, [searchQuery, selectedCategory, sortBy, minPrice, maxPrice, currentPage, initialized])
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await fetchApi('/api/categories')
       if (response.ok) {
@@ -141,9 +131,9 @@ function ProductsContent() {
     } catch (error) {
       console.error('Failed to fetch categories:', error)
     }
-  }
+  }, [])
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -174,7 +164,17 @@ function ProductsContent() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentPage, sortBy, searchQuery, selectedCategory, minPrice, maxPrice])
+
+  useEffect(() => {
+    fetchCategories()
+  }, [fetchCategories])
+
+  useEffect(() => {
+    if (initialized) {
+      fetchProducts()
+    }
+  }, [fetchProducts, initialized])
 
   const toggleWishlist = (productId: string) => {
     setWishlist(prev =>
