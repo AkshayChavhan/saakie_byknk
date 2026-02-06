@@ -57,6 +57,7 @@ export default function CategoriesManagement() {
   })
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -92,15 +93,33 @@ export default function CategoriesManagement() {
     }
   }, [imagePreview])
 
-  const handleCreateCategory = async (e: React.FormEvent) => {
+  const handleSubmitCategory = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
     try {
       const token = await getToken()
       let response: Response
+      const isEditing = !!editingCategory
 
-      if (selectedImage) {
+      if (isEditing) {
+        // Update existing category
+        response = await fetchApi(`/api/admin/categories/${editingCategory.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            slug: formData.slug,
+            description: formData.description || null,
+            parentId: formData.parentId || null,
+            isActive: formData.isActive
+          })
+        })
+      } else if (selectedImage) {
+        // Create with image upload
         const uploadFormData = new FormData()
         uploadFormData.append('image', selectedImage)
         uploadFormData.append('data', JSON.stringify({
@@ -119,6 +138,7 @@ export default function CategoriesManagement() {
           body: uploadFormData
         })
       } else {
+        // Create without image
         response = await fetchApi('/api/admin/categories', {
           method: 'POST',
           headers: {
@@ -133,22 +153,31 @@ export default function CategoriesManagement() {
       }
 
       if (response.ok) {
-        const newCategory = await response.json()
+        const savedCategory = await response.json()
         const categoryWithChildren = {
-          ...newCategory,
-          children: newCategory.children || []
+          ...savedCategory,
+          children: savedCategory.children || []
         }
-        setCategories([...categories, categoryWithChildren])
+
+        if (isEditing) {
+          setCategories(categories.map(cat =>
+            cat.id === editingCategory.id ? categoryWithChildren : cat
+          ))
+          toast.success('Category Updated', `"${savedCategory.name}" has been updated successfully.`)
+        } else {
+          setCategories([...categories, categoryWithChildren])
+          toast.success('Category Created', `"${savedCategory.name}" has been created successfully.`)
+        }
+
         setIsModalOpen(false)
         resetForm()
-        toast.success('Category Created', `"${newCategory.name}" has been created successfully.`)
       } else {
         const error = await response.json()
-        toast.error('Failed to Create Category', error.error || 'Something went wrong. Please try again.')
+        toast.error(isEditing ? 'Failed to Update Category' : 'Failed to Create Category', error.error || 'Something went wrong. Please try again.')
       }
     } catch (error) {
-      console.error('Failed to create category:', error)
-      toast.error('Failed to Create Category', 'An unexpected error occurred. Please try again.')
+      console.error('Failed to save category:', error)
+      toast.error('Failed to Save Category', 'An unexpected error occurred. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -164,10 +193,27 @@ export default function CategoriesManagement() {
       isActive: true
     })
     setSelectedImage(null)
+    setEditingCategory(null)
     if (imagePreview) {
       URL.revokeObjectURL(imagePreview)
       setImagePreview(null)
     }
+  }
+
+  const openEditModal = (category: Category) => {
+    setEditingCategory(category)
+    setFormData({
+      name: category.name,
+      slug: category.slug,
+      description: category.description || '',
+      image: category.image || '',
+      parentId: category.parentId || '',
+      isActive: category.isActive
+    })
+    if (category.image) {
+      setImagePreview(category.image)
+    }
+    setIsModalOpen(true)
   }
 
   const handleImageSelect = (file: File | null) => {
@@ -397,6 +443,7 @@ export default function CategoriesManagement() {
                 <Eye className="h-5 w-5 transition-transform duration-200 hover:scale-110" />
               </button>
               <button
+                onClick={() => openEditModal(category)}
                 className="p-2.5 text-amber-600 hover:bg-amber-50 hover:shadow-sm rounded-lg transition-all duration-200 active:scale-90"
                 title="Edit category"
               >
@@ -501,6 +548,7 @@ export default function CategoriesManagement() {
               <Eye className="h-4 w-4 transition-transform duration-200 hover:scale-110" />
             </button>
             <button
+              onClick={() => openEditModal(category)}
               className="p-2 text-amber-600 hover:bg-amber-50 hover:shadow-sm rounded-lg transition-all duration-200 active:scale-90"
               title="Edit"
             >
@@ -707,7 +755,9 @@ export default function CategoriesManagement() {
             }`}>
               {/* Modal Header */}
               <div className="flex items-center justify-between p-4 sm:p-5 border-b border-gray-100">
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900">Add New Category</h2>
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+                  {editingCategory ? 'Edit Category' : 'Add New Category'}
+                </h2>
                 <button
                   onClick={closeModal}
                   className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
@@ -718,7 +768,7 @@ export default function CategoriesManagement() {
 
               {/* Modal Body - Scrollable */}
               <div className="flex-1 overflow-y-auto p-4 sm:p-5">
-                <form id="category-form" onSubmit={handleCreateCategory} className="space-y-4">
+                <form id="category-form" onSubmit={handleSubmitCategory} className="space-y-4">
                   {/* Name */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -895,10 +945,10 @@ export default function CategoriesManagement() {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                         </svg>
-                        Creating...
+                        {editingCategory ? 'Updating...' : 'Creating...'}
                       </>
                     ) : (
-                      'Create Category'
+                      editingCategory ? 'Update Category' : 'Create Category'
                     )}
                   </button>
                 </div>
