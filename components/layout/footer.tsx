@@ -53,7 +53,7 @@ export function Footer() {
             <div className="space-y-3">
               <div className="flex items-center text-gray-300">
                 <Mail size={18} className="mr-3 flex-shrink-0" />
-                <span>support@saakie-byknk.com</span>
+                <span>saakiebyknk@gmail.com</span>
               </div>
               <div className="flex items-center text-gray-300">
                 <Phone size={18} className="mr-3 flex-shrink-0" />
@@ -61,7 +61,8 @@ export function Footer() {
               </div>
               <div className="flex items-start text-gray-300">
                 <MapPin size={18} className="mr-3 flex-shrink-0 mt-1" />
-                <span>123 Fashion Street,<br />Mumbai, Maharashtra 400001</span>
+                <span>Pune, Maharashtra, India</span><br/>
+                <span>Yavatmal, Maharashtra, India</span>
               </div>
             </div>
           </div>
