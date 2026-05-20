@@ -1,3 +1,4 @@
+import 'server-only'
 import Razorpay from 'razorpay'
 
 // Make Razorpay optional - only initialize if keys are provided

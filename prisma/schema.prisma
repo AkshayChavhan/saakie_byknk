@@ -50,14 +50,17 @@ model Category {
 }
 
 model Product {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  name          String
-  slug          String   @unique
-  description   String
-  details       String?
-  price         Float
-  comparePrice  Float?
-  costPrice     Float?
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  name             String
+  slug             String   @unique
+  description      String
+  shortDescription String?
+  details          String?
+  price            Float
+  comparePrice     Float?
+  costPrice        Float?
+  rating           Float    @default(0)
+  salesCount       Int      @default(0)
   categoryId    String   @db.ObjectId
   category      Category @relation(fields: [categoryId], references: [id])
   brand         String?
@@ -119,6 +122,7 @@ model Image {
   height    Int?
   format    String?
   alt       String?
+  order     Int     @default(0)
   isPrimary Boolean @default(false)
   productId String  @db.ObjectId
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -304,4 +308,35 @@ enum PaymentStatus {
   FAILED
   REFUNDED
   CANCELLED
+}
+
+model HeroSlide {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  subtitle    String?
+  description String?
+  image       String
+  ctaText     String?
+  ctaLink     String?
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("hero_slides")
+}
+
+model PromotionalBanner {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  title           String
+  description     String?
+  image           String?
+  link            String?
+  backgroundColor String?
+  order           Int      @default(0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("promotional_banners")
 }
