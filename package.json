@@ -8,9 +8,10 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "postinstall": "prisma generate",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
