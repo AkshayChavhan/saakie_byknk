@@ -1,3 +1,4 @@
+import 'server-only';
 import { v2 as cloudinary } from 'cloudinary';
 
 cloudinary.config({
@@ -51,6 +52,38 @@ export const uploadToCloudinary = async (file: File, folder: string = 'products'
   }
 };
 
+export const uploadImage = async (
+  buffer: Buffer,
+  folder: string = 'products'
+): Promise<CloudinaryUploadResult> => {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.upload_stream(
+      {
+        resource_type: 'auto',
+        folder: `saakie-byknk/${folder}`,
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'avif'],
+        transformation: [
+          { quality: 'auto:best' },
+          { fetch_format: 'auto' },
+        ],
+      },
+      (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve({
+            url: result?.secure_url || '',
+            publicId: result?.public_id || '',
+            width: result?.width,
+            height: result?.height,
+            format: result?.format,
+          });
+        }
+      }
+    ).end(buffer);
+  });
+};
+
 export const deleteFromCloudinary = async (publicId: string) => {
   try {
     const result = await cloudinary.uploader.destroy(publicId);
@@ -60,6 +93,8 @@ export const deleteFromCloudinary = async (publicId: string) => {
     throw error;
   }
 };
+
+export const deleteImage = (publicId: string) => deleteFromCloudinary(publicId);
 
 export const generateOptimizedUrl = (publicId: string, options: {
   width?: number;

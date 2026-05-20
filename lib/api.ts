@@ -1,65 +1,47 @@
-// API Configuration for Backend - v2
-// Remove trailing slash from API URL to prevent double slashes
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/$/, '');
-const MASTER_API_KEY = process.env.NEXT_PUBLIC_MASTER_API_KEY || '';
+// API client for same-origin Next.js routes.
+// Endpoints are relative paths (e.g. "/api/products"); the browser resolves
+// them against the current origin, so no base URL or master key is needed.
 
 interface ApiOptions extends RequestInit {
   token?: string;
 }
 
 /**
- * Helper to get the full API URL
+ * Identity helper kept for backwards compatibility with any caller still
+ * importing it. Relative paths are returned as-is.
  */
 export function getApiUrl(endpoint: string): string {
-  // If the endpoint starts with /api, use the backend URL
-  if (endpoint.startsWith('/api')) {
-    return `${API_BASE_URL}${endpoint}`;
-  }
   return endpoint;
 }
 
 /**
- * Simple fetch wrapper that automatically uses the backend URL
- * Use this for quick migrations from direct fetch calls
+ * Simple same-origin fetch wrapper.
  */
 export async function fetchApi(endpoint: string, options: RequestInit = {}): Promise<Response> {
-  const url = getApiUrl(endpoint);
-
-  // Add master API key header if available
-  const headers: Record<string, string> = {
-    ...(options.headers as Record<string, string> || {}),
-  };
-
-  if (MASTER_API_KEY) {
-    headers['X-API-Key'] = MASTER_API_KEY;
-  }
-
-  return fetch(url, {
-    ...options,
-    headers,
-  });
+  return fetch(endpoint, options);
 }
 
 /**
- * Base fetch wrapper for API calls to the Express backend
+ * Base fetch wrapper for same-origin Next.js API calls.
+ *
+ * Clerk session cookies are sent automatically on same-origin requests, so
+ * route handlers can rely on `auth()` directly. The optional `token` param
+ * is preserved so existing call sites continue to compile, but new handlers
+ * should not depend on it.
  */
 async function apiFetch<T>(endpoint: string, options: ApiOptions = {}): Promise<T> {
   const { token, ...fetchOptions } = options;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    ...(fetchOptions.headers as Record<string, string> | undefined),
   };
-
-  // Add master API key for backend authentication
-  if (MASTER_API_KEY) {
-    headers['X-API-Key'] = MASTER_API_KEY;
-  }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const response = await fetch(endpoint, {
     ...fetchOptions,
     headers,
   });
@@ -289,4 +271,3 @@ export const adminApi = {
     }),
 };
 
-export { API_BASE_URL };

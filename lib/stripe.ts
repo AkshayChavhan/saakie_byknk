@@ -1,3 +1,4 @@
+import 'server-only'
 import Stripe from 'stripe'
 
 // Make Stripe optional - only initialize if keys are provided

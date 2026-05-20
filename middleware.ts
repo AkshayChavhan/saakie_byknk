@@ -11,7 +11,10 @@ const isPublicRoute = createRouteMatcher([
   '/api/promotional-data',
   '/api/auth/check-role',
   '/api/admin/set-admin',
+  '/api/users/(.*)/metadata',
   '/api/webhooks/clerk',
+  '/api/webhooks/stripe',
+  '/api/webhooks/razorpay',
   '/sign-in(.*)',
   '/sign-up(.*)',
 ])
