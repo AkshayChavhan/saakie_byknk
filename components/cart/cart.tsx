@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { ShoppingCart } from 'lucide-react'
-import { useAuth } from '@clerk/nextjs'
+import { useSession } from 'next-auth/react'
 import { CartItem } from './cart-item'
 import { CartSummary } from './cart-summary'
 import { SareeLoader } from '@/components/ui/saree-loader'
@@ -43,44 +43,35 @@ export function Cart({ initialCart }: CartProps) {
   const [isLoading, setIsLoading] = useState(!initialCart)
   const [isUpdating, setIsUpdating] = useState(false)
   const router = useRouter()
-  const { isLoaded, isSignedIn, getToken } = useAuth()
+  const { status } = useSession()
+  const isLoaded = status !== 'loading'
 
   const fetchCart = useCallback(async () => {
     try {
       setIsLoading(true)
-      const token = await getToken()
-      if (!token) {
-        router.push('/sign-in')
-        return
-      }
-      const cartData = await cartApi.get(token)
+      const cartData = await cartApi.get()
       setCart(cartData)
     } catch (error) {
       console.error('Failed to fetch cart:', error)
     } finally {
       setIsLoading(false)
     }
-  }, [getToken, router])
+  }, [])
 
   useEffect(() => {
     if (!initialCart && isLoaded) {
-      if (isSignedIn) {
+      if (status === 'authenticated') {
         fetchCart()
       } else {
         router.push('/sign-in')
       }
     }
-  }, [initialCart, isLoaded, isSignedIn, fetchCart, router])
+  }, [initialCart, isLoaded, status, fetchCart, router])
 
   const updateItemQuantity = async (itemId: string, quantity: number) => {
     try {
       setIsUpdating(true)
-      const token = await getToken()
-      if (!token) {
-        router.push('/sign-in')
-        return
-      }
-      const updatedCart = await cartApi.updateItem(token, itemId, quantity)
+      const updatedCart = await cartApi.updateItem(itemId, quantity)
       setCart(updatedCart)
     } catch (error) {
       console.error('Failed to update quantity:', error)
@@ -93,12 +84,7 @@ export function Cart({ initialCart }: CartProps) {
   const removeItem = async (itemId: string) => {
     try {
       setIsUpdating(true)
-      const token = await getToken()
-      if (!token) {
-        router.push('/sign-in')
-        return
-      }
-      const updatedCart = await cartApi.removeItem(token, itemId)
+      const updatedCart = await cartApi.removeItem(itemId)
       setCart(updatedCart)
     } catch (error) {
       console.error('Failed to remove item:', error)
@@ -115,12 +101,7 @@ export function Cart({ initialCart }: CartProps) {
 
     try {
       setIsUpdating(true)
-      const token = await getToken()
-      if (!token) {
-        router.push('/sign-in')
-        return
-      }
-      await cartApi.clear(token)
+      await cartApi.clear()
       setCart({ ...cart!, items: [], subtotal: 0, itemCount: 0 })
     } catch (error) {
       console.error('Failed to clear cart:', error)

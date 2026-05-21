@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useAuth } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Search, Filter, Edit, Trash2, Eye, UserPlus, MoreVertical, ArrowLeft, Users, ShieldCheck, Crown, ShoppingBag } from 'lucide-react'
@@ -10,7 +9,6 @@ import { fetchApi } from '@/lib/api'
 
 interface User {
   id: string
-  clerkId: string
   email: string
   name: string | null
   phone: string | null
@@ -25,7 +23,6 @@ interface User {
 }
 
 export default function UsersManagement() {
-  const { getToken } = useAuth()
   const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
@@ -36,12 +33,7 @@ export default function UsersManagement() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const token = await getToken()
-      const response = await fetchApi('/api/admin/users', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await fetchApi('/api/admin/users')
       if (response.ok) {
         const data = await response.json()
         // Handle both array response and object with users property
@@ -53,7 +45,7 @@ export default function UsersManagement() {
     } finally {
       setLoading(false)
     }
-  }, [getToken])
+  }, [])
 
   useEffect(() => {
     fetchUsers()
@@ -62,12 +54,8 @@ export default function UsersManagement() {
   const handleDeleteUser = async (userId: string) => {
     if (confirm('Are you sure you want to delete this user?')) {
       try {
-        const token = await getToken()
         const response = await fetchApi(`/api/admin/users/${userId}`, {
           method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
         })
         if (response.ok) {
           setUsers(users.filter(user => user.id !== userId))
@@ -80,12 +68,10 @@ export default function UsersManagement() {
 
   const handleUpdateUserRole = async (userId: string, newRole: string) => {
     try {
-      const token = await getToken()
       const response = await fetchApi(`/api/admin/users/${userId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ role: newRole })
       })

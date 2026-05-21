@@ -1,10 +1,8 @@
 // API client for same-origin Next.js routes.
 // Endpoints are relative paths (e.g. "/api/products"); the browser resolves
-// them against the current origin, so no base URL or master key is needed.
-
-interface ApiOptions extends RequestInit {
-  token?: string;
-}
+// them against the current origin. Auth.js session cookies are sent
+// automatically on same-origin requests, so route handlers authenticate via
+// `requireAuth()` with no token plumbing needed.
 
 /**
  * Identity helper kept for backwards compatibility with any caller still
@@ -15,34 +13,27 @@ export function getApiUrl(endpoint: string): string {
 }
 
 /**
- * Simple same-origin fetch wrapper.
+ * Simple same-origin fetch wrapper. The session cookie rides along
+ * automatically; callers do not pass tokens.
  */
 export async function fetchApi(endpoint: string, options: RequestInit = {}): Promise<Response> {
   return fetch(endpoint, options);
 }
 
 /**
- * Base fetch wrapper for same-origin Next.js API calls.
- *
- * Clerk session cookies are sent automatically on same-origin requests, so
- * route handlers can rely on `auth()` directly. The optional `token` param
- * is preserved so existing call sites continue to compile, but new handlers
- * should not depend on it.
+ * Base fetch wrapper for same-origin Next.js API calls. The Auth.js session
+ * cookie is sent automatically (`credentials: 'same-origin'`), so protected
+ * routes work without an Authorization header.
  */
-async function apiFetch<T>(endpoint: string, options: ApiOptions = {}): Promise<T> {
-  const { token, ...fetchOptions } = options;
-
+async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(fetchOptions.headers as Record<string, string> | undefined),
+    ...(options.headers as Record<string, string> | undefined),
   };
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
   const response = await fetch(endpoint, {
-    ...fetchOptions,
+    credentials: 'same-origin',
+    ...options,
     headers,
   });
 
@@ -98,176 +89,159 @@ export const categoryApi = {
 };
 
 // ============================================
-// Cart APIs (Requires Auth)
+// Cart APIs (Requires Auth — session cookie)
 // ============================================
 export const cartApi = {
-  get: (token: string) =>
-    apiFetch<any>('/api/cart', { token }),
+  get: () =>
+    apiFetch<any>('/api/cart'),
 
-  addItem: (token: string, data: { productId: string; quantity: number; colorId?: string; sizeId?: string }) =>
+  addItem: (data: { productId: string; quantity: number; colorId?: string; sizeId?: string }) =>
     apiFetch<any>('/api/cart', {
       method: 'POST',
-      token,
       body: JSON.stringify(data),
     }),
 
-  updateItem: (token: string, itemId: string, quantity: number) =>
+  updateItem: (itemId: string, quantity: number) =>
     apiFetch<any>(`/api/cart/items/${itemId}`, {
       method: 'PATCH',
-      token,
       body: JSON.stringify({ quantity }),
     }),
 
-  removeItem: (token: string, itemId: string) =>
+  removeItem: (itemId: string) =>
     apiFetch<any>(`/api/cart/items/${itemId}`, {
       method: 'DELETE',
-      token,
     }),
 
-  clear: (token: string) =>
+  clear: () =>
     apiFetch<any>('/api/cart', {
       method: 'DELETE',
-      token,
     }),
 };
 
 // ============================================
-// Wishlist APIs (Requires Auth)
+// Wishlist APIs (Requires Auth — session cookie)
 // ============================================
 export const wishlistApi = {
-  get: (token: string) =>
-    apiFetch<any>('/api/wishlist', { token }),
+  get: () =>
+    apiFetch<any>('/api/wishlist'),
 
-  addItem: (token: string, productId: string) =>
+  addItem: (productId: string) =>
     apiFetch<any>('/api/wishlist', {
       method: 'POST',
-      token,
       body: JSON.stringify({ productId }),
     }),
 
-  removeItem: (token: string, productId: string) =>
+  removeItem: (productId: string) =>
     apiFetch<any>(`/api/wishlist/${productId}`, {
       method: 'DELETE',
-      token,
     }),
 };
 
 // ============================================
-// Order APIs (Requires Auth)
+// Order APIs (Requires Auth — session cookie)
 // ============================================
 export const orderApi = {
-  list: (token: string) =>
-    apiFetch<any>('/api/orders', { token }),
+  list: () =>
+    apiFetch<any>('/api/orders'),
 
-  getById: (token: string, orderId: string) =>
-    apiFetch<any>(`/api/orders/${orderId}`, { token }),
+  getById: (orderId: string) =>
+    apiFetch<any>(`/api/orders/${orderId}`),
 };
 
 // ============================================
-// Payment APIs (Requires Auth)
+// Payment APIs (Requires Auth — session cookie)
 // ============================================
 export const paymentApi = {
-  createIntent: (token: string, data: { paymentGateway: 'stripe' | 'razorpay'; shippingAddressId: string; billingAddressId?: string }) =>
+  createIntent: (data: { paymentGateway: 'stripe' | 'razorpay'; shippingAddressId: string; billingAddressId?: string }) =>
     apiFetch<any>('/api/payments/create-intent', {
       method: 'POST',
-      token,
       body: JSON.stringify(data),
     }),
 };
 
 // ============================================
-// User APIs (Requires Auth)
+// User APIs (Requires Auth — session cookie)
 // ============================================
 export const userApi = {
-  getProfile: (token: string) =>
-    apiFetch<any>('/api/users/profile', { token }),
+  getProfile: () =>
+    apiFetch<any>('/api/users/profile'),
 
-  getAddresses: (token: string) =>
-    apiFetch<any>('/api/users/addresses', { token }),
+  getAddresses: () =>
+    apiFetch<any>('/api/users/addresses'),
 
-  addAddress: (token: string, data: any) =>
+  addAddress: (data: any) =>
     apiFetch<any>('/api/users/addresses', {
       method: 'POST',
-      token,
       body: JSON.stringify(data),
     }),
 };
 
 // ============================================
-// Admin APIs (Requires Admin Auth)
+// Admin APIs (Requires Admin Auth — session cookie)
 // ============================================
 export const adminApi = {
-  getDashboard: (token: string) =>
-    apiFetch<any>('/api/admin/dashboard', { token }),
+  getDashboard: () =>
+    apiFetch<any>('/api/admin/dashboard'),
 
   // Users
-  getUsers: (token: string) =>
-    apiFetch<any>('/api/admin/users', { token }),
+  getUsers: () =>
+    apiFetch<any>('/api/admin/users'),
 
-  updateUserRole: (token: string, userId: string, role: string) =>
+  updateUserRole: (userId: string, role: string) =>
     apiFetch<any>(`/api/admin/users/${userId}`, {
       method: 'PATCH',
-      token,
       body: JSON.stringify({ role }),
     }),
 
   // Products
-  getProducts: (token: string) =>
-    apiFetch<any>('/api/admin/products', { token }),
+  getProducts: () =>
+    apiFetch<any>('/api/admin/products'),
 
-  createProduct: (token: string, data: any) =>
+  createProduct: (data: any) =>
     apiFetch<any>('/api/admin/products', {
       method: 'POST',
-      token,
       body: JSON.stringify(data),
     }),
 
-  updateProduct: (token: string, productId: string, data: any) =>
+  updateProduct: (productId: string, data: any) =>
     apiFetch<any>(`/api/admin/products/${productId}`, {
       method: 'PATCH',
-      token,
       body: JSON.stringify(data),
     }),
 
-  deleteProduct: (token: string, productId: string) =>
+  deleteProduct: (productId: string) =>
     apiFetch<any>(`/api/admin/products/${productId}`, {
       method: 'DELETE',
-      token,
     }),
 
   // Orders
-  getOrders: (token: string) =>
-    apiFetch<any>('/api/admin/orders', { token }),
+  getOrders: () =>
+    apiFetch<any>('/api/admin/orders'),
 
-  updateOrderStatus: (token: string, orderId: string, status: string) =>
+  updateOrderStatus: (orderId: string, status: string) =>
     apiFetch<any>(`/api/admin/orders/${orderId}`, {
       method: 'PATCH',
-      token,
       body: JSON.stringify({ status }),
     }),
 
   // Categories
-  getCategories: (token: string) =>
-    apiFetch<any>('/api/admin/categories', { token }),
+  getCategories: () =>
+    apiFetch<any>('/api/admin/categories'),
 
-  createCategory: (token: string, data: any) =>
+  createCategory: (data: any) =>
     apiFetch<any>('/api/admin/categories', {
       method: 'POST',
-      token,
       body: JSON.stringify(data),
     }),
 
-  updateCategory: (token: string, categoryId: string, data: any) =>
+  updateCategory: (categoryId: string, data: any) =>
     apiFetch<any>(`/api/admin/categories/${categoryId}`, {
       method: 'PATCH',
-      token,
       body: JSON.stringify(data),
     }),
 
-  deleteCategory: (token: string, categoryId: string) =>
+  deleteCategory: (categoryId: string) =>
     apiFetch<any>(`/api/admin/categories/${categoryId}`, {
       method: 'DELETE',
-      token,
     }),
 };
-

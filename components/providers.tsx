@@ -1,6 +1,7 @@
 'use client'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { SessionProvider } from 'next-auth/react'
 import { useState } from 'react'
 import { ChatBubble } from '@/components/chat'
 import { ToastProvider } from '@/components/ui/toast'
@@ -19,11 +20,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
   )
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        {children}
-        <ChatBubble />
-      </ToastProvider>
-    </QueryClientProvider>
+    <SessionProvider>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          {children}
+          <ChatBubble />
+        </ToastProvider>
+      </QueryClientProvider>
+    </SessionProvider>
   )
 }

@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
-import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
+import { auth } from '@/auth'
 import { Cart } from '@/components/cart'
 
 export const metadata: Metadata = {
@@ -9,9 +9,9 @@ export const metadata: Metadata = {
 }
 
 export default async function CartPage() {
-  const { userId } = await auth()
+  const session = await auth()
 
-  if (!userId) {
+  if (!session?.user) {
     redirect('/sign-in')
   }
 

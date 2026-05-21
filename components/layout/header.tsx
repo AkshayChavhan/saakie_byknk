@@ -4,8 +4,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/nextjs'
-import { Search, Heart } from 'lucide-react'
+import { useSession, signOut } from 'next-auth/react'
+import { Search, Heart, LogOut, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { CartIcon } from '@/components/cart'
 
@@ -32,11 +32,12 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const pathname = usePathname()
-  const { user } = useUser()
-  // For now, show admin link for all authenticated users
-  // Role check is handled by middleware
-  const isAdmin = !!user
+  const { data: session, status } = useSession()
+  const isSignedIn = status === 'authenticated'
+  const role = session?.user?.role
+  const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN'
   const [isScrolled, setIsScrolled] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -170,24 +171,80 @@ export function Header() {
               <Search size={20} />
             </button>
             
-            <SignedIn>
-              <Link href="/wishlist" className="p-2 rounded-md text-gray-700 hover:bg-gray-100">
-                <Heart size={20} />
-              </Link>
-              
-              <CartIcon />
-              
-              <UserButton afterSignOutUrl="/" />
-            </SignedIn>
-            
-            <SignedOut>
+            {isSignedIn ? (
+              <>
+                <Link href="/wishlist" className="p-2 rounded-md text-gray-700 hover:bg-gray-100">
+                  <Heart size={20} />
+                </Link>
+
+                <CartIcon />
+
+                <div className="relative">
+                  <button
+                    onClick={() => setUserMenuOpen((open) => !open)}
+                    className="p-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                    aria-label="Account menu"
+                  >
+                    <User size={20} />
+                  </button>
+
+                  {userMenuOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setUserMenuOpen(false)}
+                        aria-hidden="true"
+                      />
+                      <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
+                        {session?.user?.email && (
+                          <div className="px-4 py-2 border-b border-gray-100">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {session.user.name || 'My Account'}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {session.user.email}
+                            </p>
+                          </div>
+                        )}
+                        <Link
+                          href="/wishlist"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          Wishlist
+                        </Link>
+                        {isAdmin && (
+                          <Link
+                            href="/admin"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          >
+                            Admin Dashboard
+                          </Link>
+                        )}
+                        <button
+                          onClick={() => {
+                            setUserMenuOpen(false)
+                            signOut({ callbackUrl: '/' })
+                          }}
+                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          <LogOut size={16} />
+                          Sign Out
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </>
+            ) : (
               <Link
                 href="/sign-in"
                 className="text-sm font-medium text-gray-700 hover:text-primary"
               >
                 Sign In
               </Link>
-            </SignedOut>
+            )}
           </div>
         </div>
 

@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { createMockUser, createMockOrder, createMockAddress, createMockProduct } from '../mocks/factories'
+import { createMockUser, createMockOrder, createMockAddress, createMockProduct, createMockSession } from '../mocks/factories'
 
-// Mock Clerk auth
+// Mock Auth.js — `auth()` resolves the session (or null when signed out)
 const mockAuth = vi.fn()
-vi.mock('@clerk/nextjs/server', () => ({
+vi.mock('@/auth', () => ({
   auth: () => mockAuth(),
 }))
 
@@ -53,7 +53,7 @@ describe('Orders API', () => {
     }
 
     it('creates order for guest user', async () => {
-      mockAuth.mockResolvedValue({ userId: null })
+      mockAuth.mockResolvedValue(null)
 
       const mockAddress = createMockAddress({ id: 'addr_123' })
       const mockOrder = createMockOrder({ id: 'order_123', orderNumber: 'COD123456' })
@@ -81,7 +81,7 @@ describe('Orders API', () => {
     })
 
     it('creates order for authenticated user', async () => {
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockPrisma.user.findUnique.mockResolvedValue(createMockUser({ id: 'user_123' }))
 
       const mockAddress = createMockAddress({ id: 'addr_123', userId: 'user_123' })
@@ -108,7 +108,7 @@ describe('Orders API', () => {
     })
 
     it('generates unique order number', async () => {
-      mockAuth.mockResolvedValue({ userId: null })
+      mockAuth.mockResolvedValue(null)
 
       mockPrisma.address.create.mockResolvedValue(createMockAddress())
       mockPrisma.order.create.mockResolvedValue({
@@ -131,7 +131,7 @@ describe('Orders API', () => {
     })
 
     it('decrements product stock after order', async () => {
-      mockAuth.mockResolvedValue({ userId: null })
+      mockAuth.mockResolvedValue(null)
 
       mockPrisma.address.create.mockResolvedValue(createMockAddress())
       mockPrisma.order.create.mockResolvedValue({
@@ -157,7 +157,7 @@ describe('Orders API', () => {
     })
 
     it('stores color and size in order notes', async () => {
-      mockAuth.mockResolvedValue({ userId: null })
+      mockAuth.mockResolvedValue(null)
 
       mockPrisma.address.create.mockResolvedValue(createMockAddress())
       mockPrisma.order.create.mockResolvedValue({
@@ -184,7 +184,7 @@ describe('Orders API', () => {
     })
 
     it('handles database errors', async () => {
-      mockAuth.mockResolvedValue({ userId: null })
+      mockAuth.mockResolvedValue(null)
       mockPrisma.address.create.mockRejectedValue(new Error('Database error'))
 
       const { POST } = await import('@/app/api/orders/route')
@@ -200,7 +200,7 @@ describe('Orders API', () => {
     })
 
     it('handles foreign key constraint errors', async () => {
-      mockAuth.mockResolvedValue({ userId: null })
+      mockAuth.mockResolvedValue(null)
       mockPrisma.address.create.mockResolvedValue(createMockAddress())
       mockPrisma.order.create.mockRejectedValue(new Error('Foreign key constraint failed'))
 
@@ -217,7 +217,7 @@ describe('Orders API', () => {
     })
 
     it('disconnects from database after operation', async () => {
-      mockAuth.mockResolvedValue({ userId: null })
+      mockAuth.mockResolvedValue(null)
       mockPrisma.address.create.mockResolvedValue(createMockAddress())
       mockPrisma.order.create.mockResolvedValue({
         ...createMockOrder(),

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useAuth } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import {
@@ -35,7 +34,6 @@ interface Category {
 }
 
 export default function CategoriesManagement() {
-  const { getToken } = useAuth()
   const router = useRouter()
   const toast = useToast()
   const [categories, setCategories] = useState<Category[]>([])
@@ -77,12 +75,7 @@ export default function CategoriesManagement() {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const token = await getToken()
-      const response = await fetchApi('/api/admin/categories', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await fetchApi('/api/admin/categories')
       if (response.ok) {
         const data = await response.json()
         const categoriesData = Array.isArray(data) ? data : (data.categories ?? data.data ?? [])
@@ -94,7 +87,7 @@ export default function CategoriesManagement() {
     } finally {
       setLoading(false)
     }
-  }, [getToken, toast])
+  }, [toast])
 
   useEffect(() => {
     fetchCategories()
@@ -114,7 +107,6 @@ export default function CategoriesManagement() {
     setIsSubmitting(true)
 
     try {
-      const token = await getToken()
       let response: Response
       const isEditing = !!editingCategory
 
@@ -124,7 +116,6 @@ export default function CategoriesManagement() {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
             name: formData.name,
@@ -148,9 +139,6 @@ export default function CategoriesManagement() {
 
         response = await fetchApi('/api/admin/categories/upload', {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
           body: uploadFormData
         })
       } else {
@@ -159,7 +147,6 @@ export default function CategoriesManagement() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
             ...formData,
@@ -242,12 +229,10 @@ export default function CategoriesManagement() {
 
   const handleUpdateCategory = async (categoryId: string, updates: Partial<Category>) => {
     try {
-      const token = await getToken()
       const response = await fetchApi(`/api/admin/categories/${categoryId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(updates)
       })
@@ -271,13 +256,9 @@ export default function CategoriesManagement() {
   const handleDeleteCategory = async (categoryId: string) => {
     if (confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
       try {
-        const token = await getToken()
         const categoryToDelete = categories.find(c => c.id === categoryId)
         const response = await fetchApi(`/api/admin/categories/${categoryId}`, {
           method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
         })
         if (response.ok) {
           setCategories(categories.filter(cat => cat.id !== categoryId))
@@ -418,12 +399,8 @@ export default function CategoriesManagement() {
 
     setIsDeletingFromMap(true)
     try {
-      const token = await getToken()
       const response = await fetchApi(`/api/admin/categories/${deleteTarget.id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
       })
 
       if (response.ok) {

@@ -3,41 +3,36 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { ShoppingCart } from 'lucide-react'
-import { useAuth } from '@clerk/nextjs'
+import { useSession } from 'next-auth/react'
 import { cartApi } from '@/lib/api'
 
 export function CartIcon() {
   const [itemCount, setItemCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
-  const { isLoaded, isSignedIn, getToken } = useAuth()
+  const { status } = useSession()
+  const isSignedIn = status === 'authenticated'
 
   const fetchCartCount = useCallback(async () => {
     try {
-      const token = await getToken()
-      if (!token) {
-        setItemCount(0)
-        setIsLoading(false)
-        return
-      }
-      const cart = await cartApi.get(token)
+      const cart = await cartApi.get()
       setItemCount(cart.itemCount || 0)
     } catch (error) {
       console.error('Failed to fetch cart count:', error)
     } finally {
       setIsLoading(false)
     }
-  }, [getToken])
+  }, [])
 
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
+    if (status === 'authenticated') {
       fetchCartCount()
-    } else if (isLoaded && !isSignedIn) {
+    } else if (status === 'unauthenticated') {
       setItemCount(0)
       setIsLoading(false)
     }
-  }, [isSignedIn, isLoaded, fetchCartCount])
+  }, [status, fetchCartCount])
 
-  if (!isLoaded || !isSignedIn) {
+  if (status === 'loading' || !isSignedIn) {
     return (
       <Link href="/sign-in" className="p-2 rounded-md text-gray-700 hover:bg-gray-100">
         <ShoppingCart size={20} />

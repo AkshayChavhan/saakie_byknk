@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useAuth } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import {
@@ -41,7 +40,6 @@ interface Category {
 }
 
 export default function ProductsManagement() {
-  const { getToken } = useAuth()
   const router = useRouter()
   const toast = useToast()
   const [products, setProducts] = useState<Product[]>([])
@@ -85,10 +83,7 @@ export default function ProductsManagement() {
 
   const fetchProducts = useCallback(async () => {
     try {
-      const token = await getToken()
-      const response = await fetchApi('/api/admin/products', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
+      const response = await fetchApi('/api/admin/products')
       if (response.ok) {
         const data = await response.json()
         const productsData = Array.isArray(data) ? data : (data.products ?? data.data ?? [])
@@ -100,14 +95,11 @@ export default function ProductsManagement() {
     } finally {
       setLoading(false)
     }
-  }, [getToken, toast])
+  }, [toast])
 
   const fetchCategories = useCallback(async () => {
     try {
-      const token = await getToken()
-      const response = await fetchApi('/api/admin/categories', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
+      const response = await fetchApi('/api/admin/categories')
       if (response.ok) {
         const data = await response.json()
         const categoriesData = Array.isArray(data) ? data : (data.categories ?? data.data ?? [])
@@ -116,7 +108,7 @@ export default function ProductsManagement() {
     } catch (error) {
       console.error('Failed to fetch categories:', error)
     }
-  }, [getToken])
+  }, [])
 
   useEffect(() => {
     fetchProducts()
@@ -133,10 +125,8 @@ export default function ProductsManagement() {
   const handleDeleteProduct = async (productId: string, productName: string) => {
     if (confirm('Are you sure you want to delete this product?')) {
       try {
-        const token = await getToken()
         const response = await fetchApi(`/api/admin/products/${productId}`, {
           method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token}` }
         })
         if (response.ok) {
           setProducts(products.filter(product => product.id !== productId))
@@ -153,12 +143,10 @@ export default function ProductsManagement() {
 
   const handleToggleProductStatus = async (productId: string, isActive: boolean) => {
     try {
-      const token = await getToken()
       const response = await fetchApi(`/api/admin/products/${productId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ isActive })
       })
@@ -176,12 +164,10 @@ export default function ProductsManagement() {
 
   const handleToggleFeatured = async (productId: string, isFeatured: boolean) => {
     try {
-      const token = await getToken()
       const response = await fetchApi(`/api/admin/products/${productId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ isFeatured })
       })
@@ -248,10 +234,8 @@ export default function ProductsManagement() {
 
       uploadFormData.append('data', JSON.stringify(productData))
 
-      const token = await getToken()
       const response = await fetchApi('/api/admin/products/upload', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
         body: uploadFormData
       })
 

@@ -31,7 +31,6 @@ export async function GET(request: Request) {
         where,
         select: {
           id: true,
-          clerkId: true,
           email: true,
           name: true,
           phone: true,
