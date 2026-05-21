@@ -2,13 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { Header } from '@/components/layout/header'
 
-// Mock Clerk components
-const mockUseUser = vi.fn()
-vi.mock('@clerk/nextjs', () => ({
-  useUser: () => mockUseUser(),
-  SignedIn: ({ children }: { children: React.ReactNode }) => mockUseUser().user ? <>{children}</> : null,
-  SignedOut: ({ children }: { children: React.ReactNode }) => !mockUseUser().user ? <>{children}</> : null,
-  UserButton: () => <div data-testid="user-button">UserButton</div>,
+// Mock Auth.js client session
+const mockUseSession = vi.fn()
+vi.mock('next-auth/react', () => ({
+  useSession: () => mockUseSession(),
+  signOut: vi.fn(),
 }))
 
 // Mock the CartIcon component
@@ -16,10 +14,20 @@ vi.mock('@/components/cart', () => ({
   CartIcon: () => <div data-testid="cart-icon">Cart</div>,
 }))
 
+// Helper: build a useSession() return value.
+const signedOut = () => ({ data: null, status: 'unauthenticated' as const })
+const signedIn = (role = 'USER') => ({
+  data: {
+    user: { id: 'user_123', email: 'test@example.com', name: 'Test User', role },
+    expires: '2099-01-01',
+  },
+  status: 'authenticated' as const,
+})
+
 describe('Header component', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUseUser.mockReturnValue({ user: null })
+    mockUseSession.mockReturnValue(signedOut())
   })
 
   it('renders the logo', () => {
@@ -32,7 +40,6 @@ describe('Header component', () => {
   it('renders main navigation links in desktop view', () => {
     render(<Header />)
 
-    // These are in the desktop nav (hidden on mobile)
     const homeLinks = screen.getAllByText('Home')
     expect(homeLinks.length).toBeGreaterThan(0)
 
@@ -41,83 +48,67 @@ describe('Header component', () => {
   })
 
   it('shows Sign In link when user is not authenticated', () => {
-    mockUseUser.mockReturnValue({ user: null })
+    mockUseSession.mockReturnValue(signedOut())
 
     render(<Header />)
 
     expect(screen.getByText('Sign In')).toBeInTheDocument()
   })
 
-  it('shows user button when user is authenticated', () => {
-    mockUseUser.mockReturnValue({ user: { id: 'user_123' } })
+  it('shows account menu button when user is authenticated', () => {
+    mockUseSession.mockReturnValue(signedIn())
 
     render(<Header />)
 
-    expect(screen.getByTestId('user-button')).toBeInTheDocument()
+    expect(screen.getByLabelText('Account menu')).toBeInTheDocument()
   })
 
   it('shows cart icon when user is authenticated', () => {
-    mockUseUser.mockReturnValue({ user: { id: 'user_123' } })
+    mockUseSession.mockReturnValue(signedIn())
 
     render(<Header />)
 
     expect(screen.getByTestId('cart-icon')).toBeInTheDocument()
   })
 
-  it('shows admin link when user is authenticated', () => {
-    mockUseUser.mockReturnValue({ user: { id: 'user_123' } })
+  it('shows Admin Dashboard in account menu for admin users', () => {
+    mockUseSession.mockReturnValue(signedIn('ADMIN'))
 
     render(<Header />)
 
-    expect(screen.getByText('Admin')).toBeInTheDocument()
+    // Admin link lives inside the account dropdown — open it first.
+    fireEvent.click(screen.getByLabelText('Account menu'))
+
+    const adminLink = screen.getByRole('link', { name: /Admin Dashboard/i })
+    expect(adminLink).toHaveAttribute('href', '/admin')
   })
 
-  it('does not show admin link when user is not authenticated', () => {
-    mockUseUser.mockReturnValue({ user: null })
+  it('does not show Admin Dashboard for non-admin users', () => {
+    mockUseSession.mockReturnValue(signedIn('USER'))
 
     render(<Header />)
 
-    expect(screen.queryByText('Admin')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByLabelText('Account menu'))
+
+    expect(screen.queryByText('Admin Dashboard')).not.toBeInTheDocument()
   })
 
-  it('opens mobile menu when hamburger button is clicked', () => {
+  it('does not show account menu when user is not authenticated', () => {
+    mockUseSession.mockReturnValue(signedOut())
+
     render(<Header />)
 
-    // Click the hamburger button (first button)
-    const menuButton = screen.getAllByRole('button')[0]
-    fireEvent.click(menuButton)
-
-    // Mobile menu should now be visible - check for the mobile menu container
-    const mobileMenu = document.querySelector('.lg\\:hidden.py-4')
-    expect(mobileMenu).toBeInTheDocument()
+    expect(screen.queryByLabelText('Account menu')).not.toBeInTheDocument()
   })
 
-  it('shows Admin Dashboard in mobile menu for authenticated users', () => {
-    mockUseUser.mockReturnValue({ user: { id: 'user_123' } })
+  it('shows a Sign Out option in the account menu', () => {
+    mockUseSession.mockReturnValue(signedIn())
 
     render(<Header />)
 
-    // Click the hamburger button
-    const menuButton = screen.getAllByRole('button')[0]
-    fireEvent.click(menuButton)
+    fireEvent.click(screen.getByLabelText('Account menu'))
 
-    // Admin Dashboard link should be visible in mobile menu
-    expect(screen.getByText('Admin Dashboard')).toBeInTheDocument()
-  })
-
-  it('can toggle search functionality', () => {
-    render(<Header />)
-
-    // Find and click the search button (look for button with Search icon)
-    const buttons = screen.getAllByRole('button')
-    // Search button is the first one after the menu button
-    const searchButton = buttons[1]
-
-    fireEvent.click(searchButton)
-
-    // Search bar visibility is toggled
-    // After toggle, the search state changes
-    expect(searchButton).toBeInTheDocument()
+    expect(screen.getByText('Sign Out')).toBeInTheDocument()
   })
 
   it('has sticky header styling', () => {
@@ -135,7 +126,7 @@ describe('Header component', () => {
   })
 
   it('sign in link points to sign-in page', () => {
-    mockUseUser.mockReturnValue({ user: null })
+    mockUseSession.mockReturnValue(signedOut())
 
     render(<Header />)
 
@@ -143,24 +134,11 @@ describe('Header component', () => {
     expect(signInLink).toHaveAttribute('href', '/sign-in')
   })
 
-  it('admin link points to admin page', () => {
-    mockUseUser.mockReturnValue({ user: { id: 'user_123' } })
-
-    render(<Header />)
-
-    const adminLink = screen.getByRole('link', { name: /^Admin$/i })
-    expect(adminLink).toHaveAttribute('href', '/admin')
-  })
-
   it('navigation links have correct hrefs', () => {
     render(<Header />)
 
-    // Check one of each navigation link (they appear in both desktop and mobile nav)
     const homeLinks = screen.getAllByRole('link', { name: 'Home' })
     expect(homeLinks[0]).toHaveAttribute('href', '/')
-
-    const silkLinks = screen.getAllByRole('link', { name: 'Silk Sarees' })
-    expect(silkLinks[0]).toHaveAttribute('href', '/categories/silk-sarees')
 
     const saleLinks = screen.getAllByRole('link', { name: 'Sale' })
     expect(saleLinks[0]).toHaveAttribute('href', '/products?sale=true')

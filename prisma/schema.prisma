@@ -9,8 +9,11 @@ datasource db {
 
 model User {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  clerkId         String   @unique
   email           String   @unique
+  // Hashed (bcrypt) credentials password. Nullable so future OAuth-only
+  // users (Google, magic-link) can exist without a password.
+  password        String?
+  emailVerified   DateTime?
   name            String?
   phone           String?
   imageUrl        String?
@@ -27,6 +30,10 @@ model User {
 
   @@map("users")
 }
+
+// NOTE: When Google OAuth / magic-link providers are added later, Auth.js
+// adapter models (Account, Session, VerificationToken) go here. Not needed
+// now: Credentials provider uses the JWT session strategy.
 
 model Category {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId

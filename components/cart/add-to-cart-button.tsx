@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ShoppingCart, Check } from 'lucide-react'
-import { useAuth } from '@clerk/nextjs'
+import { useSession } from 'next-auth/react'
 import { cartApi } from '@/lib/api'
 
 interface AddToCartButtonProps {
@@ -25,7 +25,7 @@ export function AddToCartButton({
 }: AddToCartButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [isAdded, setIsAdded] = useState(false)
-  const { isLoaded, isSignedIn, getToken } = useAuth()
+  const { status } = useSession()
   const router = useRouter()
 
   const sizeClasses = {
@@ -40,22 +40,17 @@ export function AddToCartButton({
   }
 
   const handleAddToCart = async () => {
-    if (!isLoaded) return
+    if (status === 'loading') return
 
-    if (!isSignedIn) {
+    if (status !== 'authenticated') {
       router.push('/sign-in')
       return
     }
 
     try {
       setIsLoading(true)
-      const token = await getToken()
-      if (!token) {
-        router.push('/sign-in')
-        return
-      }
 
-      await cartApi.addItem(token, {
+      await cartApi.addItem({
         productId,
         quantity: 1
       })
@@ -83,7 +78,7 @@ export function AddToCartButton({
   return (
     <button
       onClick={handleAddToCart}
-      disabled={isLoading || !isLoaded}
+      disabled={isLoading || status === 'loading'}
       className={baseClasses}
     >
       {isLoading ? (

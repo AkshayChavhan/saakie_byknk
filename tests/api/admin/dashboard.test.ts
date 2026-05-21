@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { createMockUser, createMockProduct, createMockOrder } from '../../mocks/factories'
+import { createMockUser, createMockProduct, createMockOrder, createMockSession } from '../../mocks/factories'
 
-// Mock Clerk auth
+// Mock Auth.js — `auth()` resolves the session (or null when signed out)
 const mockAuth = vi.fn()
-vi.mock('@clerk/nextjs/server', () => ({
+vi.mock('@/auth', () => ({
   auth: () => mockAuth(),
 }))
 
@@ -39,7 +39,7 @@ describe('Admin Dashboard API', () => {
 
   describe('GET /api/admin/dashboard', () => {
     it('returns 401 when not authenticated', async () => {
-      mockAuth.mockResolvedValue({ userId: null })
+      mockAuth.mockResolvedValue(null)
 
       const { GET } = await import('@/app/api/admin/dashboard/route')
       const response = await GET()
@@ -50,7 +50,7 @@ describe('Admin Dashboard API', () => {
     })
 
     it('returns 403 when user is not admin', async () => {
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockPrisma.user.findUnique.mockResolvedValue(
         createMockUser({ role: 'USER' })
       )
@@ -64,7 +64,7 @@ describe('Admin Dashboard API', () => {
     })
 
     it('returns 403 when user not found', async () => {
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockPrisma.user.findUnique.mockResolvedValue(null)
 
       const { GET } = await import('@/app/api/admin/dashboard/route')
@@ -74,7 +74,7 @@ describe('Admin Dashboard API', () => {
     })
 
     it('returns dashboard statistics for ADMIN user', async () => {
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockPrisma.user.findUnique.mockResolvedValue(
         createMockUser({ role: 'ADMIN' })
       )
@@ -109,7 +109,7 @@ describe('Admin Dashboard API', () => {
     })
 
     it('returns dashboard statistics for SUPER_ADMIN user', async () => {
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockPrisma.user.findUnique.mockResolvedValue(
         createMockUser({ role: 'SUPER_ADMIN' })
       )
@@ -127,7 +127,7 @@ describe('Admin Dashboard API', () => {
     })
 
     it('returns zero revenue when no paid orders', async () => {
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockPrisma.user.findUnique.mockResolvedValue(
         createMockUser({ role: 'ADMIN' })
       )
@@ -147,7 +147,7 @@ describe('Admin Dashboard API', () => {
     })
 
     it('includes top products', async () => {
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockPrisma.user.findUnique.mockResolvedValue(
         createMockUser({ role: 'ADMIN' })
       )
@@ -170,7 +170,7 @@ describe('Admin Dashboard API', () => {
     })
 
     it('includes recent orders', async () => {
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockPrisma.user.findUnique.mockResolvedValue(
         createMockUser({ role: 'ADMIN' })
       )
@@ -192,7 +192,7 @@ describe('Admin Dashboard API', () => {
     })
 
     it('handles database errors', async () => {
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockPrisma.user.findUnique.mockRejectedValue(new Error('Database error'))
 
       const { GET } = await import('@/app/api/admin/dashboard/route')
@@ -204,7 +204,7 @@ describe('Admin Dashboard API', () => {
     })
 
     it('disconnects from database after query', async () => {
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockPrisma.user.findUnique.mockResolvedValue(
         createMockUser({ role: 'ADMIN' })
       )

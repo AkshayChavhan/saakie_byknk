@@ -2,11 +2,21 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { CartIcon } from '@/components/cart/cart-icon'
 
-// Mock Clerk
-const mockUseUser = vi.fn()
-vi.mock('@clerk/nextjs', () => ({
-  useUser: () => mockUseUser(),
+// Mock Auth.js client session
+const mockUseSession = vi.fn()
+vi.mock('next-auth/react', () => ({
+  useSession: () => mockUseSession(),
 }))
+
+// Helper: build a useSession() return value from a simple signed-in flag.
+const sessionState = (opts: { loaded: boolean; signedIn: boolean }) => {
+  if (!opts.loaded) return { data: null, status: 'loading' as const }
+  if (!opts.signedIn) return { data: null, status: 'unauthenticated' as const }
+  return {
+    data: { user: { id: 'user_123', role: 'USER' }, expires: '2099-01-01' },
+    status: 'authenticated' as const,
+  }
+}
 
 describe('CartIcon component', () => {
   beforeEach(() => {
@@ -19,10 +29,7 @@ describe('CartIcon component', () => {
   })
 
   it('shows sign-in link when user is not loaded', () => {
-    mockUseUser.mockReturnValue({
-      user: null,
-      isLoaded: false,
-    })
+    mockUseSession.mockReturnValue(sessionState({ loaded: false, signedIn: false }))
 
     render(<CartIcon />)
 
@@ -31,10 +38,7 @@ describe('CartIcon component', () => {
   })
 
   it('shows sign-in link when user is not authenticated', () => {
-    mockUseUser.mockReturnValue({
-      user: null,
-      isLoaded: true,
-    })
+    mockUseSession.mockReturnValue(sessionState({ loaded: true, signedIn: false }))
 
     render(<CartIcon />)
 
@@ -42,10 +46,7 @@ describe('CartIcon component', () => {
   })
 
   it('shows cart link for authenticated user', async () => {
-    mockUseUser.mockReturnValue({
-      user: { id: 'user_123' },
-      isLoaded: true,
-    })
+    mockUseSession.mockReturnValue(sessionState({ loaded: true, signedIn: true }))
 
     ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true,
@@ -60,10 +61,7 @@ describe('CartIcon component', () => {
   })
 
   it('displays item count badge when cart has items', async () => {
-    mockUseUser.mockReturnValue({
-      user: { id: 'user_123' },
-      isLoaded: true,
-    })
+    mockUseSession.mockReturnValue(sessionState({ loaded: true, signedIn: true }))
 
     ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true,
@@ -78,10 +76,7 @@ describe('CartIcon component', () => {
   })
 
   it('displays 99+ when item count exceeds 99', async () => {
-    mockUseUser.mockReturnValue({
-      user: { id: 'user_123' },
-      isLoaded: true,
-    })
+    mockUseSession.mockReturnValue(sessionState({ loaded: true, signedIn: true }))
 
     ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true,
@@ -96,10 +91,7 @@ describe('CartIcon component', () => {
   })
 
   it('does not display badge when cart is empty', async () => {
-    mockUseUser.mockReturnValue({
-      user: { id: 'user_123' },
-      isLoaded: true,
-    })
+    mockUseSession.mockReturnValue(sessionState({ loaded: true, signedIn: true }))
 
     ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true,
@@ -119,10 +111,7 @@ describe('CartIcon component', () => {
   })
 
   it('fetches cart count on mount for authenticated user', async () => {
-    mockUseUser.mockReturnValue({
-      user: { id: 'user_123' },
-      isLoaded: true,
-    })
+    mockUseSession.mockReturnValue(sessionState({ loaded: true, signedIn: true }))
 
     ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true,
@@ -132,15 +121,12 @@ describe('CartIcon component', () => {
     render(<CartIcon />)
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/cart')
+      expect(global.fetch).toHaveBeenCalledWith('/api/cart', expect.any(Object))
     })
   })
 
   it('does not fetch cart for unauthenticated user', () => {
-    mockUseUser.mockReturnValue({
-      user: null,
-      isLoaded: true,
-    })
+    mockUseSession.mockReturnValue(sessionState({ loaded: true, signedIn: false }))
 
     render(<CartIcon />)
 
@@ -148,10 +134,7 @@ describe('CartIcon component', () => {
   })
 
   it('handles fetch error gracefully', async () => {
-    mockUseUser.mockReturnValue({
-      user: { id: 'user_123' },
-      isLoaded: true,
-    })
+    mockUseSession.mockReturnValue(sessionState({ loaded: true, signedIn: true }))
 
     ;(global.fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network error'))
 
@@ -167,10 +150,7 @@ describe('CartIcon component', () => {
   })
 
   it('handles non-ok response gracefully', async () => {
-    mockUseUser.mockReturnValue({
-      user: { id: 'user_123' },
-      isLoaded: true,
-    })
+    mockUseSession.mockReturnValue(sessionState({ loaded: true, signedIn: true }))
 
     ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: false,
@@ -188,10 +168,7 @@ describe('CartIcon component', () => {
   })
 
   it('renders shopping cart icon', () => {
-    mockUseUser.mockReturnValue({
-      user: null,
-      isLoaded: true,
-    })
+    mockUseSession.mockReturnValue(sessionState({ loaded: true, signedIn: false }))
 
     render(<CartIcon />)
 

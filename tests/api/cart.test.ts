@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { createMockUser, createMockCart, createMockCartItem, createMockProduct } from '../mocks/factories'
+import { createMockUser, createMockCart, createMockCartItem, createMockProduct, createMockSession } from '../mocks/factories'
 
-// Mock Clerk auth
+// Mock Auth.js — `auth()` resolves the session (or null when signed out)
 const mockAuth = vi.fn()
-vi.mock('@clerk/nextjs/server', () => ({
+vi.mock('@/auth', () => ({
   auth: () => mockAuth(),
 }))
 
@@ -38,7 +38,7 @@ describe('Cart API', () => {
 
   describe('GET /api/cart', () => {
     it('returns 401 when not authenticated', async () => {
-      mockAuth.mockResolvedValue({ userId: null })
+      mockAuth.mockResolvedValue(null)
 
       const { GET } = await import('@/app/api/cart/route')
       const response = await GET()
@@ -49,7 +49,7 @@ describe('Cart API', () => {
     })
 
     it('returns 404 when user not found', async () => {
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockDb.user.findUnique.mockResolvedValue(null)
 
       const { GET } = await import('@/app/api/cart/route')
@@ -68,7 +68,7 @@ describe('Cart API', () => {
       ]
       const cart = createMockCart({ items: cartItems })
 
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockDb.user.findUnique.mockResolvedValue(user)
       mockDb.cart.findUnique.mockResolvedValue(cart)
 
@@ -85,7 +85,7 @@ describe('Cart API', () => {
       const user = createMockUser()
       const newCart = createMockCart({ items: [] })
 
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockDb.user.findUnique.mockResolvedValue(user)
       mockDb.cart.findUnique.mockResolvedValue(null)
       mockDb.cart.create.mockResolvedValue(newCart)
@@ -104,7 +104,7 @@ describe('Cart API', () => {
     })
 
     it('handles database errors', async () => {
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockDb.user.findUnique.mockRejectedValue(new Error('DB Error'))
 
       const { GET } = await import('@/app/api/cart/route')
@@ -116,7 +116,7 @@ describe('Cart API', () => {
 
   describe('POST /api/cart', () => {
     it('returns 401 when not authenticated', async () => {
-      mockAuth.mockResolvedValue({ userId: null })
+      mockAuth.mockResolvedValue(null)
 
       const { POST } = await import('@/app/api/cart/route')
       const request = new NextRequest('http://localhost:3000/api/cart', {
@@ -129,7 +129,7 @@ describe('Cart API', () => {
     })
 
     it('returns 400 when productId is missing', async () => {
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockDb.user.findUnique.mockResolvedValue(createMockUser())
 
       const { POST } = await import('@/app/api/cart/route')
@@ -145,7 +145,7 @@ describe('Cart API', () => {
     })
 
     it('returns 400 when quantity is less than 1', async () => {
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockDb.user.findUnique.mockResolvedValue(createMockUser())
 
       const { POST } = await import('@/app/api/cart/route')
@@ -161,7 +161,7 @@ describe('Cart API', () => {
     })
 
     it('returns 404 when product not found', async () => {
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockDb.user.findUnique.mockResolvedValue(createMockUser())
       mockDb.product.findUnique.mockResolvedValue(null)
 
@@ -178,7 +178,7 @@ describe('Cart API', () => {
     })
 
     it('returns 400 when product is inactive', async () => {
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockDb.user.findUnique.mockResolvedValue(createMockUser())
       mockDb.product.findUnique.mockResolvedValue(
         createMockProduct({ isActive: false })
@@ -197,7 +197,7 @@ describe('Cart API', () => {
     })
 
     it('returns 400 when insufficient stock', async () => {
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockDb.user.findUnique.mockResolvedValue(createMockUser())
       mockDb.product.findUnique.mockResolvedValue(
         createMockProduct({ stock: 2, isActive: true })
@@ -223,7 +223,7 @@ describe('Cart API', () => {
         items: [createMockCartItem({ price: 5999, quantity: 1 })],
       })
 
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockDb.user.findUnique.mockResolvedValue(user)
       mockDb.product.findUnique.mockResolvedValue(product)
       mockDb.cart.findUnique
@@ -256,7 +256,7 @@ describe('Cart API', () => {
         items: [{ ...existingItem, quantity: 3 }],
       })
 
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockDb.user.findUnique.mockResolvedValue(user)
       mockDb.product.findUnique.mockResolvedValue(product)
       mockDb.cart.findUnique
@@ -285,7 +285,7 @@ describe('Cart API', () => {
         items: [createMockCartItem()],
       })
 
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockDb.user.findUnique.mockResolvedValue(user)
       mockDb.product.findUnique.mockResolvedValue(product)
       mockDb.cart.findUnique
@@ -307,7 +307,7 @@ describe('Cart API', () => {
 
   describe('DELETE /api/cart', () => {
     it('returns 401 when not authenticated', async () => {
-      mockAuth.mockResolvedValue({ userId: null })
+      mockAuth.mockResolvedValue(null)
 
       const { DELETE } = await import('@/app/api/cart/route')
       const response = await DELETE()
@@ -318,7 +318,7 @@ describe('Cart API', () => {
     it('clears all items from cart', async () => {
       const user = createMockUser()
 
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockDb.user.findUnique.mockResolvedValue(user)
       mockDb.cartItem.deleteMany.mockResolvedValue({ count: 3 })
 
@@ -334,7 +334,7 @@ describe('Cart API', () => {
     })
 
     it('returns 404 when user not found', async () => {
-      mockAuth.mockResolvedValue({ userId: 'clerk_123' })
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockDb.user.findUnique.mockResolvedValue(null)
 
       const { DELETE } = await import('@/app/api/cart/route')

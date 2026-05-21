@@ -35,32 +35,29 @@ vi.mock('next/link', () => ({
   },
 }))
 
-// Mock Clerk
-vi.mock('@clerk/nextjs', () => ({
-  useUser: () => ({
-    user: null,
-    isLoaded: true,
-    isSignedIn: false,
+// Mock Auth.js client hooks (next-auth/react)
+vi.mock('next-auth/react', () => ({
+  useSession: () => ({
+    data: null,
+    status: 'unauthenticated',
   }),
-  useAuth: () => ({
-    userId: null,
-    isLoaded: true,
-    isSignedIn: false,
-  }),
-  ClerkProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  SignInButton: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  SignUpButton: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  UserButton: () => null,
+  signIn: vi.fn(),
+  signOut: vi.fn(),
+  SessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }))
 
-vi.mock('@clerk/nextjs/server', () => ({
-  auth: vi.fn(() => Promise.resolve({ userId: null })),
-  currentUser: vi.fn(() => Promise.resolve(null)),
+// Mock the Auth.js server instance (`auth()` used by route handlers / server components)
+vi.mock('@/auth', () => ({
+  auth: vi.fn(() => Promise.resolve(null)),
+  signIn: vi.fn(),
+  signOut: vi.fn(),
+  handlers: { GET: vi.fn(), POST: vi.fn() },
 }))
 
 // Mock environment variables
 process.env.DATABASE_URL = 'mongodb://localhost:27017/test'
 process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000'
+process.env.AUTH_SECRET = 'test-secret'
 
 // Global fetch mock
 global.fetch = vi.fn()

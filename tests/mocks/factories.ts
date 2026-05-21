@@ -2,7 +2,6 @@
 
 export const createMockUser = (overrides = {}) => ({
   id: 'user_123',
-  clerkId: 'clerk_user_123',
   email: 'test@example.com',
   name: 'Test User',
   phone: '+919876543210',
@@ -13,6 +12,20 @@ export const createMockUser = (overrides = {}) => ({
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
   ...overrides,
+})
+
+/**
+ * Mock Auth.js session shape. `requireAuth()`/`optionalAuth()` read
+ * `session.user.id`, so tests resolve `auth()` with this.
+ */
+export const createMockSession = (overrides: { id?: string; role?: string } = {}) => ({
+  user: {
+    id: overrides.id ?? 'user_123',
+    email: 'test@example.com',
+    name: 'Test User',
+    role: overrides.role ?? 'USER',
+  },
+  expires: '2099-01-01T00:00:00.000Z',
 })
 
 export const createMockProduct = (overrides = {}) => ({

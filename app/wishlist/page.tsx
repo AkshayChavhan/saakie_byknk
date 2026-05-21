@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useAuth } from '@clerk/nextjs'
+import { useSession } from 'next-auth/react'
 import { Heart, ShoppingCart, Trash2, ArrowRight, Package } from 'lucide-react'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
@@ -31,7 +31,9 @@ interface WishlistItem {
 }
 
 export default function WishlistPage() {
-  const { isSignedIn, isLoaded, getToken } = useAuth()
+  const { status } = useSession()
+  const isLoaded = status !== 'loading'
+  const isSignedIn = status === 'authenticated'
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([])
   const [loading, setLoading] = useState(true)
   const [removing, setRemoving] = useState<string | null>(null)
@@ -39,22 +41,17 @@ export default function WishlistPage() {
 
   const fetchWishlist = useCallback(async () => {
     try {
-      const token = await getToken()
-      if (!token) {
-        setLoading(false)
-        return
-      }
-      const data = await wishlistApi.get(token)
+      const data = await wishlistApi.get()
       setWishlistItems(data.items || [])
     } catch (error) {
       console.error('Error fetching wishlist:', error)
     } finally {
       setLoading(false)
     }
-  }, [getToken])
+  }, [])
 
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
+    if (isSignedIn) {
       fetchWishlist()
     } else if (isLoaded) {
       setLoading(false)
@@ -64,9 +61,7 @@ export default function WishlistPage() {
   const removeFromWishlist = async (productId: string) => {
     setRemoving(productId)
     try {
-      const token = await getToken()
-      if (!token) return
-      await wishlistApi.removeItem(token, productId)
+      await wishlistApi.removeItem(productId)
       setWishlistItems(prev => prev.filter(item => item.product.id !== productId))
     } catch (error) {
       console.error('Error removing from wishlist:', error)
@@ -78,9 +73,7 @@ export default function WishlistPage() {
   const addToCart = async (productId: string) => {
     setAddingToCart(productId)
     try {
-      const token = await getToken()
-      if (!token) return
-      await cartApi.addItem(token, { productId, quantity: 1 })
+      await cartApi.addItem({ productId, quantity: 1 })
       alert('Added to cart!')
     } catch (error) {
       console.error('Error adding to cart:', error)

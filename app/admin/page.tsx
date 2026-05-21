@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useUser, useAuth } from '@clerk/nextjs'
+import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -76,8 +76,9 @@ interface Category {
 }
 
 export default function AdminDashboard() {
-  const { user } = useUser()
-  const { getToken } = useAuth()
+  const { data: session, status } = useSession()
+  const user = session?.user
+  const role = session?.user?.role
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     totalOrders: 0,
@@ -91,9 +92,8 @@ export default function AdminDashboard() {
     recentOrders: []
   })
   const [loading, setLoading] = useState(true)
-  const [authorized, setAuthorized] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const [debugInfo, setDebugInfo] = useState<string>('')
+  const authorized = role === 'ADMIN' || role === 'SUPER_ADMIN'
 
   // Mapped View state
   const toast = useToast()
@@ -116,12 +116,7 @@ export default function AdminDashboard() {
 
   const fetchDashboardStats = useCallback(async () => {
     try {
-      const token = await getToken()
-      const response = await fetchApi('/api/admin/dashboard', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await fetchApi('/api/admin/dashboard')
       if (response.ok) {
         const data = await response.json()
         setStats(data)
@@ -131,62 +126,17 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false)
     }
-  }, [getToken])
+  }, [])
 
-  const checkAuthorization = useCallback(async () => {
-    try {
-      const token = await getToken()
-      console.log('[Admin] Token exists:', !!token)
-      setDebugInfo(prev => prev + `\nToken exists: ${!!token}`)
-
-      if (!token) {
-        console.log('[Admin] No token')
-        setDebugInfo(prev => prev + '\nNo token - not signed in')
-        setLoading(false)
-        return
-      }
-
-      setDebugInfo(prev => prev + '\nCalling /api/auth/check-role...')
-
-      const response = await fetchApi('/api/auth/check-role', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-
-      console.log('[Admin] Response status:', response.status)
-      setDebugInfo(prev => prev + `\nResponse status: ${response.status}`)
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log('[Admin] Role data:', data)
-        setDebugInfo(prev => prev + `\nRole data: ${JSON.stringify(data, null, 2)}`)
-
-        if (data.role === 'ADMIN' || data.role === 'SUPER_ADMIN') {
-          setAuthorized(true)
-          setDebugInfo(prev => prev + '\nAuthorized! Loading dashboard...')
-          fetchDashboardStats()
-        } else {
-          console.log('[Admin] Not admin role:', data.role)
-          setDebugInfo(prev => prev + `\nNot admin role: ${data.role}`)
-          setLoading(false)
-        }
-      } else {
-        const errorData = await response.json().catch(() => ({}))
-        console.log('[Admin] API error:', response.status, errorData)
-        setDebugInfo(prev => prev + `\nAPI error: ${response.status} - ${JSON.stringify(errorData)}`)
-        setLoading(false)
-      }
-    } catch (error) {
-      console.error('[Admin] Authorization check failed:', error)
-      setDebugInfo(prev => prev + `\nError: ${error instanceof Error ? error.message : String(error)}`)
+  // Role comes straight from the Auth.js session — no API round-trip.
+  useEffect(() => {
+    if (status === 'loading') return
+    if (authorized) {
+      fetchDashboardStats()
+    } else {
       setLoading(false)
     }
-  }, [getToken, fetchDashboardStats])
-
-  useEffect(() => {
-    checkAuthorization()
-  }, [checkAuthorization])
+  }, [status, authorized, fetchDashboardStats])
 
   useEffect(() => {
     setMounted(true)
@@ -286,12 +236,7 @@ export default function AdminDashboard() {
   const fetchCategories = async () => {
     setIsLoadingCategories(true)
     try {
-      const token = await getToken()
-      const response = await fetchApi('/api/admin/categories', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await fetchApi('/api/admin/categories')
       if (response.ok) {
         const data = await response.json()
         const categoriesData = Array.isArray(data) ? data : (data.categories ?? data.data ?? [])
@@ -397,12 +342,8 @@ export default function AdminDashboard() {
 
     setIsDeletingFromMap(true)
     try {
-      const token = await getToken()
       const response = await fetchApi(`/api/admin/categories/${deleteTarget.id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
       })
 
       if (response.ok) {
@@ -421,17 +362,12 @@ export default function AdminDashboard() {
     }
   }
 
-  if (loading) {
+  if (loading || status === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-red-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Checking authorization...</p>
-          {debugInfo && (
-            <pre className="mt-4 p-4 bg-gray-800 text-green-400 text-left text-xs rounded-lg max-w-xl overflow-auto">
-              {debugInfo}
-            </pre>
-          )}
         </div>
       </div>
     )
@@ -443,12 +379,6 @@ export default function AdminDashboard() {
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-2xl w-full">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
           <p className="text-gray-600 mb-4">You don&apos;t have permission to access the admin dashboard.</p>
-          <div className="bg-gray-100 rounded-lg p-4 mb-4">
-            <h2 className="font-semibold text-gray-800 mb-2">Debug Info:</h2>
-            <pre className="text-xs text-gray-600 whitespace-pre-wrap overflow-auto max-h-64">
-              {debugInfo || 'No debug info available'}
-            </pre>
-          </div>
           <Link href="/" className="inline-block bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700">
             Go to Home
           </Link>
@@ -466,7 +396,7 @@ export default function AdminDashboard() {
             Admin Dashboard
           </h1>
           <p className="text-gray-600">
-            Welcome back, {user?.firstName || 'Admin'}! Here&apos;s what&apos;s happening with your store.
+            Welcome back, {user?.name || 'Admin'}! Here&apos;s what&apos;s happening with your store.
           </p>
         </div>
 

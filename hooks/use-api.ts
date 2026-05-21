@@ -1,7 +1,6 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@clerk/nextjs';
 import {
   productApi,
   categoryApi,
@@ -12,6 +11,9 @@ import {
   adminApi,
   ProductListParams,
 } from '@/lib/api';
+
+// Protected endpoints authenticate via the Auth.js session cookie, which the
+// browser sends automatically on same-origin requests — no token plumbing.
 
 // ============================================
 // Product Hooks
@@ -60,28 +62,18 @@ export function useCategory(slug: string) {
 // Cart Hooks
 // ============================================
 export function useCart() {
-  const { getToken } = useAuth();
-
   return useQuery({
     queryKey: ['cart'],
-    queryFn: async () => {
-      const token = await getToken();
-      if (!token) throw new Error('Not authenticated');
-      return cartApi.get(token);
-    },
+    queryFn: () => cartApi.get(),
   });
 }
 
 export function useAddToCart() {
-  const { getToken } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { productId: string; quantity: number; colorId?: string; sizeId?: string }) => {
-      const token = await getToken();
-      if (!token) throw new Error('Not authenticated');
-      return cartApi.addItem(token, data);
-    },
+    mutationFn: (data: { productId: string; quantity: number; colorId?: string; sizeId?: string }) =>
+      cartApi.addItem(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
     },
@@ -89,15 +81,11 @@ export function useAddToCart() {
 }
 
 export function useUpdateCartItem() {
-  const { getToken } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ itemId, quantity }: { itemId: string; quantity: number }) => {
-      const token = await getToken();
-      if (!token) throw new Error('Not authenticated');
-      return cartApi.updateItem(token, itemId, quantity);
-    },
+    mutationFn: ({ itemId, quantity }: { itemId: string; quantity: number }) =>
+      cartApi.updateItem(itemId, quantity),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
     },
@@ -105,15 +93,10 @@ export function useUpdateCartItem() {
 }
 
 export function useRemoveCartItem() {
-  const { getToken } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (itemId: string) => {
-      const token = await getToken();
-      if (!token) throw new Error('Not authenticated');
-      return cartApi.removeItem(token, itemId);
-    },
+    mutationFn: (itemId: string) => cartApi.removeItem(itemId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
     },
@@ -121,15 +104,10 @@ export function useRemoveCartItem() {
 }
 
 export function useClearCart() {
-  const { getToken } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async () => {
-      const token = await getToken();
-      if (!token) throw new Error('Not authenticated');
-      return cartApi.clear(token);
-    },
+    mutationFn: () => cartApi.clear(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
     },
@@ -140,28 +118,17 @@ export function useClearCart() {
 // Wishlist Hooks
 // ============================================
 export function useWishlist() {
-  const { getToken } = useAuth();
-
   return useQuery({
     queryKey: ['wishlist'],
-    queryFn: async () => {
-      const token = await getToken();
-      if (!token) throw new Error('Not authenticated');
-      return wishlistApi.get(token);
-    },
+    queryFn: () => wishlistApi.get(),
   });
 }
 
 export function useAddToWishlist() {
-  const { getToken } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (productId: string) => {
-      const token = await getToken();
-      if (!token) throw new Error('Not authenticated');
-      return wishlistApi.addItem(token, productId);
-    },
+    mutationFn: (productId: string) => wishlistApi.addItem(productId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wishlist'] });
     },
@@ -169,15 +136,10 @@ export function useAddToWishlist() {
 }
 
 export function useRemoveFromWishlist() {
-  const { getToken } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (productId: string) => {
-      const token = await getToken();
-      if (!token) throw new Error('Not authenticated');
-      return wishlistApi.removeItem(token, productId);
-    },
+    mutationFn: (productId: string) => wishlistApi.removeItem(productId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wishlist'] });
     },
@@ -188,28 +150,16 @@ export function useRemoveFromWishlist() {
 // Order Hooks
 // ============================================
 export function useOrders() {
-  const { getToken } = useAuth();
-
   return useQuery({
     queryKey: ['orders'],
-    queryFn: async () => {
-      const token = await getToken();
-      if (!token) throw new Error('Not authenticated');
-      return orderApi.list(token);
-    },
+    queryFn: () => orderApi.list(),
   });
 }
 
 export function useOrder(orderId: string) {
-  const { getToken } = useAuth();
-
   return useQuery({
     queryKey: ['order', orderId],
-    queryFn: async () => {
-      const token = await getToken();
-      if (!token) throw new Error('Not authenticated');
-      return orderApi.getById(token, orderId);
-    },
+    queryFn: () => orderApi.getById(orderId),
     enabled: !!orderId,
   });
 }
@@ -218,28 +168,16 @@ export function useOrder(orderId: string) {
 // User Hooks
 // ============================================
 export function useUserProfile() {
-  const { getToken } = useAuth();
-
   return useQuery({
     queryKey: ['user', 'profile'],
-    queryFn: async () => {
-      const token = await getToken();
-      if (!token) throw new Error('Not authenticated');
-      return userApi.getProfile(token);
-    },
+    queryFn: () => userApi.getProfile(),
   });
 }
 
 export function useUserAddresses() {
-  const { getToken } = useAuth();
-
   return useQuery({
     queryKey: ['user', 'addresses'],
-    queryFn: async () => {
-      const token = await getToken();
-      if (!token) throw new Error('Not authenticated');
-      return userApi.getAddresses(token);
-    },
+    queryFn: () => userApi.getAddresses(),
   });
 }
 
@@ -247,80 +185,46 @@ export function useUserAddresses() {
 // Admin Hooks
 // ============================================
 export function useAdminDashboard() {
-  const { getToken } = useAuth();
-
   return useQuery({
     queryKey: ['admin', 'dashboard'],
-    queryFn: async () => {
-      const token = await getToken();
-      if (!token) throw new Error('Not authenticated');
-      return adminApi.getDashboard(token);
-    },
+    queryFn: () => adminApi.getDashboard(),
   });
 }
 
 export function useAdminUsers() {
-  const { getToken } = useAuth();
-
   return useQuery({
     queryKey: ['admin', 'users'],
-    queryFn: async () => {
-      const token = await getToken();
-      if (!token) throw new Error('Not authenticated');
-      return adminApi.getUsers(token);
-    },
+    queryFn: () => adminApi.getUsers(),
   });
 }
 
 export function useAdminProducts() {
-  const { getToken } = useAuth();
-
   return useQuery({
     queryKey: ['admin', 'products'],
-    queryFn: async () => {
-      const token = await getToken();
-      if (!token) throw new Error('Not authenticated');
-      return adminApi.getProducts(token);
-    },
+    queryFn: () => adminApi.getProducts(),
   });
 }
 
 export function useAdminOrders() {
-  const { getToken } = useAuth();
-
   return useQuery({
     queryKey: ['admin', 'orders'],
-    queryFn: async () => {
-      const token = await getToken();
-      if (!token) throw new Error('Not authenticated');
-      return adminApi.getOrders(token);
-    },
+    queryFn: () => adminApi.getOrders(),
   });
 }
 
 export function useAdminCategories() {
-  const { getToken } = useAuth();
-
   return useQuery({
     queryKey: ['admin', 'categories'],
-    queryFn: async () => {
-      const token = await getToken();
-      if (!token) throw new Error('Not authenticated');
-      return adminApi.getCategories(token);
-    },
+    queryFn: () => adminApi.getCategories(),
   });
 }
 
 export function useUpdateOrderStatus() {
-  const { getToken } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
-      const token = await getToken();
-      if (!token) throw new Error('Not authenticated');
-      return adminApi.updateOrderStatus(token, orderId, status);
-    },
+    mutationFn: ({ orderId, status }: { orderId: string; status: string }) =>
+      adminApi.updateOrderStatus(orderId, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
     },

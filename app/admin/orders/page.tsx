@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useAuth } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Search, Filter, Eye, Package, Truck, CheckCircle, XCircle, Clock, AlertTriangle, ArrowLeft } from 'lucide-react'
@@ -31,7 +30,6 @@ interface Order {
 }
 
 export default function OrdersManagement() {
-  const { getToken } = useAuth()
   const router = useRouter()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
@@ -43,12 +41,7 @@ export default function OrdersManagement() {
 
   const fetchOrders = useCallback(async () => {
     try {
-      const token = await getToken()
-      const response = await fetchApi('/api/admin/orders', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await fetchApi('/api/admin/orders')
       if (response.ok) {
         const data = await response.json()
         // Handle both array response and object with orders property
@@ -60,7 +53,7 @@ export default function OrdersManagement() {
     } finally {
       setLoading(false)
     }
-  }, [getToken])
+  }, [])
 
   useEffect(() => {
     fetchOrders()
@@ -68,12 +61,10 @@ export default function OrdersManagement() {
 
   const handleStatusUpdate = async (orderId: string, newStatus: string) => {
     try {
-      const token = await getToken()
       const response = await fetchApi(`/api/admin/orders/${orderId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ status: newStatus })
       })

@@ -1,11 +1,10 @@
 import 'server-only';
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 
 export interface AuthedUser {
   id: string;
-  clerkId: string;
   email: string;
   name: string | null;
   imageUrl: string | null;
@@ -14,7 +13,6 @@ export interface AuthedUser {
 
 const userSelect = {
   id: true,
-  clerkId: true,
   email: true,
   name: true,
   imageUrl: true,
@@ -53,13 +51,14 @@ function notFound(message: string, code: string): NextResponse {
  */
 export async function requireAuth(): Promise<AuthedUser | NextResponse> {
   try {
-    const { userId: clerkId } = await auth();
-    if (!clerkId) {
-      return unauthorized('Unauthorized - No session', 'NO_TOKEN');
+    const session = await auth();
+    const userId = session?.user?.id;
+    if (!userId) {
+      return unauthorized('Unauthorized - No session', 'NO_SESSION');
     }
 
     const user = await prisma.user.findUnique({
-      where: { clerkId },
+      where: { id: userId },
       select: userSelect,
     });
 
@@ -80,11 +79,12 @@ export async function requireAuth(): Promise<AuthedUser | NextResponse> {
  */
 export async function optionalAuth(): Promise<AuthedUser | null> {
   try {
-    const { userId: clerkId } = await auth();
-    if (!clerkId) return null;
+    const session = await auth();
+    const userId = session?.user?.id;
+    if (!userId) return null;
 
     const user = await prisma.user.findUnique({
-      where: { clerkId },
+      where: { id: userId },
       select: userSelect,
     });
 

@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['res.cloudinary.com', 'images.unsplash.com', 'img.clerk.com', 'saakie.vercel.app'],
+    domains: ['res.cloudinary.com', 'images.unsplash.com', 'saakie.vercel.app'],
   },
   serverExternalPackages: ['@prisma/client'],
   experimental: {
