@@ -10,13 +10,14 @@ import { fetchApi } from '@/lib/api'
 
 interface Product {
   id: string
+  slug: string
   name: string
   price: number
   comparePrice: number
   rating: number
   reviews: number
   image: string
-  colors: string[]
+  colors?: string[]
   isNew?: boolean
   isBestseller?: boolean
 }
@@ -108,7 +109,7 @@ export function FeaturedProducts() {
               onMouseEnter={() => setHoveredProduct(product.id)}
               onMouseLeave={() => setHoveredProduct(null)}
             >
-              <Link href={`/products/${product.id}`}>
+              <Link href={`/products/${product.slug}`}>
                 <div className="relative aspect-[3/4] mb-3 overflow-hidden rounded-lg bg-gray-100">
                   <Image
                     src={product.image}
@@ -168,15 +169,17 @@ export function FeaturedProducts() {
                     </span>
                   </div>
 
-                  <div className="flex items-center space-x-1">
-                    {product.colors.map((color, index) => (
-                      <div
-                        key={index}
-                        className="w-4 h-4 rounded-full border border-gray-300"
-                        style={{ backgroundColor: color }}
-                      />
-                    ))}
-                  </div>
+                  {product.colors && product.colors.length > 0 && (
+                    <div className="flex items-center space-x-1">
+                      {product.colors.map((color, index) => (
+                        <div
+                          key={index}
+                          className="w-4 h-4 rounded-full border border-gray-300"
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               </Link>
 
