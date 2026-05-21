@@ -78,8 +78,7 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: [
-    // Run on everything except Next internals and files with an extension.
-    String.raw`/((?!_next/static|_next/image|favicon.ico|.+\.[\w]+$).*)`,
-  ],
+  // Must be a plain string literal — Next.js parses this statically at build
+  // time and cannot evaluate expressions (template tags, concatenation, etc).
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.+\\.[\\w]+$).*)'],
 };
