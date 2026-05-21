@@ -40,10 +40,39 @@ export async function GET(
           product.reviews.length
         : 0;
 
+    // Related products: other active products in the same category.
+    const related = await prisma.product.findMany({
+      where: {
+        isActive: true,
+        categoryId: product.categoryId,
+        id: { not: product.id },
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        price: true,
+        comparePrice: true,
+        images: { select: { url: true }, take: 1 },
+      },
+      take: 4,
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const relatedProducts = related.map((p) => ({
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      price: p.price,
+      comparePrice: p.comparePrice ?? p.price,
+      image: p.images[0]?.url || '/images/placeholder-product.jpg',
+    }));
+
     return NextResponse.json({
       ...product,
       avgRating,
       reviewCount: product._count.reviews,
+      relatedProducts,
     });
   } catch (error) {
     return apiError(error);

@@ -921,7 +921,7 @@ export default function ProductDetailPage() {
         </div>
 
         {/* Related Products */}
-        {product.relatedProducts.length > 0 && (
+        {product.relatedProducts && product.relatedProducts.length > 0 && (
           <div className="mt-12">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">You Might Also Like</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
