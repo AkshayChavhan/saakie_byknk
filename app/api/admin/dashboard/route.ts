@@ -24,6 +24,9 @@ export async function GET() {
       lowStockProducts,
       monthlyOrders,
       newUsersThisMonth,
+      activeUsers,
+      topProducts,
+      recentOrders,
     ] = await Promise.all([
       prisma.user.count(),
       prisma.product.count({ where: { isActive: true } }),
@@ -38,6 +41,28 @@ export async function GET() {
         select: { total: true },
       }),
       prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
+      // Active users = users who have placed at least one order.
+      prisma.user.count({ where: { orders: { some: {} } } }),
+      // Top products = best sellers by number of order items.
+      prisma.product.findMany({
+        take: 5,
+        orderBy: { orderItems: { _count: 'desc' } },
+        select: {
+          id: true,
+          name: true,
+          price: true,
+          stock: true,
+          images: { select: { url: true }, take: 1 },
+          _count: { select: { orderItems: true } },
+        },
+      }),
+      prisma.order.findMany({
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { name: true, email: true } },
+        },
+      }),
     ]);
 
     const totalRevenue = await prisma.order.aggregate({
@@ -47,25 +72,19 @@ export async function GET() {
 
     const monthlyRevenue = monthlyOrders.reduce((sum, order) => sum + order.total, 0);
 
-    const recentOrders = await prisma.order.findMany({
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        user: { select: { name: true, email: true } },
-      },
-    });
-
+    // Flat response — the admin dashboard page reads every field off the
+    // top level (`setStats(data)`).
     return NextResponse.json({
-      stats: {
-        totalUsers,
-        totalProducts,
-        totalOrders,
-        totalRevenue: totalRevenue._sum.total || 0,
-        monthlyRevenue,
-        pendingOrders,
-        lowStockProducts,
-        newUsersThisMonth,
-      },
+      totalUsers,
+      totalProducts,
+      totalOrders,
+      totalRevenue: totalRevenue._sum.total || 0,
+      monthlyRevenue,
+      pendingOrders,
+      lowStockProducts,
+      newUsersThisMonth,
+      activeUsers,
+      topProducts,
       recentOrders,
     });
   } catch (error) {
