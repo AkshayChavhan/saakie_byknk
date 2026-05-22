@@ -39,6 +39,13 @@ interface Category {
   slug: string
 }
 
+// An existing product image as returned by GET /api/admin/products/[id].
+interface ExistingImage {
+  id: string
+  url: string
+  isPrimary: boolean
+}
+
 export default function ProductsManagement() {
   const router = useRouter()
   const toast = useToast()
@@ -80,6 +87,16 @@ export default function ProductsManagement() {
     images: [] as File[]
   })
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
+
+  // Edit-mode state. When `editingProductId` is set, the modal acts as an
+  // edit form; otherwise it creates. `existingImages` are images already on
+  // the product; `removedImageIds` tracks ones the admin removed; the primary
+  // image is either an existing image id or `new:<index>` for an added file.
+  const [editingProductId, setEditingProductId] = useState<string | null>(null)
+  const [existingImages, setExistingImages] = useState<ExistingImage[]>([])
+  const [removedImageIds, setRemovedImageIds] = useState<string[]>([])
+  const [primaryImageId, setPrimaryImageId] = useState<string | null>(null)
+  const isEditMode = editingProductId !== null
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -182,6 +199,72 @@ export default function ProductsManagement() {
     }
   }
 
+  const openEditModal = async (productId: string) => {
+    try {
+      const response = await fetchApi(`/api/admin/products/${productId}`)
+      if (!response.ok) {
+        toast.error('Failed to Load', 'Could not load product for editing.')
+        return
+      }
+      const p = await response.json()
+
+      // Reset any in-progress create state, then pre-fill from the product.
+      imagePreviews.forEach(url => URL.revokeObjectURL(url))
+      setImagePreviews([])
+      setFormData({
+        name: p.name ?? '',
+        slug: p.slug ?? '',
+        description: p.description ?? '',
+        price: p.price != null ? String(p.price) : '',
+        compareAtPrice: p.comparePrice != null ? String(p.comparePrice) : '',
+        stock: p.stock != null ? String(p.stock) : '',
+        lowStockAlert: p.lowStockAlert != null ? String(p.lowStockAlert) : '10',
+        categoryId: p.categoryId ?? p.category?.id ?? '',
+        material: p.material ?? '',
+        pattern: p.pattern ?? '',
+        occasion: Array.isArray(p.occasion) ? p.occasion.join(', ') : (p.occasion ?? ''),
+        careInstructions: p.careInstructions ?? '',
+        weight: p.weight != null ? String(p.weight) : '',
+        length: '',
+        width: '',
+        blouseIncluded: !!p.blouseIncluded,
+        isActive: !!p.isActive,
+        isFeatured: !!p.isFeatured,
+        images: [],
+      })
+
+      const imgs: ExistingImage[] = (p.images ?? []).map((img: { id: string; url: string; isPrimary: boolean }) => ({
+        id: img.id,
+        url: img.url,
+        isPrimary: img.isPrimary,
+      }))
+      setExistingImages(imgs)
+      setRemovedImageIds([])
+      const primary = imgs.find(i => i.isPrimary) ?? imgs[0]
+      setPrimaryImageId(primary ? primary.id : null)
+
+      setEditingProductId(productId)
+      setShowAddModal(true)
+    } catch (error) {
+      console.error('Failed to open product for editing:', error)
+      toast.error('Failed to Load', 'An error occurred.')
+    }
+  }
+
+  const toggleRemoveExistingImage = (imageId: string) => {
+    setRemovedImageIds(prev => {
+      const next = prev.includes(imageId)
+        ? prev.filter(id => id !== imageId)
+        : [...prev, imageId]
+      // If the removed image was primary, pick a new primary from what remains.
+      if (next.includes(imageId) && primaryImageId === imageId) {
+        const stillThere = existingImages.find(i => !next.includes(i.id))
+        setPrimaryImageId(stillThere ? stillThere.id : null)
+      }
+      return next
+    })
+  }
+
   const handleImageSelect = (files: FileList | null) => {
     if (!files) return
     const fileArray = Array.from(files)
@@ -200,17 +283,6 @@ export default function ProductsManagement() {
     setIsSubmitting(true)
 
     try {
-      if (!formData.images || formData.images.length === 0) {
-        toast.error('Images Required', 'Please select at least one image.')
-        setIsSubmitting(false)
-        return
-      }
-
-      const uploadFormData = new FormData()
-      formData.images.forEach((file) => {
-        uploadFormData.append('images', file)
-      })
-
       const productData = {
         name: formData.name,
         slug: formData.slug,
@@ -232,6 +304,52 @@ export default function ProductsManagement() {
         occasion: formData.occasion,
       }
 
+      if (isEditMode) {
+        // --- EDIT: PATCH with image add/remove/primary ---
+        const remainingCount =
+          existingImages.filter(img => !removedImageIds.includes(img.id)).length +
+          formData.images.length
+        if (remainingCount === 0) {
+          toast.error('Images Required', 'A product must have at least one image.')
+          setIsSubmitting(false)
+          return
+        }
+
+        const editFormData = new FormData()
+        editFormData.append('data', JSON.stringify(productData))
+        formData.images.forEach((file) => editFormData.append('newImages', file))
+        editFormData.append('removedImageIds', JSON.stringify(removedImageIds))
+        if (primaryImageId) editFormData.append('primaryImageId', primaryImageId)
+
+        const response = await fetchApi(`/api/admin/products/${editingProductId}`, {
+          method: 'PATCH',
+          body: editFormData,
+        })
+
+        if (response.ok) {
+          const updated = await response.json()
+          setProducts(products.map(p => (p.id === updated.id ? updated : p)))
+          setShowAddModal(false)
+          resetForm()
+          toast.success('Product Updated', `"${updated.name}" has been updated.`)
+        } else {
+          const error = await response.json().catch(() => ({}))
+          toast.error('Failed to Update', error.error || 'Something went wrong.')
+        }
+        return
+      }
+
+      // --- CREATE: POST to the upload route ---
+      if (!formData.images || formData.images.length === 0) {
+        toast.error('Images Required', 'Please select at least one image.')
+        setIsSubmitting(false)
+        return
+      }
+
+      const uploadFormData = new FormData()
+      formData.images.forEach((file) => {
+        uploadFormData.append('images', file)
+      })
       uploadFormData.append('data', JSON.stringify(productData))
 
       const response = await fetchApi('/api/admin/products/upload', {
@@ -250,8 +368,8 @@ export default function ProductsManagement() {
         toast.error('Failed to Create', error.error || 'Something went wrong.')
       }
     } catch (error) {
-      console.error('Error creating product:', error)
-      toast.error('Failed to Create', 'An unexpected error occurred.')
+      console.error('Error saving product:', error)
+      toast.error(isEditMode ? 'Failed to Update' : 'Failed to Create', 'An unexpected error occurred.')
     } finally {
       setIsSubmitting(false)
     }
@@ -260,6 +378,10 @@ export default function ProductsManagement() {
   const resetForm = () => {
     imagePreviews.forEach(url => URL.revokeObjectURL(url))
     setImagePreviews([])
+    setEditingProductId(null)
+    setExistingImages([])
+    setRemovedImageIds([])
+    setPrimaryImageId(null)
     setFormData({
       name: '',
       slug: '',
@@ -447,6 +569,7 @@ export default function ProductsManagement() {
                 <Eye className="h-5 w-5 transition-transform duration-200 hover:scale-110" />
               </button>
               <button
+                onClick={() => openEditModal(product.id)}
                 className="p-2.5 text-emerald-600 hover:bg-emerald-50 hover:shadow-sm rounded-lg transition-all duration-200 active:scale-90"
                 title="Edit product"
               >
@@ -559,6 +682,7 @@ export default function ProductsManagement() {
               <Eye className="h-4 w-4 transition-transform duration-200 hover:scale-110" />
             </button>
             <button
+              onClick={() => openEditModal(product.id)}
               className="p-2 text-emerald-600 hover:bg-emerald-50 hover:shadow-sm rounded-lg transition-all duration-200 active:scale-90"
               title="Edit"
             >
@@ -835,7 +959,9 @@ export default function ProductsManagement() {
             }`}>
               {/* Modal Header */}
               <div className="flex items-center justify-between p-4 sm:p-5 border-b border-gray-100">
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900">Add New Product</h2>
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+                  {isEditMode ? 'Edit Product' : 'Add New Product'}
+                </h2>
                 <button
                   onClick={closeAddModal}
                   className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
@@ -849,7 +975,58 @@ export default function ProductsManagement() {
                 <form id="product-form" onSubmit={handleFormSubmit} className="space-y-5">
                   {/* Image Upload */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Product Images *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Product Images {isEditMode ? '' : '*'}
+                    </label>
+
+                    {/* Existing images (edit mode only) — remove / set primary */}
+                    {isEditMode && existingImages.length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-xs text-gray-500 mb-2">Current images — tap the star to set the main image</p>
+                        <div className="flex flex-wrap gap-3">
+                          {existingImages.map((img) => {
+                            const removed = removedImageIds.includes(img.id)
+                            const isPrimary = primaryImageId === img.id
+                            return (
+                              <div key={img.id} className="relative">
+                                <Image
+                                  src={img.url}
+                                  alt="Product image"
+                                  width={80}
+                                  height={80}
+                                  className={`h-20 w-20 object-cover rounded-lg ring-2 transition-all ${
+                                    removed
+                                      ? 'opacity-30 ring-red-300'
+                                      : isPrimary
+                                        ? 'ring-amber-400'
+                                        : 'ring-gray-200'
+                                  }`}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => toggleRemoveExistingImage(img.id)}
+                                  className="absolute -top-2 -right-2 p-1 bg-white rounded-full shadow ring-1 ring-gray-200 hover:bg-red-50"
+                                  title={removed ? 'Keep image' : 'Remove image'}
+                                >
+                                  <X className={`h-3.5 w-3.5 ${removed ? 'text-gray-400' : 'text-red-600'}`} />
+                                </button>
+                                {!removed && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setPrimaryImageId(img.id)}
+                                    className="absolute -bottom-2 -right-2 p-1 bg-white rounded-full shadow ring-1 ring-gray-200 hover:bg-amber-50"
+                                    title={isPrimary ? 'Main image' : 'Set as main image'}
+                                  >
+                                    <Star className={`h-3.5 w-3.5 ${isPrimary ? 'text-amber-500 fill-current' : 'text-gray-400'}`} />
+                                  </button>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+
                     <div className={`border-2 border-dashed rounded-xl p-4 transition-colors ${
                       imagePreviews.length > 0 ? 'border-green-300 bg-green-50' : 'border-gray-200 hover:border-gray-300'
                     }`}>
@@ -869,7 +1046,7 @@ export default function ProductsManagement() {
                             ))}
                           </div>
                           <label htmlFor="product-images" className="mt-3 inline-block text-sm text-red-600 hover:text-red-700 cursor-pointer">
-                            Change images
+                            {isEditMode ? 'Change images to add' : 'Change images'}
                           </label>
                         </div>
                       ) : (
@@ -877,7 +1054,9 @@ export default function ProductsManagement() {
                           <div className="p-3 bg-gray-100 rounded-xl mb-3">
                             <ImageIcon className="h-8 w-8 text-gray-400" />
                           </div>
-                          <span className="text-sm font-medium text-gray-700">Tap to upload images</span>
+                          <span className="text-sm font-medium text-gray-700">
+                            {isEditMode ? 'Tap to add more images' : 'Tap to upload images'}
+                          </span>
                           <span className="text-xs text-gray-500 mt-1">JPEG, PNG, WebP • Max 5MB each</span>
                         </label>
                       )}
@@ -1092,10 +1271,10 @@ export default function ProductsManagement() {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                         </svg>
-                        Creating...
+                        {isEditMode ? 'Saving...' : 'Creating...'}
                       </>
                     ) : (
-                      'Create Product'
+                      isEditMode ? 'Save Changes' : 'Create Product'
                     )}
                   </button>
                 </div>
