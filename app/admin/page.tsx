@@ -22,6 +22,7 @@ import {
   Circle,
   X,
   Trash2,
+  MessageSquare,
   Megaphone,
   Images
 } from 'lucide-react'
@@ -208,6 +209,7 @@ export default function AdminDashboard() {
     { name: 'Manage Products', href: '/admin/products', icon: Package },
     { name: 'Manage Orders', href: '/admin/orders', icon: ShoppingBag },
     { name: 'Manage Categories', href: '/admin/categories', icon: Calendar },
+    { name: 'Manage Reviews', href: '/admin/reviews', icon: MessageSquare },
     { name: 'Hero Slides', href: '/admin/hero-slides', icon: Images },
     { name: 'Promotional Banners', href: '/admin/promotional-banners', icon: Megaphone },
   ]
