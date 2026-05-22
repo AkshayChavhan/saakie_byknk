@@ -9,6 +9,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
+    const search = searchParams.get('search');
     const sort = searchParams.get('sort') ?? 'newest';
     const minPrice = searchParams.get('minPrice') ?? '0';
     const maxPrice = searchParams.get('maxPrice') ?? '999999';
@@ -36,6 +37,16 @@ export async function GET(request: Request) {
     }
 
     if (inStock === 'true') where.stock = { gt: 0 };
+
+    // Free-text search across product name, description, and tags.
+    if (search?.trim()) {
+      const term = search.trim();
+      where.OR = [
+        { name: { contains: term, mode: 'insensitive' } },
+        { description: { contains: term, mode: 'insensitive' } },
+        { tags: { has: term } },
+      ];
+    }
 
     let orderBy: any = {};
     switch (sort) {

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { Search, Heart, LogOut, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -32,8 +32,10 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
   const { data: session, status } = useSession()
   const isSignedIn = status === 'authenticated'
   const role = session?.user?.role
@@ -66,6 +68,16 @@ export function Header() {
     } else {
       setMobileMenuOpen(true)
     }
+  }
+
+  // Submit the header search — navigates to the products page filtered by query.
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const query = searchQuery.trim()
+    if (!query) return
+    router.push(`/products?search=${encodeURIComponent(query)}`)
+    setSearchOpen(false)
+    setSearchQuery('')
   }
 
   // Close menu when pressing Escape key
@@ -250,17 +262,23 @@ export function Header() {
 
         {searchOpen && (
           <div className="py-4 border-t">
-            <div className="relative">
+            <form onSubmit={handleSearchSubmit} className="relative">
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search for fashion, colors, styles..."
                 className="w-full px-4 py-2 pr-12 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 autoFocus
               />
-              <button className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-500 hover:text-primary">
+              <button
+                type="submit"
+                aria-label="Search"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-500 hover:text-primary"
+              >
                 <Search size={20} />
               </button>
-            </div>
+            </form>
           </div>
         )}
 
