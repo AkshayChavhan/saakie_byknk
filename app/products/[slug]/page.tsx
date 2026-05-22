@@ -25,7 +25,7 @@ import {
   Check
 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
-import { fetchApi, cartApi } from '@/lib/api'
+import { fetchApi, cartApi, wishlistApi } from '@/lib/api'
 
 interface ProductImage {
   id: string
@@ -158,6 +158,9 @@ export default function ProductDetailPage() {
   const [addingToCart, setAddingToCart] = useState(false)
   const [addedToCart, setAddedToCart] = useState(false)
 
+  // Wishlist State
+  const [wishlistBusy, setWishlistBusy] = useState(false)
+
   // Review Form State
   const { status: authStatus } = useSession()
   const [reviewRating, setReviewRating] = useState(0)
@@ -186,6 +189,57 @@ export default function ProductDetailPage() {
   useEffect(() => {
     fetchProduct()
   }, [fetchProduct])
+
+  // Reflect whether this product is already in the signed-in user's wishlist.
+  useEffect(() => {
+    if (authStatus !== 'authenticated' || !product) {
+      setIsWishlisted(false)
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      try {
+        const wishlist = await wishlistApi.get()
+        if (cancelled) return
+        const inWishlist = (wishlist?.items ?? []).some(
+          (item: { product?: { id?: string } }) => item.product?.id === product.id
+        )
+        setIsWishlisted(inWishlist)
+      } catch (err) {
+        console.error('Failed to load wishlist state:', err)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [authStatus, product])
+
+  const handleToggleWishlist = async () => {
+    if (!product) return
+    if (authStatus !== 'authenticated') {
+      router.push('/sign-in')
+      return
+    }
+    if (wishlistBusy) return
+
+    // Optimistic toggle, reverted on failure.
+    const next = !isWishlisted
+    setIsWishlisted(next)
+    setWishlistBusy(true)
+    try {
+      if (next) {
+        await wishlistApi.addItem(product.id)
+      } else {
+        await wishlistApi.removeItem(product.id)
+      }
+    } catch (err) {
+      console.error('Failed to update wishlist:', err)
+      setIsWishlisted(!next) // revert
+      alert('Could not update your wishlist. Please try again.')
+    } finally {
+      setWishlistBusy(false)
+    }
+  }
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -392,12 +446,14 @@ export default function ProductDetailPage() {
             {product.name}
           </h1>
           <div className="flex items-center space-x-2">
-            <button 
-              onClick={() => setIsWishlisted(!isWishlisted)}
-              className="p-2"
+            <button
+              onClick={handleToggleWishlist}
+              disabled={wishlistBusy}
+              aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+              className="p-2 disabled:opacity-50"
             >
-              <Heart 
-                size={24} 
+              <Heart
+                size={24}
                 className={isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}
               />
             </button>
@@ -724,8 +780,9 @@ export default function ProductDetailPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <button
-                  onClick={() => setIsWishlisted(!isWishlisted)}
-                  className={`flex items-center justify-center space-x-2 py-3 px-4 border rounded-lg font-medium transition-colors ${
+                  onClick={handleToggleWishlist}
+                  disabled={wishlistBusy}
+                  className={`flex items-center justify-center space-x-2 py-3 px-4 border rounded-lg font-medium transition-colors disabled:opacity-60 ${
                     isWishlisted
                       ? 'border-red-500 text-red-500 bg-red-50'
                       : 'border-gray-300 text-gray-700 hover:border-gray-400'
@@ -1145,8 +1202,10 @@ export default function ProductDetailPage() {
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-40">
         <div className="flex space-x-2">
           <button
-            onClick={() => setIsWishlisted(!isWishlisted)}
-            className={`flex-shrink-0 p-3 border rounded-lg ${
+            onClick={handleToggleWishlist}
+            disabled={wishlistBusy}
+            aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+            className={`flex-shrink-0 p-3 border rounded-lg disabled:opacity-60 ${
               isWishlisted
                 ? 'border-red-500 text-red-500 bg-red-50'
                 : 'border-gray-300 text-gray-700'
