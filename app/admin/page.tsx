@@ -21,7 +21,9 @@ import {
   ChevronUp,
   Circle,
   X,
-  Trash2
+  Trash2,
+  Megaphone,
+  Images
 } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
 import { fetchApi } from '@/lib/api'
@@ -206,6 +208,8 @@ export default function AdminDashboard() {
     { name: 'Manage Products', href: '/admin/products', icon: Package },
     { name: 'Manage Orders', href: '/admin/orders', icon: ShoppingBag },
     { name: 'Manage Categories', href: '/admin/categories', icon: Calendar },
+    { name: 'Hero Slides', href: '/admin/hero-slides', icon: Images },
+    { name: 'Promotional Banners', href: '/admin/promotional-banners', icon: Megaphone },
   ]
 
   // Helper function to format time ago
