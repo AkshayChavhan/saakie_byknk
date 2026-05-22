@@ -24,7 +24,8 @@ import {
   Trash2,
   MessageSquare,
   Megaphone,
-  Images
+  Images,
+  Store
 } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
 import { fetchApi } from '@/lib/api'
@@ -398,6 +399,13 @@ export default function AdminDashboard() {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors group"
+          >
+            <Store className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+            <span className="text-sm font-medium">Back to Store</span>
+          </Link>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Admin Dashboard
           </h1>
