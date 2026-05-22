@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { 
@@ -152,6 +153,15 @@ export default function ProductDetailPage() {
     pincode: ''
   })
 
+  // Review Form State
+  const { status: authStatus } = useSession()
+  const [reviewRating, setReviewRating] = useState(0)
+  const [reviewHoverRating, setReviewHoverRating] = useState(0)
+  const [reviewTitle, setReviewTitle] = useState('')
+  const [reviewComment, setReviewComment] = useState('')
+  const [reviewSubmitting, setReviewSubmitting] = useState(false)
+  const [reviewMessage, setReviewMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
   const fetchProduct = useCallback(async () => {
     try {
       setLoading(true)
@@ -171,6 +181,45 @@ export default function ProductDetailPage() {
   useEffect(() => {
     fetchProduct()
   }, [fetchProduct])
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!product) return
+    if (reviewRating < 1) {
+      setReviewMessage({ type: 'error', text: 'Please select a star rating.' })
+      return
+    }
+    setReviewSubmitting(true)
+    setReviewMessage(null)
+    try {
+      const response = await fetchApi('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: product.id,
+          rating: reviewRating,
+          title: reviewTitle,
+          comment: reviewComment,
+        }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (response.ok) {
+        setReviewMessage({
+          type: 'success',
+          text: data.message || 'Thanks! Your review will appear once approved.',
+        })
+        setReviewRating(0)
+        setReviewTitle('')
+        setReviewComment('')
+      } else {
+        setReviewMessage({ type: 'error', text: data.error || 'Could not submit your review.' })
+      }
+    } catch {
+      setReviewMessage({ type: 'error', text: 'Something went wrong. Please try again.' })
+    } finally {
+      setReviewSubmitting(false)
+    }
+  }
 
   useEffect(() => {
     if (product?.colors.length && !selectedColor) {
@@ -796,6 +845,100 @@ export default function ProductDetailPage() {
 
             {activeTab === 'reviews' && (
               <div className="space-y-6">
+                {/* Write a Review */}
+                <div className="bg-gray-50 rounded-xl p-5 sm:p-6">
+                  <h3 className="font-semibold text-gray-900 mb-3">Write a Review</h3>
+                  {authStatus !== 'authenticated' ? (
+                    <p className="text-sm text-gray-600">
+                      Please{' '}
+                      <Link href="/sign-in" className="text-rose-600 hover:text-rose-700 font-medium">
+                        sign in
+                      </Link>{' '}
+                      to write a review.
+                    </p>
+                  ) : (
+                    <form onSubmit={handleReviewSubmit} className="space-y-4">
+                      {reviewMessage && (
+                        <div
+                          className={`text-sm rounded-lg px-3 py-2 ${
+                            reviewMessage.type === 'success'
+                              ? 'bg-green-50 text-green-700 border border-green-200'
+                              : 'bg-red-50 text-red-700 border border-red-200'
+                          }`}
+                        >
+                          {reviewMessage.text}
+                        </div>
+                      )}
+
+                      {/* Star rating */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          Your Rating *
+                        </label>
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => setReviewRating(star)}
+                              onMouseEnter={() => setReviewHoverRating(star)}
+                              onMouseLeave={() => setReviewHoverRating(0)}
+                              className="p-0.5"
+                              aria-label={`${star} star${star > 1 ? 's' : ''}`}
+                            >
+                              <Star
+                                size={26}
+                                className={
+                                  star <= (reviewHoverRating || reviewRating)
+                                    ? 'fill-yellow-400 text-yellow-400'
+                                    : 'text-gray-300'
+                                }
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          Title
+                        </label>
+                        <input
+                          type="text"
+                          value={reviewTitle}
+                          onChange={(e) => setReviewTitle(e.target.value)}
+                          placeholder="Sum up your experience"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          Review
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={reviewComment}
+                          onChange={(e) => setReviewComment(e.target.value)}
+                          placeholder="Tell others what you think about this product"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent resize-none"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={reviewSubmitting}
+                        className="px-5 py-2.5 bg-rose-600 text-white rounded-lg font-medium hover:bg-rose-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {reviewSubmitting ? 'Submitting…' : 'Submit Review'}
+                      </button>
+                      <p className="text-xs text-gray-500">
+                        Reviews are published after approval.
+                      </p>
+                    </form>
+                  )}
+                </div>
+
                 {product.reviews.length > 0 ? (
                   <>
                     <div className="text-center py-6 border-b border-gray-200">

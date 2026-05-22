@@ -19,14 +19,16 @@ export async function GET(
         colors: true,
         sizes: true,
         category: true,
+        // Only approved reviews are shown publicly.
         reviews: {
+          where: { status: 'APPROVED' },
           include: {
             user: { select: { name: true, imageUrl: true } },
           },
           orderBy: { createdAt: 'desc' },
           take: 10,
         },
-        _count: { select: { reviews: true } },
+        _count: { select: { reviews: { where: { status: 'APPROVED' } } } },
       },
     });
 
@@ -34,10 +36,15 @@ export async function GET(
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
+    // Average rating over approved reviews only.
+    const approvedRatings = await prisma.review.findMany({
+      where: { productId: product.id, status: 'APPROVED' },
+      select: { rating: true },
+    });
     const avgRating =
-      product.reviews.length > 0
-        ? product.reviews.reduce((sum, r) => sum + r.rating, 0) /
-          product.reviews.length
+      approvedRatings.length > 0
+        ? approvedRatings.reduce((sum, r) => sum + r.rating, 0) /
+          approvedRatings.length
         : 0;
 
     // Related products: other active products in the same category.

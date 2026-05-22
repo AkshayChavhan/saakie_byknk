@@ -282,13 +282,22 @@ model Review {
   title     String?
   comment   String?
   images    String[]
+  // Verified-purchase flag: true when the reviewer has an order for this product.
   isVerified Boolean @default(false)
+  // Moderation state — only APPROVED reviews are shown publicly.
+  status    ReviewStatus @default(PENDING)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([productId])
   @@index([userId])
   @@map("reviews")
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum UserRole {
