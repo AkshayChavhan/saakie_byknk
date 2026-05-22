@@ -327,17 +327,18 @@ enum PaymentStatus {
 }
 
 model HeroSlide {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  subtitle    String?
-  description String?
-  image       String
-  ctaText     String?
-  ctaLink     String?
-  order       Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  title         String
+  subtitle      String?
+  description   String?
+  image         String
+  imagePublicId String? // Cloudinary public ID for deletion
+  ctaText       String?
+  ctaLink       String?
+  order         Int      @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@map("hero_slides")
 }
@@ -347,6 +348,7 @@ model PromotionalBanner {
   title           String
   description     String?
   image           String?
+  imagePublicId   String? // Cloudinary public ID for deletion
   link            String?
   backgroundColor String?
   order           Int      @default(0)
