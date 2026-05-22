@@ -32,6 +32,15 @@ export function CartIcon() {
     }
   }, [status, fetchCartCount])
 
+  // Refresh the count when an item is added elsewhere (e.g. product page).
+  useEffect(() => {
+    const onCartUpdated = () => {
+      if (status === 'authenticated') fetchCartCount()
+    }
+    window.addEventListener('cartUpdated', onCartUpdated)
+    return () => window.removeEventListener('cartUpdated', onCartUpdated)
+  }, [status, fetchCartCount])
+
   if (status === 'loading' || !isSignedIn) {
     return (
       <Link href="/sign-in" className="p-2 rounded-md text-gray-700 hover:bg-gray-100">

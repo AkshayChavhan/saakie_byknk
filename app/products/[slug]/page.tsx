@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -25,7 +25,7 @@ import {
   Check
 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
-import { fetchApi } from '@/lib/api'
+import { fetchApi, cartApi } from '@/lib/api'
 
 interface ProductImage {
   id: string
@@ -122,6 +122,7 @@ interface Product {
 
 export default function ProductDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const slug = params.slug as string
   
   const [product, setProduct] = useState<Product | null>(null)
@@ -152,6 +153,10 @@ export default function ProductDetailPage() {
     city: '',
     pincode: ''
   })
+
+  // Add-to-Cart State
+  const [addingToCart, setAddingToCart] = useState(false)
+  const [addedToCart, setAddedToCart] = useState(false)
 
   // Review Form State
   const { status: authStatus } = useSession()
@@ -230,14 +235,32 @@ export default function ProductDetailPage() {
     }
   }, [product, selectedColor, selectedSize])
 
-  const handleAddToCart = () => {
-    console.log('Add to cart:', {
-      productId: product?.id,
-      selectedColor,
-      selectedSize,
-      quantity
-    })
-    // TODO: Implement cart functionality
+  const handleAddToCart = async () => {
+    if (!product) return
+
+    // Require sign-in — the cart is tied to the user account.
+    if (authStatus !== 'authenticated') {
+      router.push('/sign-in')
+      return
+    }
+    if (product.stock < quantity) {
+      alert(`Only ${product.stock} item${product.stock === 1 ? '' : 's'} in stock.`)
+      return
+    }
+
+    try {
+      setAddingToCart(true)
+      await cartApi.addItem({ productId: product.id, quantity })
+      setAddedToCart(true)
+      setTimeout(() => setAddedToCart(false), 2000)
+      // Let the header cart icon refresh its count.
+      window.dispatchEvent(new CustomEvent('cartUpdated'))
+    } catch (error) {
+      console.error('Failed to add to cart:', error)
+      alert(error instanceof Error ? error.message : 'Failed to add item to cart')
+    } finally {
+      setAddingToCart(false)
+    }
   }
 
   const handleCashOnDelivery = () => {
@@ -661,10 +684,25 @@ export default function ProductDetailPage() {
                 <>
                   <button
                     onClick={handleAddToCart}
-                    className="w-full bg-primary text-white py-4 px-6 rounded-lg font-medium text-lg hover:bg-primary/90 transition-colors flex items-center justify-center space-x-2"
+                    disabled={addingToCart}
+                    className="w-full bg-primary text-white py-4 px-6 rounded-lg font-medium text-lg hover:bg-primary/90 transition-colors flex items-center justify-center space-x-2 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    <ShoppingCart size={20} />
-                    <span>Add to Cart - {formatPrice(product.price * quantity)}</span>
+                    {addingToCart ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Adding...</span>
+                      </>
+                    ) : addedToCart ? (
+                      <>
+                        <Check size={20} />
+                        <span>Added to Cart</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart size={20} />
+                        <span>Add to Cart - {formatPrice(product.price * quantity)}</span>
+                      </>
+                    )}
                   </button>
                   
                   <button
@@ -1121,10 +1159,25 @@ export default function ProductDetailPage() {
             <>
               <button
                 onClick={handleAddToCart}
-                className="flex-1 bg-primary text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center space-x-2"
+                disabled={addingToCart}
+                className="flex-1 bg-primary text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <ShoppingCart size={16} />
-                <span>Cart</span>
+                {addingToCart ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Adding</span>
+                  </>
+                ) : addedToCart ? (
+                  <>
+                    <Check size={16} />
+                    <span>Added</span>
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart size={16} />
+                    <span>Cart</span>
+                  </>
+                )}
               </button>
               
               <button
