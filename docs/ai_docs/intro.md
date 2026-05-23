@@ -40,18 +40,30 @@ read the diff → run the app → watch the behaviour change.
 
 So: the front end is done. **Every phase below is backend + a little UI polish.**
 
-> ⚠️ **Security note:** a real `OPENAI_API_KEY` is committed in `.env`. Rotate it
+> ⚠️ **Security note:** real API keys are committed in `.env`. Rotate them
 > and confirm `.env` is gitignored before this work is pushed publicly.
 
 ---
 
 ## 2. Confirmed decisions
 
-- **Plain OpenAI SDK** for the hand-built phases (1–15) — no framework, so every
-  mechanism (streaming, tool-call loop, agent loop) is hand-written and the loop
-  logic *is* the lesson. LangChain comes **last** (Phase 16), deliberately.
-- **Models:** `gpt-4o-mini` (chat), `text-embedding-3-small` (embeddings),
-  `gpt-4o` vision (image input), Whisper + TTS (voice).
+- **Plain provider SDKs** for the hand-built phases (1–15) — no framework, so
+  every mechanism (streaming, tool-call loop, agent loop) is hand-written and
+  the loop logic *is* the lesson. LangChain comes **last** (Phase 16),
+  deliberately.
+- **Chat model: Anthropic Claude** — `claude-haiku-4-5` via the official
+  `@anthropic-ai/sdk`. Claude is a better fit for the agentic + MCP phases
+  later (P7, P8, P14, P15).
+- **OpenAI is still needed for two things** (Anthropic doesn't ship them):
+  - **Embeddings** (Phase 5, semantic RAG) — `text-embedding-3-small`.
+  - **Voice** (Phase 13) — Whisper (STT) + TTS.
+  So `.env` carries **both** `ANTHROPIC_API_KEY` and `OPENAI_API_KEY`. Two
+  providers in one app is normal.
+- **File-naming rule:** any file whose code is **tied to one provider** has the
+  provider in its name — `lib/ai/claude.ts`, later `lib/ai/openai-embeddings.ts`.
+  Provider-agnostic files (`lib/ai/prompts.ts`, `app/api/chat/route.ts`,
+  `lib/ai/tools.ts`, …) keep generic names. So at a glance, you know which
+  files would need touching if the underlying provider ever swapped.
 - **Vector store:** MongoDB Atlas Vector Search — already the DB, no new infra.
 - One phase = one branch + focused commit(s) + a `phase-N.md` note; built and
   verified one at a time, **stopping after each for review**.
@@ -94,6 +106,10 @@ Semantic RAG. Add an `embedding Float[]` field to `Product`;
 MongoDB Atlas Vector Search index; `lib/ai/vector-search.ts` runs a
 `$vectorSearch` aggregation; swap the retriever to vectors. Now "something
 elegant for a winter reception" works with no keyword overlap.
+**Provider note:** Anthropic doesn't ship an embeddings model, so this phase
+introduces a small OpenAI client in its own file — `lib/ai/openai-embeddings.ts`
+— calling `text-embedding-3-small`. (Per the naming rule above, that file
+makes the OpenAI dependency obvious.)
 
 **Phase 6 — `ai-phase-6-hybrid-rerank`** · *hybrid retrieval, re-ranking*
 Hybrid search: run keyword + vector search, merge the candidates, then a
@@ -132,15 +148,21 @@ run like tests. Proving the AI works rather than vibe-checking it.
 ### — Advanced / multimodal —
 
 **Phase 12 — `ai-phase-12-vision`** · *multimodal, vision*
-Image search: upload a photo → `gpt-4o` vision describes it → embed the
-description → vector search → "find sarees like this photo".
+Image search: upload a photo → Claude vision (the same `claude-haiku-4-5` /
+Sonnet describes it) → embed the description → vector search → "find sarees
+like this photo". Claude handles vision natively — no extra provider needed
+for this phase.
 
 **Phase 13 — `ai-phase-13-voice`** · *speech AI*
-Voice chat: mic input → Whisper (speech-to-text) → assistant → TTS reply audio.
+Voice chat: mic input → Whisper (speech-to-text) → Claude → TTS reply audio.
+**Provider note:** Anthropic doesn't ship speech models. This phase adds a
+small OpenAI client in its own file — `lib/ai/openai-voice.ts` — for Whisper
++ TTS. The main chat path stays Claude.
 
 **Phase 14 — `ai-phase-14-mcp`** · *MCP — tool interop standard*
 Expose the shop's tools as a **Model Context Protocol** server, so any MCP
-client (Claude, etc.) can use the catalog tools.
+client (Claude, etc.) can use the catalog tools. Adds `@modelcontextprotocol/sdk`
+(the official Anthropic Claude SDK has MCP helpers but not a full client).
 
 **Phase 15 — `ai-phase-15-multi-agent`** · *multi-agent systems*
 Two cooperating agents — a **Stylist** agent (taste, outfit advice) and a
