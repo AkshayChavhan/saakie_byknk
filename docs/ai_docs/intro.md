@@ -266,7 +266,7 @@ For each phase:
 ## 7. Status
 
 - [ ] Phase 1 — Basic chatbot
-- [ ] Phase 2 — Streaming
+- [x] Phase 2 — Streaming
 - [ ] Phase 3 — Tool calling + structured output
 - [ ] Phase 4 — Keyword RAG
 - [ ] Phase 5 — Semantic RAG (embeddings + Atlas Vector Search)
