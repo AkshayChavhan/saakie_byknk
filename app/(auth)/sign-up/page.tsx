@@ -34,7 +34,15 @@ export default function SignUpPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        setError(data.error || 'Could not create your account. Please try again.')
+        // The API returns errors as either a string (`{ error: '...' }`) or an
+        // object (`{ error: { message, code } }`). Normalise to a string so we
+        // never hand React a non-renderable object (React error #31).
+        const message =
+          typeof data.error === 'string'
+            ? data.error
+            : data.error?.message ||
+              'Could not create your account. Please try again.'
+        setError(message)
         setIsLoading(false)
         return
       }
