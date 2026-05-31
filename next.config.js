@@ -2,6 +2,12 @@
 const nextConfig = {
   images: {
     domains: ['res.cloudinary.com', 'images.unsplash.com', 'saakie.vercel.app'],
+    // Allow SVG sources (e.g. /images/placeholder-category.svg) through the
+    // image optimizer. Hardened so a served SVG can never execute scripts:
+    // it is sandboxed with a strict CSP and sent as an attachment.
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   serverExternalPackages: ['@prisma/client'],
   experimental: {

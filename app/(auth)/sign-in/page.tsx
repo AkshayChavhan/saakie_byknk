@@ -4,6 +4,14 @@ import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
+import { Mail, Lock } from 'lucide-react'
+import { AuthShell } from '@/components/auth/auth-shell'
+import {
+  TextField,
+  PasswordField,
+  SubmitButton,
+  ErrorBanner,
+} from '@/components/auth/auth-fields'
 
 function SignInForm() {
   const router = useRouter()
@@ -38,75 +46,78 @@ function SignInForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white shadow-xl rounded-lg p-8 space-y-5">
-      {error && (
-        <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {error && <ErrorBanner message={error} />}
+
+      <TextField
+        id="email"
+        label="Email address"
+        type="email"
+        icon={Mail}
+        autoComplete="email"
+        required
+        value={email}
+        onChange={setEmail}
+        placeholder="you@example.com"
+      />
 
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-          Email address
-        </label>
-        <input
-          id="email"
-          type="email"
-          autoComplete="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-red-600 focus:ring-red-600 focus:outline-none focus:ring-1"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-          Password
-        </label>
-        <input
+        <PasswordField
           id="password"
-          type="password"
+          label="Password"
+          icon={Lock}
           autoComplete="current-password"
           required
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-red-600 focus:ring-red-600 focus:outline-none focus:ring-1"
+          onChange={setPassword}
+          placeholder="Enter your password"
         />
+        <div className="mt-2 text-right">
+          <Link
+            href="/sign-in"
+            className="text-xs font-medium text-marigold-700 transition-colors hover:text-maroon-700"
+          >
+            Forgot password?
+          </Link>
+        </div>
       </div>
 
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="w-full bg-red-600 text-white py-2.5 rounded-md font-medium hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-      >
-        {isLoading ? 'Signing in…' : 'Sign in'}
-      </button>
+      <SubmitButton loading={isLoading} loadingLabel="Signing in…">
+        Sign in
+      </SubmitButton>
 
       {/* When Google OAuth is added later, a `signIn('google')` button goes here. */}
+
+      <p className="pt-1 text-center text-sm text-maroon-700/80">
+        New to Saakie?{' '}
+        <Link
+          href="/sign-up"
+          className="font-semibold text-maroon-700 underline-offset-2 hover:underline"
+        >
+          Create an account
+        </Link>
+      </p>
     </form>
   )
 }
 
 export default function SignInPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            Sign in to your account
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Or{' '}
-            <Link href="/sign-up" className="font-medium text-red-600 hover:text-red-500">
-              create a new account
-            </Link>
-          </p>
-        </div>
-        <Suspense fallback={<div className="bg-white shadow-xl rounded-lg p-8 text-center text-gray-500">Loading…</div>}>
-          <SignInForm />
-        </Suspense>
-      </div>
-    </div>
+    <AuthShell
+      eyebrow="Welcome back"
+      title="Sign in to your account"
+      subtitle="Step back into a world of timeless weaves and curated elegance."
+      panelQuote="Drape yourself in heritage — every weave tells a story."
+    >
+      <Suspense
+        fallback={
+          <div className="rounded-xl border border-maroon-100 bg-white/60 p-8 text-center text-sm text-maroon-500">
+            Loading…
+          </div>
+        }
+      >
+        <SignInForm />
+      </Suspense>
+    </AuthShell>
   )
 }

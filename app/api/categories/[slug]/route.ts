@@ -62,7 +62,7 @@ export async function GET(
         id: child.id,
         name: child.name,
         slug: child.slug,
-        image: child.image || '/images/placeholder-category.jpg',
+        image: child.image || '/images/placeholder-category.svg',
         count: child._count.products,
       })),
       pagination: {
