@@ -104,23 +104,23 @@ export function Header() {
   }, [mobileMenuOpen])
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm">
+    <header className="sticky top-0 z-50 bg-black shadow-sm">
       {/* <div className="bg-red-600 text-white py-2 text-center text-sm">
         <p>Free shipping on orders above ₹2,999 | Cash on Delivery Available</p>
       </div> */}
       
       <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
+          <div className="flex items-center flex-1 min-w-0">
             {/* Mobile: Animated hamburger menu button */}
             <button
               onClick={toggleMenu}
-              className="lg:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
+              className="lg:hidden p-2 rounded-md text-white hover:bg-gray-800 transition-colors"
               aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             >
               {isScrolled && !mobileMenuOpen ? (
                 <Image
-                  src="/images/saakie.jpg"
+                  src="/images/saakieLogo.png"
                   alt="Saakie by KNK"
                   width={100}
                   height={32}
@@ -132,19 +132,20 @@ export function Header() {
             </button>
 
             {/* Desktop: Always show logo. Mobile: Only show when not scrolled */}
+            {/* Logo spans up to the full header width; height stays capped to the bar. */}
             <Link
               href="/"
               className={cn(
-                "ml-4 lg:ml-0 flex items-center transition-opacity duration-300",
+                "ml-4 lg:ml-0 flex items-center flex-1 min-w-0 max-w-full transition-opacity duration-300",
                 isScrolled ? "lg:opacity-100 opacity-0 pointer-events-none lg:pointer-events-auto" : "opacity-100"
               )}
             >
               <Image
-                src="/images/saakie.jpg"
+                src="/images/saakieLogo.png"
                 alt="Saakie by KNK"
                 width={150}
                 height={50}
-                className="h-8 w-auto sm:h-10 lg:h-12"
+                className="w-full h-auto max-h-12 object-contain object-left"
                 priority
               />
             </Link>
@@ -156,8 +157,8 @@ export function Header() {
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  'text-sm font-medium transition-colors hover:text-red-600',
-                  pathname === item.href ? 'text-red-600' : 'text-gray-700'
+                  'text-sm font-medium transition-colors hover:text-gray-300',
+                  pathname === item.href ? 'text-white font-semibold' : 'text-gray-200'
                 )}
               >
                 {item.name}
@@ -167,7 +168,7 @@ export function Header() {
               <>
                 <Link
                   href="/admin"
-                  className="text-sm font-medium text-gray-700 hover:text-red-600 transition-colors"
+                  className="text-sm font-medium text-gray-200 hover:text-gray-300 transition-colors"
                 >
                   Admin
                 </Link>
@@ -178,14 +179,14 @@ export function Header() {
           <div className="flex items-center space-x-4">
             <button
               onClick={() => setSearchOpen(!searchOpen)}
-              className="p-2 rounded-md text-gray-700 hover:bg-gray-100"
+              className="p-2 rounded-md text-white hover:bg-gray-800"
             >
               <Search size={20} />
             </button>
             
             {isSignedIn ? (
               <>
-                <Link href="/wishlist" className="p-2 rounded-md text-gray-700 hover:bg-gray-100">
+                <Link href="/wishlist" className="p-2 rounded-md text-white hover:bg-gray-800">
                   <Heart size={20} />
                 </Link>
 
@@ -194,7 +195,7 @@ export function Header() {
                 <div className="relative">
                   <button
                     onClick={() => setUserMenuOpen((open) => !open)}
-                    className="p-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                    className="p-2 rounded-full bg-gray-800 text-white hover:bg-gray-700 transition-colors"
                     aria-label="Account menu"
                   >
                     <User size={20} />
@@ -252,7 +253,7 @@ export function Header() {
             ) : (
               <Link
                 href="/sign-in"
-                className="text-sm font-medium text-gray-700 hover:text-primary"
+                className="text-sm font-medium text-white hover:text-gray-300"
               >
                 Sign In
               </Link>
@@ -309,7 +310,7 @@ export function Header() {
             <div className="flex items-center justify-between p-4 border-b border-gray-800">
               <Link href="/" onClick={handleCloseMenu}>
                 <Image
-                  src="/images/saakie.jpg"
+                  src="/images/saakieLogo.png"
                   alt="Saakie by KNK"
                   width={120}
                   height={40}
