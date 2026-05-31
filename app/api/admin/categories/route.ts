@@ -15,7 +15,9 @@ export async function GET() {
 
     const categories = await prisma.category.findMany({
       include: {
-        _count: { select: { products: true } },
+        parent: { select: { id: true, name: true } },
+        children: { select: { id: true, name: true } },
+        _count: { select: { products: true, children: true } },
       },
       orderBy: { name: 'asc' },
     });
@@ -33,7 +35,7 @@ export async function POST(request: Request) {
     const admin = requireAdmin(r);
     if (admin) return admin;
 
-    const { name, slug, description, image, isActive = true } = await request.json();
+    const { name, slug, description, image, parentId, isActive = true } = await request.json();
 
     if (!name || !slug) {
       return NextResponse.json({ error: 'Name and slug are required' }, { status: 400 });
@@ -48,7 +50,12 @@ export async function POST(request: Request) {
     }
 
     const category = await prisma.category.create({
-      data: { name, slug, description, image, isActive },
+      data: { name, slug, description, image, parentId: parentId || null, isActive },
+      include: {
+        parent: { select: { id: true, name: true } },
+        children: { select: { id: true, name: true } },
+        _count: { select: { products: true, children: true } },
+      },
     });
 
     return NextResponse.json(category, { status: 201 });
