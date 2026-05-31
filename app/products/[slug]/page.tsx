@@ -638,9 +638,9 @@ export default function ProductDetailPage() {
 
             {/* Description Preview */}
             <div className="space-y-2">
-              <p className="text-gray-700 leading-relaxed">
-                {showFullDescription 
-                  ? product.description 
+              <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                {showFullDescription
+                  ? product.description
                   : `${product.description.slice(0, 150)}${product.description.length > 150 ? '...' : ''}`
                 }
               </p>
@@ -840,13 +840,13 @@ export default function ProductDetailPage() {
           <div className="py-8">
             {activeTab === 'description' && (
               <div className="prose max-w-none">
-                <p className="text-gray-700 leading-relaxed mb-6">
+                <p className="text-gray-700 leading-relaxed mb-6 whitespace-pre-line">
                   {product.description}
                 </p>
                 {product.details && (
                   <div className="bg-gray-50 p-6 rounded-lg">
                     <h3 className="font-medium text-gray-900 mb-4">Additional Details</h3>
-                    <p className="text-gray-700 leading-relaxed">
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-line">
                       {product.details}
                     </p>
                   </div>
