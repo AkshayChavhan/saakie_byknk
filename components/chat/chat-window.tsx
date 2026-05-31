@@ -5,8 +5,27 @@ import { Send, Loader2, Sparkles, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ChatMessage } from './chat-message'
 import { ProductCardMini } from './product-card-mini'
-import type { ChatMessage as ChatMessageType } from '@/types/chat'
+import type {
+  ChatMessage as ChatMessageType,
+  RecommendedProduct
+} from '@/types/chat'
 import { fetchApi } from '@/lib/api'
+
+/**
+ * Phase 3 wire format:
+ *   <streamed advice text>\n\n[[PRODUCTS]]{"products":[...]}
+ *
+ * The chat route streams free-form text tokens, then (if any tool surfaced
+ * products) appends this exact sentinel followed by a JSON payload. We split
+ * on it so the visible message is just the advice and `products[]` is parsed
+ * out into RecommendedProduct[] for ProductCardMini to render.
+ *
+ * Kept inline (instead of a shared constant) because the route is the only
+ * other place that knows this string, and a single source-of-truth import
+ * would couple a server-only file to the client bundle. The matching string
+ * is documented in app/api/chat/route.ts.
+ */
+const PRODUCTS_SENTINEL = '\n\n[[PRODUCTS]]'
 
 interface ChatWindowProps {
   onClose: () => void
@@ -93,9 +112,18 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
       // Read the streaming body chunk-by-chunk and append each decoded chunk
       // to the assistant message we just inserted. React re-renders on each
       // setMessages call, so the user sees the text appear token-by-token.
+      //
+      // New in Phase 3: the stream may end with a trailing sentinel and a
+      // JSON payload of recommended products (see PRODUCTS_SENTINEL above).
+      // We split each render at the sentinel so the visible message is just
+      // the advice; once the closing brace is in we parse the JSON once and
+      // attach products[] to the message — the existing ProductCardMini
+      // block in the render method picks it up automatically.
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       let received = ''
+      let products: RecommendedProduct[] | undefined
+      let productsParsed = false
 
       // Once the first token arrives, the "Thinking…" indicator becomes
       // redundant — the message itself is now visibly streaming.
@@ -111,9 +139,38 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
           gotFirstChunk = true
           setIsLoading(false)
         }
+
+        const sentinelIdx = received.indexOf(PRODUCTS_SENTINEL)
+        const visibleText =
+          sentinelIdx === -1 ? received : received.slice(0, sentinelIdx)
+
+        if (!productsParsed && sentinelIdx !== -1) {
+          const payload = received.slice(
+            sentinelIdx + PRODUCTS_SENTINEL.length
+          )
+          // The payload may arrive across multiple chunks; only parse once
+          // the JSON looks closed (cheap heuristic, then try/catch as the
+          // real guard).
+          if (payload.trimEnd().endsWith('}')) {
+            try {
+              const parsed = JSON.parse(payload) as {
+                products?: RecommendedProduct[]
+              }
+              if (Array.isArray(parsed.products)) {
+                products = parsed.products
+                productsParsed = true
+              }
+            } catch {
+              /* not closed yet — wait for more chunks */
+            }
+          }
+        }
+
         setMessages(prev =>
           prev.map(m =>
-            m.id === assistantId ? { ...m, content: received } : m
+            m.id === assistantId
+              ? { ...m, content: visibleText, products }
+              : m
           )
         )
       }
