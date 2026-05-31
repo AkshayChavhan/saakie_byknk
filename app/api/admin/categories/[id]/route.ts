@@ -46,7 +46,14 @@ export async function PATCH(
     const admin = requireAdmin(r);
     if (admin) return admin;
     const { id } = await context.params;
-    const { name, slug, description, image, isActive } = await request.json();
+    const { name, slug, description, image, parentId, isActive } = await request.json();
+
+    if (parentId && parentId === id) {
+      return NextResponse.json(
+        { error: 'A category cannot be its own parent' },
+        { status: 400 }
+      );
+    }
 
     if (slug) {
       const existingCategory = await prisma.category.findFirst({
@@ -68,7 +75,13 @@ export async function PATCH(
         ...(slug && { slug }),
         ...(description !== undefined && { description }),
         ...(image !== undefined && { image }),
+        ...(parentId !== undefined && { parentId: parentId || null }),
         ...(isActive !== undefined && { isActive }),
+      },
+      include: {
+        parent: { select: { id: true, name: true } },
+        children: { select: { id: true, name: true } },
+        _count: { select: { products: true, children: true } },
       },
     });
 
