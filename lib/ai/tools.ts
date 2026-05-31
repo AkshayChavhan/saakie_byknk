@@ -1,6 +1,10 @@
 import 'server-only';
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
+import {
+  keywordSearchProducts,
+  rowToRecommendedProduct,
+} from '@/lib/ai/keyword-search';
 import type { RecommendedProduct } from '@/types/chat';
 
 /**
@@ -107,64 +111,12 @@ const SearchProductsInput = z
 
 async function searchProducts(rawInput: unknown) {
   const input = SearchProductsInput.parse(rawInput);
-  const limit = input.limit ?? 6;
 
-  const where: Record<string, unknown> = { isActive: true };
-
-  if (input.categorySlug) {
-    const cat = await prisma.category.findUnique({
-      where: { slug: input.categorySlug },
-      select: { id: true },
-    });
-    if (cat) where.categoryId = cat.id;
-  }
-
-  if (input.minPrice !== undefined || input.maxPrice !== undefined) {
-    where.price = {
-      ...(input.minPrice !== undefined ? { gte: input.minPrice } : {}),
-      ...(input.maxPrice !== undefined ? { lte: input.maxPrice } : {}),
-    };
-  }
-
-  if (input.inStockOnly) where.stock = { gt: 0 };
-  if (input.material) {
-    where.material = { contains: input.material, mode: 'insensitive' };
-  }
-  if (input.occasion) where.occasion = { has: input.occasion };
-
-  if (input.query?.trim()) {
-    const term = input.query.trim();
-    where.OR = [
-      { name: { contains: term, mode: 'insensitive' } },
-      { description: { contains: term, mode: 'insensitive' } },
-      { tags: { has: term } },
-    ];
-  }
-
-  const rows = await prisma.product.findMany({
-    where,
-    take: limit,
-    orderBy: { createdAt: 'desc' },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      price: true,
-      images: { select: { url: true }, take: 1, orderBy: { order: 'asc' } },
-      category: { select: { name: true } },
-    },
-  });
-
-  const totalFound = await prisma.product.count({ where });
-
-  const products: RecommendedProduct[] = rows.map((p) => ({
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    price: p.price,
-    image: p.images[0]?.url ?? PLACEHOLDER_IMAGE,
-    category: p.category?.name ?? '',
-  }));
+  // The where-clause + Prisma query + RecommendedProduct mapping all live in
+  // lib/ai/keyword-search.ts so Phase 4 RAG can reuse the exact same logic.
+  // This tool is now a thin wrapper: validate args, delegate, summarise.
+  const { rows, totalFound } = await keywordSearchProducts(input, input.limit ?? 6);
+  const products: RecommendedProduct[] = rows.map(rowToRecommendedProduct);
 
   return {
     products,

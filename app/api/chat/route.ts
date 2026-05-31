@@ -8,6 +8,7 @@ import {
   productsFromToolResult,
   type ToolResult,
 } from '@/lib/ai/tools';
+import { retrieveContext } from '@/lib/ai/retrieval';
 import { apiError } from '@/lib/server/errors';
 import type { RecommendedProduct } from '@/types/chat';
 
@@ -30,6 +31,13 @@ const MAX_HISTORY = 12;
  * Phase 7 turns this into a configurable agent property.
  */
 const MAX_TOOL_ITERATIONS = 4;
+
+/**
+ * How many products to retrieve into the RAG context block (Phase 4).
+ * 6 is a sweet spot: enough variety for "show me silk under 5k", small
+ * enough that the formatted block stays ~500 tokens.
+ */
+const RAG_LIMIT = 6;
 
 /**
  * Sentinel that delimits the streamed text from the trailing structured
@@ -106,9 +114,38 @@ export async function POST(request: Request) {
       );
     }
 
+    // ─── Phase 4: RAG retrieval ────────────────────────────────────────────
+    // Before we ask Claude anything, run a keyword search over the catalogue
+    // using the user's latest message. Inject the matches into the system
+    // prompt so Claude can answer "show me silk under 5k" in a SINGLE turn
+    // instead of going through a tool_use round-trip.
+    //
+    // Done synchronously here (before the ReadableStream is constructed)
+    // because:
+    //   • The system prompt + RAG products must be ready before we start
+    //     the first Claude turn.
+    //   • Retrieval is a single Prisma round-trip — fast enough to keep on
+    //     the critical path without hurting time-to-first-token noticeably.
+    //   • Phase 7 will move this into the stream and surface "Searching
+    //     catalog…" as a visible status; for now it's invisible plumbing.
+    const lastUserMessage = [...history]
+      .reverse()
+      .find((m) => m.role === 'user' && typeof m.content === 'string');
+    const ragQuery =
+      typeof lastUserMessage?.content === 'string' ? lastUserMessage.content : '';
+
+    const { products: ragProducts, contextBlock: ragContext } =
+      await retrieveContext(ragQuery, { limit: RAG_LIMIT });
+
+    const systemPrompt = ragContext
+      ? `${FASHION_ASSISTANT_SYSTEM_PROMPT}\n\n${ragContext}`
+      : FASHION_ASSISTANT_SYSTEM_PROMPT;
+
     const encoder = new TextEncoder();
 
-    // Aggregated products across all tool calls this request, deduped by id.
+    // Aggregated products across the request, deduped by id. Seeded with the
+    // RAG results so they flow to the UI even when the model never calls a
+    // tool — a "show me silk" question can now finish in one round-trip.
     const collectedProducts: RecommendedProduct[] = [];
     const seenProductIds = new Set<string>();
     const pushProducts = (ps: RecommendedProduct[]) => {
@@ -119,6 +156,7 @@ export async function POST(request: Request) {
         }
       }
     };
+    pushProducts(ragProducts);
 
     // Track the currently-active upstream stream so `cancel()` can abort it.
     let activeStream: ReturnType<typeof anthropic.messages.stream> | null =
@@ -140,7 +178,10 @@ export async function POST(request: Request) {
               model: CHAT_MODEL,
               max_tokens: 1024,
               temperature: 0.7,
-              system: FASHION_ASSISTANT_SYSTEM_PROMPT,
+              // Augmented with the Phase 4 RAG context block when retrieval
+              // found relevant products; falls back to the base prompt
+              // otherwise (e.g. an abstract "how do I drape" question).
+              system: systemPrompt,
               messages: conversation,
               tools: TOOL_DEFINITIONS,
             });
