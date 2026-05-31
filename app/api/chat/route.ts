@@ -13,28 +13,45 @@ interface IncomingMessage {
   content: string;
 }
 
-// Cap how much conversation we send to the model — keeps cost/latency bounded.
+// Cap how much conversation we send to the model — bounds cost/latency.
 const MAX_HISTORY = 12;
 
 /**
- * Fashion Assistant chat endpoint — Phase 1 (basic LLM chatbot, Claude version).
+ * Fashion Assistant chat endpoint — Phase 2 (token streaming).
  *
- * Same purpose as the OpenAI version this replaces: take the conversation from
- * the client, give the model its role + rules, get a reply.
+ * Phase 1 returned the full reply as JSON only when the model finished. With
+ * a five-sentence reply that's ~2–4 seconds of "Thinking…" before anything
+ * appears. Streaming sends each token to the browser the moment Claude emits
+ * it, so the user sees the reply appear word-by-word — the familiar
+ * "ChatGPT typing" effect.
  *
- * Anthropic's chat API differs from OpenAI in three small but important ways:
- *   1. Method: `anthropic.messages.create(...)` (not `chat.completions.create`).
- *   2. The system prompt goes in a top-level `system` field, NOT as a message
- *      with `role: 'system'` inside `messages`. The `messages` array only
- *      accepts `user` and `assistant` roles.
- *   3. `max_tokens` is REQUIRED (OpenAI treats it as optional).
- *   4. Response text lives at `response.content[0].text` — `content` is an
- *      array of content blocks; for a plain text reply the first block is type
- *      `text`. (Later phases will see `tool_use` blocks here too.)
+ * How streaming works here (hand-built, no framework):
  *
- * The response contract is unchanged from the OpenAI version — the chat UI
- * doesn't care which model produced the reply:
+ *   1. Ask the SDK for a stream — `anthropic.messages.stream({ ... })`.
+ *      The SDK exposes an async iterator (`for await (event of stream)`)
+ *      that yields events as Claude emits them. We only care about
+ *      `content_block_delta` events with a `text_delta` payload — those are
+ *      the actual reply tokens.
+ *
+ *   2. Pipe those text deltas into a `ReadableStream` that the route returns
+ *      as the HTTP response body. Each delta is encoded with `TextEncoder`
+ *      and `enqueue`d; when the model finishes, we `close()` the stream.
+ *
+ *   3. The client (`components/chat/chat-window.tsx`) reads the body with
+ *      `response.body.getReader()`, decodes each chunk, and appends the text
+ *      to the in-progress assistant message — re-rendering on each chunk.
+ *
+ * Wire format: plain `text/plain; charset=utf-8` — just the tokens
+ * concatenated. (Not full SSE `data: ...\n\n` framing — that adds protocol
+ * overhead we don't need yet. Phase 6, when the agent streams structured
+ * "thinking → tool-call → result" events, will switch to SSE.)
+ *
+ * Trade-off: this Phase changes the response shape. Phase 1 returned
  *   { message: string, products: RecommendedProduct[] }
+ * Phase 2 returns
+ *   <plain streamed text>
+ * Products come back in Phase 3 via a structured trailing event after the
+ * text stream. The chat UI is updated in this commit to match.
  */
 export async function POST(request: Request) {
   try {
@@ -48,7 +65,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Keep only well-formed user/assistant turns, and only the recent ones.
     const history = (messages as IncomingMessage[])
       .filter(
         (m) =>
@@ -67,9 +83,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // The system prompt sets the model's behaviour. With Anthropic it is a
-    // top-level field, not the first item in `messages`.
-    const response = await anthropic.messages.create({
+    // Build the streaming request. Note `stream` is implicit — the SDK's
+    // `.stream()` helper handles the protocol details and gives us a typed
+    // async iterator over events.
+    const claudeStream = anthropic.messages.stream({
       model: CHAT_MODEL,
       max_tokens: 500,
       temperature: 0.7,
@@ -77,19 +94,59 @@ export async function POST(request: Request) {
       messages: history,
     });
 
-    // Pull the assistant's text out of the content-block array. `content` is
-    // a union of block types (text, thinking, tool_use, …). For a plain reply
-    // there is one block of type `text`. We narrow via the discriminator
-    // (`block.type === 'text'`) so TypeScript knows `.text` is safe to read.
-    // (Phase 3 will start handling `tool_use` blocks here too.)
-    const textBlock = response.content.find((block) => block.type === 'text');
-    const message =
-      (textBlock && 'text' in textBlock ? textBlock.text : '').trim() ||
-      "Sorry, I couldn't come up with a response. Could you rephrase that?";
+    const encoder = new TextEncoder();
 
-    // products is empty in Phase 1 — populated once the assistant can
-    // actually query the catalogue (Phase 3).
-    return NextResponse.json({ message, products: [] });
+    // The route returns a Web ReadableStream as its body. Inside `start`, we
+    // iterate Claude's events and `enqueue` text deltas as bytes. When Claude
+    // finishes (or errors), we close the stream.
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const event of claudeStream) {
+            if (
+              event.type === 'content_block_delta' &&
+              event.delta.type === 'text_delta'
+            ) {
+              controller.enqueue(encoder.encode(event.delta.text));
+            }
+            // Other event types we deliberately ignore here:
+            //   - message_start / content_block_start / message_stop:
+            //     bookkeeping; nothing the user needs to see.
+            //   - thinking deltas: Phase 1 doesn't use extended thinking.
+            //   - tool_use deltas: Phase 3+ — handled there.
+          }
+          controller.close();
+        } catch (err) {
+          // If the model errors mid-stream we surface a short message and
+          // close cleanly so the browser doesn't hang.
+          console.error('[chat/stream] aborted:', err);
+          try {
+            controller.enqueue(
+              encoder.encode(
+                '\n\n[The assistant ran into an error. Please try again.]'
+              )
+            );
+          } catch {
+            /* controller may already be closed */
+          }
+          controller.close();
+        }
+      },
+      cancel() {
+        // The client closed the connection (closed the tab, navigated away).
+        // Abort the upstream Claude request so we stop paying for tokens.
+        claudeStream.abort();
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        // Prevent intermediaries from buffering — important for streaming.
+        'Cache-Control': 'no-cache, no-transform',
+        'X-Accel-Buffering': 'no',
+      },
+    });
   } catch (error) {
     return apiError(error);
   }

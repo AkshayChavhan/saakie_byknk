@@ -60,7 +60,17 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
       timestamp: new Date()
     }
 
-    setMessages(prev => [...prev, userMessage])
+    // Pre-create an empty assistant message — we will append streamed tokens
+    // to it as they arrive (Phase 2 streaming).
+    const assistantId = (Date.now() + 1).toString()
+    const assistantSeed: ChatMessageType = {
+      id: assistantId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date()
+    }
+
+    setMessages(prev => [...prev, userMessage, assistantSeed])
     setInput('')
     setIsLoading(true)
 
@@ -76,30 +86,65 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
         })
       })
 
-      if (!response.ok) throw new Error('Failed to get response')
-
-      const data = await response.json()
-
-      const assistantMessage: ChatMessageType = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.message,
-        timestamp: new Date(),
-        products: data.products
+      if (!response.ok || !response.body) {
+        throw new Error('Failed to get response')
       }
 
-      setMessages(prev => [...prev, assistantMessage])
+      // Read the streaming body chunk-by-chunk and append each decoded chunk
+      // to the assistant message we just inserted. React re-renders on each
+      // setMessages call, so the user sees the text appear token-by-token.
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let received = ''
+
+      // Once the first token arrives, the "Thinking…" indicator becomes
+      // redundant — the message itself is now visibly streaming.
+      let gotFirstChunk = false
+
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+        const chunk = decoder.decode(value, { stream: true })
+        if (!chunk) continue
+        received += chunk
+        if (!gotFirstChunk) {
+          gotFirstChunk = true
+          setIsLoading(false)
+        }
+        setMessages(prev =>
+          prev.map(m =>
+            m.id === assistantId ? { ...m, content: received } : m
+          )
+        )
+      }
+
+      // If nothing came through at all, fall back to a friendly message.
+      if (!received) {
+        setMessages(prev =>
+          prev.map(m =>
+            m.id === assistantId
+              ? {
+                  ...m,
+                  content:
+                    "I'm sorry, I couldn't generate a reply. Please try again."
+                }
+              : m
+          )
+        )
+      }
     } catch (error) {
       console.error('Chat error:', error)
-      setMessages(prev => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: "I apologize, but I'm having trouble connecting right now. Please try again in a moment.",
-          timestamp: new Date()
-        }
-      ])
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === assistantId
+            ? {
+                ...m,
+                content:
+                  "I apologize, but I'm having trouble connecting right now. Please try again in a moment."
+              }
+            : m
+        )
+      )
     } finally {
       setIsLoading(false)
     }
