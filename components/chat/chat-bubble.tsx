@@ -1,12 +1,17 @@
 'use client'
 
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { MessageCircle, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ChatWindow } from './chat-window'
 
 export function ChatBubble() {
+  const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
+
+  // The Fashion Assistant is only offered on the home screen.
+  if (pathname !== '/') return null
 
   return (
     <>
