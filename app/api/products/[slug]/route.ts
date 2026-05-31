@@ -77,6 +77,7 @@ export async function GET(
 
     return NextResponse.json({
       ...product,
+      inStock: product.stock > 0,
       avgRating,
       reviewCount: product._count.reviews,
       relatedProducts,

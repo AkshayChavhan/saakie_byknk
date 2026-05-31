@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ChevronRight, Filter, X, Grid, List } from 'lucide-react'
+import { ChevronRight, Filter, X, Grid, List, Folder, ArrowRight } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { fetchApi } from '@/lib/api'
 
@@ -24,12 +24,21 @@ interface Product {
   inStock: boolean
 }
 
+interface SubCategory {
+  id: string
+  name: string
+  slug: string
+  image: string | null
+  count: number
+}
+
 interface Category {
   id: string
   name: string
   slug: string
   description: string | null
   productCount: number
+  children?: SubCategory[]
 }
 
 type SortOption = 'newest' | 'price-low' | 'price-high' | 'rating' | 'popular'
@@ -168,6 +177,59 @@ export default function CategoryPage() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
+        {/* Sub-categories */}
+        {category.children && category.children.length > 0 && (
+          <section className="mb-8" aria-label="Sub-categories">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">
+              Browse within {category.name}
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {category.children.map((child) => (
+                <Link
+                  key={child.id}
+                  href={`/categories/${child.slug}`}
+                  className="group block bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100/50 hover:border-primary-200"
+                >
+                  <article className="h-full flex flex-col">
+                    <div className="aspect-[4/5] bg-gray-100 relative overflow-hidden">
+                      {child.image ? (
+                        <Image
+                          src={child.image}
+                          alt=""
+                          fill
+                          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+                          className="object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50">
+                          <Folder className="h-12 w-12 sm:h-16 sm:w-16 text-primary-200" aria-hidden="true" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <div className="absolute bottom-4 left-4 right-4 transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                        <span className="inline-flex items-center gap-1.5 text-white text-sm font-medium">
+                          Explore Collection
+                          <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" aria-hidden="true" />
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-4 flex-1 flex flex-col">
+                      <h3 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors duration-200 text-sm sm:text-base">
+                        {child.name}
+                      </h3>
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        <span className="text-xs font-medium text-secondary-600 bg-secondary-50 px-2.5 py-1 rounded-full">
+                          {child.count} products
+                        </span>
+                      </div>
+                    </div>
+                  </article>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Filter and Sort Bar */}
         <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
           <div className="flex items-center justify-between">
