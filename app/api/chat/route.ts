@@ -1,7 +1,15 @@
 import { NextResponse } from 'next/server';
+import type { MessageParam } from '@anthropic-ai/sdk/resources/messages';
 import { anthropic, CHAT_MODEL } from '@/lib/ai/claude';
 import { FASHION_ASSISTANT_SYSTEM_PROMPT } from '@/lib/ai/prompts';
+import {
+  TOOLS,
+  TOOL_DEFINITIONS,
+  productsFromToolResult,
+  type ToolResult,
+} from '@/lib/ai/tools';
 import { apiError } from '@/lib/server/errors';
+import type { RecommendedProduct } from '@/types/chat';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,45 +21,57 @@ interface IncomingMessage {
   content: string;
 }
 
-// Cap how much conversation we send to the model — bounds cost/latency.
 const MAX_HISTORY = 12;
 
 /**
- * Fashion Assistant chat endpoint — Phase 2 (token streaming).
+ * Hard cap on tool-loop iterations. Each iteration is one Claude turn that
+ * may end in either text (we stop) or one+ tool_use blocks (we run them and
+ * loop). 4 is plenty for Phase 3 — most real chats need 1, occasionally 2.
+ * Phase 7 turns this into a configurable agent property.
+ */
+const MAX_TOOL_ITERATIONS = 4;
+
+/**
+ * Sentinel that delimits the streamed text from the trailing structured
+ * product payload on the wire. The browser splits on this exact string.
  *
- * Phase 1 returned the full reply as JSON only when the model finished. With
- * a five-sentence reply that's ~2–4 seconds of "Thinking…" before anything
- * appears. Streaming sends each token to the browser the moment Claude emits
- * it, so the user sees the reply appear word-by-word — the familiar
- * "ChatGPT typing" effect.
+ *   <streamed advice text>\n\n[[PRODUCTS]]{"products":[ ... ]}
  *
- * How streaming works here (hand-built, no framework):
+ * Phase 6 will replace this with proper SSE events; for Phase 3 the trick
+ * is enough to ship structured data alongside a free-form text stream.
+ */
+const PRODUCTS_SENTINEL = '\n\n[[PRODUCTS]]';
+
+/**
+ * Fashion Assistant chat endpoint — Phase 3 (tool calling).
  *
- *   1. Ask the SDK for a stream — `anthropic.messages.stream({ ... })`.
- *      The SDK exposes an async iterator (`for await (event of stream)`)
- *      that yields events as Claude emits them. We only care about
- *      `content_block_delta` events with a `text_delta` payload — those are
- *      the actual reply tokens.
+ * Phase 2 streamed plain text. The model still had no live data, so
+ * `products[]` was always empty. Phase 3 fixes both gaps at once:
  *
- *   2. Pipe those text deltas into a `ReadableStream` that the route returns
- *      as the HTTP response body. Each delta is encoded with `TextEncoder`
- *      and `enqueue`d; when the model finishes, we `close()` the stream.
+ *  1. The model is given three real tools (see `lib/ai/tools.ts`):
+ *     searchProducts, getProductDetails, getCategories. Each hits Prisma.
  *
- *   3. The client (`components/chat/chat-window.tsx`) reads the body with
- *      `response.body.getReader()`, decodes each chunk, and appends the text
- *      to the in-progress assistant message — re-rendering on each chunk.
+ *  2. The route runs an **agent loop**: ask Claude → if it wants a tool,
+ *     run it → feed the result back → ask again → repeat until Claude
+ *     replies with plain text (the user-facing answer).
  *
- * Wire format: plain `text/plain; charset=utf-8` — just the tokens
- * concatenated. (Not full SSE `data: ...\n\n` framing — that adds protocol
- * overhead we don't need yet. Phase 6, when the agent streams structured
- * "thinking → tool-call → result" events, will switch to SSE.)
+ *  3. After the loop ends, any products the tools surfaced are concatenated
+ *     and appended to the stream after a sentinel string:
  *
- * Trade-off: this Phase changes the response shape. Phase 1 returned
- *   { message: string, products: RecommendedProduct[] }
- * Phase 2 returns
- *   <plain streamed text>
- * Products come back in Phase 3 via a structured trailing event after the
- * text stream. The chat UI is updated in this commit to match.
+ *        <streamed advice>\n\n[[PRODUCTS]]{"products":[...]}
+ *
+ *     The browser splits on the sentinel, attaches `products[]` to the
+ *     assistant message, and the existing ProductCardMini cards render. The
+ *     chat UI's `RecommendedProduct` type didn't need to change.
+ *
+ * Concept anchor — why a loop?
+ * ────────────────────────────
+ * Claude doesn't "execute" anything. When it decides a tool is needed it
+ * just *describes the call it wants made* (`stop_reason: 'tool_use'`). Our
+ * code runs the tool, packages the result as a `tool_result` user message,
+ * and asks Claude again — now with the result available. The model uses
+ * that to compose the final answer (or to call another tool). Phase 7
+ * (`Agent`) generalises this loop with planning + multi-tool sequencing.
  */
 export async function POST(request: Request) {
   try {
@@ -65,7 +85,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const history = (messages as IncomingMessage[])
+    const history: MessageParam[] = (messages as IncomingMessage[])
       .filter(
         (m) =>
           m &&
@@ -74,7 +94,10 @@ export async function POST(request: Request) {
           m.content.trim().length > 0
       )
       .slice(-MAX_HISTORY)
-      .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+      .map((m) => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      }));
 
     if (history.length === 0) {
       return NextResponse.json(
@@ -83,42 +106,125 @@ export async function POST(request: Request) {
       );
     }
 
-    // Build the streaming request. Note `stream` is implicit — the SDK's
-    // `.stream()` helper handles the protocol details and gives us a typed
-    // async iterator over events.
-    const claudeStream = anthropic.messages.stream({
-      model: CHAT_MODEL,
-      max_tokens: 500,
-      temperature: 0.7,
-      system: FASHION_ASSISTANT_SYSTEM_PROMPT,
-      messages: history,
-    });
-
     const encoder = new TextEncoder();
 
-    // The route returns a Web ReadableStream as its body. Inside `start`, we
-    // iterate Claude's events and `enqueue` text deltas as bytes. When Claude
-    // finishes (or errors), we close the stream.
+    // Aggregated products across all tool calls this request, deduped by id.
+    const collectedProducts: RecommendedProduct[] = [];
+    const seenProductIds = new Set<string>();
+    const pushProducts = (ps: RecommendedProduct[]) => {
+      for (const p of ps) {
+        if (!seenProductIds.has(p.id)) {
+          seenProductIds.add(p.id);
+          collectedProducts.push(p);
+        }
+      }
+    };
+
+    // Track the currently-active upstream stream so `cancel()` can abort it.
+    let activeStream: ReturnType<typeof anthropic.messages.stream> | null =
+      null;
+    let clientAborted = false;
+
     const stream = new ReadableStream({
       async start(controller) {
+        const conversation: MessageParam[] = [...history];
+
         try {
-          for await (const event of claudeStream) {
-            if (
-              event.type === 'content_block_delta' &&
-              event.delta.type === 'text_delta'
-            ) {
-              controller.enqueue(encoder.encode(event.delta.text));
+          for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
+            if (clientAborted) break;
+
+            // 1. Ask Claude. The result MAY include text deltas (which we
+            //    stream to the browser as they arrive) AND/OR tool_use blocks
+            //    (which we collect from the final message at the end).
+            const claudeStream = anthropic.messages.stream({
+              model: CHAT_MODEL,
+              max_tokens: 1024,
+              temperature: 0.7,
+              system: FASHION_ASSISTANT_SYSTEM_PROMPT,
+              messages: conversation,
+              tools: TOOL_DEFINITIONS,
+            });
+            activeStream = claudeStream;
+
+            for await (const event of claudeStream) {
+              if (
+                event.type === 'content_block_delta' &&
+                event.delta.type === 'text_delta'
+              ) {
+                controller.enqueue(encoder.encode(event.delta.text));
+              }
+              // Other deltas we deliberately ignore on the user-visible
+              // stream:
+              //   - input_json_delta:   incremental tool_use input — useful in
+              //                         Phase 7 to show "calling tool…", not now.
+              //   - message_start/stop, content_block_start/stop: bookkeeping.
             }
-            // Other event types we deliberately ignore here:
-            //   - message_start / content_block_start / message_stop:
-            //     bookkeeping; nothing the user needs to see.
-            //   - thinking deltas: Phase 1 doesn't use extended thinking.
-            //   - tool_use deltas: Phase 3+ — handled there.
+
+            const final = await claudeStream.finalMessage();
+            activeStream = null;
+
+            // 2. If the model answered with plain text, we're done.
+            if (final.stop_reason !== 'tool_use') break;
+
+            // 3. Otherwise, execute every tool_use block and gather results.
+            const toolUseBlocks = final.content.filter(
+              (b): b is Extract<typeof b, { type: 'tool_use' }> =>
+                b.type === 'tool_use'
+            );
+
+            const toolResults = await Promise.all(
+              toolUseBlocks.map(async (block) => {
+                const entry = TOOLS[block.name];
+                if (!entry) {
+                  return {
+                    type: 'tool_result' as const,
+                    tool_use_id: block.id,
+                    content: JSON.stringify({
+                      error: `Unknown tool "${block.name}".`,
+                    }),
+                    is_error: true,
+                  };
+                }
+                try {
+                  const output: ToolResult = await entry.handler(block.input);
+                  pushProducts(productsFromToolResult(block.name, output));
+                  return {
+                    type: 'tool_result' as const,
+                    tool_use_id: block.id,
+                    content: JSON.stringify(output),
+                  };
+                } catch (err) {
+                  const message =
+                    err instanceof Error ? err.message : String(err);
+                  console.error(`[chat/tool ${block.name}] failed:`, err);
+                  return {
+                    type: 'tool_result' as const,
+                    tool_use_id: block.id,
+                    content: JSON.stringify({ error: message }),
+                    is_error: true,
+                  };
+                }
+              })
+            );
+
+            // 4. Append both sides of the tool exchange to the conversation
+            //    and loop. Claude must see its own tool_use blocks alongside
+            //    the matching tool_result blocks.
+            conversation.push({ role: 'assistant', content: final.content });
+            conversation.push({ role: 'user', content: toolResults });
           }
+
+          // 5. After the loop: append the structured product payload if any
+          //    tool surfaced products. The browser parses on PRODUCTS_SENTINEL.
+          if (collectedProducts.length > 0 && !clientAborted) {
+            const payload = JSON.stringify({ products: collectedProducts });
+            controller.enqueue(
+              encoder.encode(`${PRODUCTS_SENTINEL}${payload}`)
+            );
+          }
+
           controller.close();
         } catch (err) {
-          // If the model errors mid-stream we surface a short message and
-          // close cleanly so the browser doesn't hang.
           console.error('[chat/stream] aborted:', err);
           try {
             controller.enqueue(
@@ -133,16 +239,14 @@ export async function POST(request: Request) {
         }
       },
       cancel() {
-        // The client closed the connection (closed the tab, navigated away).
-        // Abort the upstream Claude request so we stop paying for tokens.
-        claudeStream.abort();
+        clientAborted = true;
+        activeStream?.abort();
       },
     });
 
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
-        // Prevent intermediaries from buffering — important for streaming.
         'Cache-Control': 'no-cache, no-transform',
         'X-Accel-Buffering': 'no',
       },
