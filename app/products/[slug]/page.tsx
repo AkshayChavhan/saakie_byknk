@@ -25,6 +25,7 @@ import {
   Check
 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
+import { isMethodAllowed, describeModes } from '@/lib/payment'
 import { fetchApi, cartApi, wishlistApi } from '@/lib/api'
 
 interface ProductImage {
@@ -96,6 +97,7 @@ interface Product {
   workType: string | null
   blouseIncluded: boolean
   weight: number | null
+  paymentModes?: ('COD' | 'PREPAID')[]
   images: ProductImage[]
   colors: Color[]
   sizes: Size[]
@@ -319,7 +321,14 @@ export default function ProductDetailPage() {
 
   const handleCashOnDelivery = () => {
     if (!product) return
-    
+
+    // Honor the payment modes the admin set for this product. If COD isn't
+    // allowed, block it (the order API enforces this too).
+    if (!isMethodAllowed('COD', product.paymentModes)) {
+      alert('This product is available on Prepaid (online payment) only — Cash on Delivery is not available.')
+      return
+    }
+
     const orderData = {
       productId: product.id,
       productName: product.name,
@@ -633,6 +642,14 @@ export default function ProductDetailPage() {
               <div className={`w-3 h-3 rounded-full ${product.inStock ? 'bg-green-500' : 'bg-red-500'}`}></div>
               <span className={`text-sm font-medium ${product.inStock ? 'text-green-600' : 'text-red-600'}`}>
                 {product.inStock ? `In Stock (${product.stock} available)` : 'Out of Stock'}
+              </span>
+            </div>
+
+            {/* Accepted payment modes (as set by the seller) */}
+            <div className="flex items-center gap-2">
+              <CreditCard size={16} className="text-gray-500" />
+              <span className="text-sm text-gray-600">
+                Payment: <span className="font-medium text-gray-900">{describeModes(product.paymentModes)}</span>
               </span>
             </div>
 
