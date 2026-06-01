@@ -163,6 +163,9 @@ export default function ProductDetailPage() {
   // Wishlist State
   const [wishlistBusy, setWishlistBusy] = useState(false)
 
+  // Share State — brief "Link copied!" feedback after the clipboard fallback.
+  const [linkCopied, setLinkCopied] = useState(false)
+
   // Review Form State
   const { status: authStatus } = useSession()
   const [reviewRating, setReviewRating] = useState(0)
@@ -215,6 +218,32 @@ export default function ProductDetailPage() {
       cancelled = true
     }
   }, [authStatus, product])
+
+  const handleShare = async () => {
+    if (!product) return
+    const url = typeof window !== 'undefined' ? window.location.href : ''
+    const shareData = {
+      title: product.name,
+      text: `Check out ${product.name} on Saakie by KNK`,
+      url,
+    }
+    // Native share sheet on supported devices (mobile); clipboard fallback otherwise.
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share(shareData)
+        return
+      } catch {
+        // User dismissed the share sheet, or it failed — fall through to copy.
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    } catch {
+      alert('Could not share. Copy the link from your browser address bar.')
+    }
+  }
 
   const handleToggleWishlist = async () => {
     if (!product) return
@@ -457,16 +486,19 @@ export default function ProductDetailPage() {
           <div className="flex items-center space-x-2">
             <button
               onClick={handleToggleWishlist}
-              disabled={wishlistBusy}
               aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-              className="p-2 disabled:opacity-50"
+              className="p-2 active:scale-90 transition-transform"
             >
               <Heart
                 size={24}
-                className={isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}
+                className={`transition-colors ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
               />
             </button>
-            <button className="p-2">
+            <button
+              onClick={handleShare}
+              aria-label="Share this product"
+              className="p-2"
+            >
               <Share2 size={24} className="text-gray-600" />
             </button>
           </div>
@@ -798,8 +830,7 @@ export default function ProductDetailPage() {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={handleToggleWishlist}
-                  disabled={wishlistBusy}
-                  className={`flex items-center justify-center space-x-2 py-3 px-4 border rounded-lg font-medium transition-colors disabled:opacity-60 ${
+                  className={`flex items-center justify-center space-x-2 py-3 px-4 border rounded-lg font-medium transition-colors active:scale-[0.98] ${
                     isWishlisted
                       ? 'border-red-500 text-red-500 bg-red-50'
                       : 'border-gray-300 text-gray-700 hover:border-gray-400'
@@ -809,9 +840,12 @@ export default function ProductDetailPage() {
                   <span>{isWishlisted ? 'Wishlisted' : 'Add to Wishlist'}</span>
                 </button>
 
-                <button className="flex items-center justify-center space-x-2 py-3 px-4 border border-gray-300 text-gray-700 hover:border-gray-400 rounded-lg font-medium transition-colors">
-                  <Share2 size={18} />
-                  <span>Share</span>
+                <button
+                  onClick={handleShare}
+                  className="flex items-center justify-center space-x-2 py-3 px-4 border border-gray-300 text-gray-700 hover:border-gray-400 rounded-lg font-medium transition-colors"
+                >
+                  {linkCopied ? <Check size={18} /> : <Share2 size={18} />}
+                  <span>{linkCopied ? 'Link copied!' : 'Share'}</span>
                 </button>
               </div>
             </div>
@@ -1220,9 +1254,8 @@ export default function ProductDetailPage() {
         <div className="flex space-x-2">
           <button
             onClick={handleToggleWishlist}
-            disabled={wishlistBusy}
             aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-            className={`flex-shrink-0 p-3 border rounded-lg disabled:opacity-60 ${
+            className={`flex-shrink-0 p-3 border rounded-lg active:scale-95 transition-transform ${
               isWishlisted
                 ? 'border-red-500 text-red-500 bg-red-50'
                 : 'border-gray-300 text-gray-700'
