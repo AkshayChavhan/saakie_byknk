@@ -124,6 +124,7 @@ export async function PATCH(
       width,
       height,
       blouseIncluded,
+      paymentModes,
       colors,
       sizes,
       isActive,
@@ -213,6 +214,12 @@ export async function PATCH(
           weight: weight ? parseFloat(weight) : null,
           ...(blouseIncluded !== undefined && {
             blouseIncluded: blouseIncluded === true || blouseIncluded === 'true',
+          }),
+          ...(paymentModes !== undefined && {
+            paymentModes:
+              Array.isArray(paymentModes) && paymentModes.length > 0
+                ? paymentModes
+                : ['PREPAID'],
           }),
           ...(isActive !== undefined && {
             isActive: isActive === true || isActive === 'true',
