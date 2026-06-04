@@ -1,0 +1,4258 @@
+[
+  {
+    "imageUrl": "https://images.pexels.com/photos/10156154/pexels-photo-10156154.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      }
+    ],
+    "name": "Hand-Block Chiffon Saree",
+    "slug": "hand-block-chiffon-saree-1",
+    "description": "A handpicked chiffon saree featuring floral block print and block print craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Chiffon · Block Print",
+    "price": 2399,
+    "comparePrice": 3240,
+    "categoryId": "6a1bf29677f04f8733c6c75f",
+    "categorySlug": "block-print-chiffon-sarees-",
+    "categoryName": "Block Print Chiffon Sarees",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Chiffon",
+      "Block Print",
+      "Saree",
+      "Wedding"
+    ],
+    "material": "Chiffon",
+    "fabric": "Chiffon",
+    "pattern": "Floral Block Print",
+    "workType": "Block Print",
+    "occasion": [
+      "Wedding",
+      "Office"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Indigo",
+      "Ivory"
+    ],
+    "stock": 12,
+    "rating": 4.7,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/11505677/pexels-photo-11505677.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      }
+    ],
+    "name": "Sanganeri Bloom Chiffon Saree",
+    "slug": "sanganeri-bloom-chiffon-saree-2",
+    "description": "A handpicked chiffon saree featuring floral block print and block print craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Chiffon · Block Print",
+    "price": 1699,
+    "comparePrice": 2460,
+    "categoryId": "6a1bf29677f04f8733c6c75f",
+    "categorySlug": "block-print-chiffon-sarees-",
+    "categoryName": "Block Print Chiffon Sarees",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Chiffon",
+      "Block Print",
+      "Saree",
+      "Casual"
+    ],
+    "material": "Chiffon",
+    "fabric": "Chiffon",
+    "pattern": "Floral Block Print",
+    "workType": "Block Print",
+    "occasion": [
+      "Casual",
+      "Party"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Mustard",
+      "Rose"
+    ],
+    "stock": 16,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/11555712/pexels-photo-11555712.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      }
+    ],
+    "name": "Jaipuri Block Chiffon Saree",
+    "slug": "jaipuri-block-chiffon-saree-3",
+    "description": "A handpicked chiffon saree featuring floral block print and block print craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Chiffon · Block Print",
+    "price": 2599,
+    "comparePrice": 3250,
+    "categoryId": "6a1bf29677f04f8733c6c75f",
+    "categorySlug": "block-print-chiffon-sarees-",
+    "categoryName": "Block Print Chiffon Sarees",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Chiffon",
+      "Block Print",
+      "Saree",
+      "Office"
+    ],
+    "material": "Chiffon",
+    "fabric": "Chiffon",
+    "pattern": "Floral Block Print",
+    "workType": "Block Print",
+    "occasion": [
+      "Office",
+      "Daily Wear"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Emerald",
+      "Teal"
+    ],
+    "stock": 20,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/11629757/pexels-photo-11629757.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      }
+    ],
+    "name": "Dabu-Print Chiffon Saree",
+    "slug": "dabu-print-chiffon-saree-4",
+    "description": "A handpicked chiffon saree featuring floral block print and block print craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Chiffon · Block Print",
+    "price": 1899,
+    "comparePrice": 2560,
+    "categoryId": "6a1bf29677f04f8733c6c75f",
+    "categorySlug": "block-print-chiffon-sarees-",
+    "categoryName": "Block Print Chiffon Sarees",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Chiffon",
+      "Block Print",
+      "Saree",
+      "Party"
+    ],
+    "material": "Chiffon",
+    "fabric": "Chiffon",
+    "pattern": "Floral Block Print",
+    "workType": "Block Print",
+    "occasion": [
+      "Party",
+      "Festive"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Ivory",
+      "Charcoal"
+    ],
+    "stock": 24,
+    "rating": 4.3,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/11647283/pexels-photo-11647283.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 1,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 2,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      }
+    ],
+    "name": "Aari Handwork Chiffon Saree",
+    "slug": "aari-handwork-chiffon-saree-5",
+    "description": "A handpicked chiffon saree featuring sequin & thread and hand embroidery craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Chiffon · Hand Embroidery",
+    "price": 3399,
+    "comparePrice": 4930,
+    "categoryId": "6a1bf2a677f04f8733c6c760",
+    "categorySlug": "handwork-chiffon-sarees",
+    "categoryName": "Handwork Chiffon Sarees",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Chiffon",
+      "Hand Embroidery",
+      "Saree",
+      "Daily Wear"
+    ],
+    "material": "Chiffon",
+    "fabric": "Chiffon",
+    "pattern": "Sequin & Thread",
+    "workType": "Hand Embroidery",
+    "occasion": [
+      "Daily Wear",
+      "Wedding"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Rose",
+      "Mehendi Green"
+    ],
+    "stock": 8,
+    "rating": 4.3,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/11647287/pexels-photo-11647287.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 1,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      }
+    ],
+    "name": "Mirror-Work Chiffon Saree",
+    "slug": "mirror-work-chiffon-saree-6",
+    "description": "A handpicked chiffon saree featuring sequin & thread and hand embroidery craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Chiffon · Hand Embroidery",
+    "price": 4099,
+    "comparePrice": 5120,
+    "categoryId": "6a1bf2a677f04f8733c6c760",
+    "categorySlug": "handwork-chiffon-sarees",
+    "categoryName": "Handwork Chiffon Sarees",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Chiffon",
+      "Hand Embroidery",
+      "Saree",
+      "Festive"
+    ],
+    "material": "Chiffon",
+    "fabric": "Chiffon",
+    "pattern": "Sequin & Thread",
+    "workType": "Hand Embroidery",
+    "occasion": [
+      "Festive",
+      "Casual"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Teal",
+      "Saffron"
+    ],
+    "stock": 12,
+    "rating": 3.5,
+    "isActive": true,
+    "isFeatured": true
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/11647288/pexels-photo-11647288.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 2,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      }
+    ],
+    "name": "Zardozi Chiffon Saree",
+    "slug": "zardozi-chiffon-saree-7",
+    "description": "A handpicked chiffon saree featuring sequin & thread and hand embroidery craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Chiffon · Hand Embroidery",
+    "price": 4799,
+    "comparePrice": 6480,
+    "categoryId": "6a1bf2a677f04f8733c6c760",
+    "categorySlug": "handwork-chiffon-sarees",
+    "categoryName": "Handwork Chiffon Sarees",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Chiffon",
+      "Hand Embroidery",
+      "Saree",
+      "Wedding"
+    ],
+    "material": "Chiffon",
+    "fabric": "Chiffon",
+    "pattern": "Sequin & Thread",
+    "workType": "Hand Embroidery",
+    "occasion": [
+      "Wedding",
+      "Office"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Charcoal",
+      "Powder Blue"
+    ],
+    "stock": 16,
+    "rating": 4.3,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/12498401/pexels-photo-12498401.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      }
+    ],
+    "name": "Resham Embroidered Chiffon Saree",
+    "slug": "resham-embroidered-chiffon-saree-8",
+    "description": "A handpicked chiffon saree featuring sequin & thread and hand embroidery craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Chiffon · Hand Embroidery",
+    "price": 2899,
+    "comparePrice": 4200,
+    "categoryId": "6a1bf2a677f04f8733c6c760",
+    "categorySlug": "handwork-chiffon-sarees",
+    "categoryName": "Handwork Chiffon Sarees",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Chiffon",
+      "Hand Embroidery",
+      "Saree",
+      "Casual"
+    ],
+    "material": "Chiffon",
+    "fabric": "Chiffon",
+    "pattern": "Sequin & Thread",
+    "workType": "Hand Embroidery",
+    "occasion": [
+      "Casual",
+      "Party"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Mehendi Green",
+      "Wine"
+    ],
+    "stock": 20,
+    "rating": 4.8,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/12567318/pexels-photo-12567318.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      }
+    ],
+    "name": "120-Count Mulmul Breeze Saree",
+    "slug": "120-count-mulmul-breeze-saree-9",
+    "description": "A handpicked mul cotton saree featuring fine weave and handloom craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Mul Cotton · Handloom",
+    "price": 1099,
+    "comparePrice": 1370,
+    "categoryId": "6a1bf2c577f04f8733c6c761",
+    "categorySlug": "120-count-mul-cotton",
+    "categoryName": "120 Count Mul Cotton",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Mul Cotton",
+      "Handloom",
+      "Saree",
+      "Office"
+    ],
+    "material": "Mul Cotton",
+    "fabric": "Mul Cotton",
+    "pattern": "Fine Weave",
+    "workType": "Handloom",
+    "occasion": [
+      "Office",
+      "Daily Wear"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Saffron",
+      "Maroon"
+    ],
+    "stock": 24,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/13155748/pexels-photo-13155748.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      }
+    ],
+    "name": "Featherlight 120s Mul Cotton Saree",
+    "slug": "featherlight-120s-mul-cotton-saree-10",
+    "description": "A handpicked mul cotton saree featuring fine weave and handloom craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Mul Cotton · Handloom",
+    "price": 1599,
+    "comparePrice": 2160,
+    "categoryId": "6a1bf2c577f04f8733c6c761",
+    "categorySlug": "120-count-mul-cotton",
+    "categoryName": "120 Count Mul Cotton",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Mul Cotton",
+      "Handloom",
+      "Saree",
+      "Party"
+    ],
+    "material": "Mul Cotton",
+    "fabric": "Mul Cotton",
+    "pattern": "Fine Weave",
+    "workType": "Handloom",
+    "occasion": [
+      "Party",
+      "Festive"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Powder Blue",
+      "Indigo"
+    ],
+    "stock": 8,
+    "rating": 4.3,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/13192074/pexels-photo-13192074.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      }
+    ],
+    "name": "Bengal Mulmul 120 Saree",
+    "slug": "bengal-mulmul-120-saree-11",
+    "description": "A handpicked mul cotton saree featuring fine weave and handloom craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Mul Cotton · Handloom",
+    "price": 999,
+    "comparePrice": 1450,
+    "categoryId": "6a1bf2c577f04f8733c6c761",
+    "categorySlug": "120-count-mul-cotton",
+    "categoryName": "120 Count Mul Cotton",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Mul Cotton",
+      "Handloom",
+      "Saree",
+      "Daily Wear"
+    ],
+    "material": "Mul Cotton",
+    "fabric": "Mul Cotton",
+    "pattern": "Fine Weave",
+    "workType": "Handloom",
+    "occasion": [
+      "Daily Wear",
+      "Wedding"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Wine",
+      "Mustard"
+    ],
+    "stock": 12,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/14205210/pexels-photo-14205210.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      }
+    ],
+    "name": "Summer Mul Cotton Saree",
+    "slug": "summer-mul-cotton-saree-12",
+    "description": "A handpicked mul cotton saree featuring fine weave and handloom craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Mul Cotton · Handloom",
+    "price": 1499,
+    "comparePrice": 1870,
+    "categoryId": "6a1bf2c577f04f8733c6c761",
+    "categorySlug": "120-count-mul-cotton",
+    "categoryName": "120 Count Mul Cotton",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Mul Cotton",
+      "Handloom",
+      "Saree",
+      "Festive"
+    ],
+    "material": "Mul Cotton",
+    "fabric": "Mul Cotton",
+    "pattern": "Fine Weave",
+    "workType": "Handloom",
+    "occasion": [
+      "Festive",
+      "Casual"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Maroon",
+      "Emerald"
+    ],
+    "stock": 16,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": true
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/14664840/pexels-photo-14664840.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 3,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      }
+    ],
+    "name": "100-Count Soft Mul Saree",
+    "slug": "100-count-soft-mul-saree-13",
+    "description": "A handpicked mul cotton saree featuring plain weave and handloom craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Mul Cotton · Handloom",
+    "price": 999,
+    "comparePrice": 1350,
+    "categoryId": "6a1bf2cf77f04f8733c6c762",
+    "categorySlug": "100-count-mul-cotton",
+    "categoryName": "100 Count Mul Cotton",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Mul Cotton",
+      "Handloom",
+      "Saree",
+      "Wedding"
+    ],
+    "material": "Mul Cotton",
+    "fabric": "Mul Cotton",
+    "pattern": "Plain Weave",
+    "workType": "Handloom",
+    "occasion": [
+      "Wedding",
+      "Office"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Indigo",
+      "Ivory"
+    ],
+    "stock": 20,
+    "rating": 4,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/14928074/pexels-photo-14928074.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 3,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 4,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      }
+    ],
+    "name": "Everyday Mulmul Cotton Saree",
+    "slug": "everyday-mulmul-cotton-saree-14",
+    "description": "A handpicked mul cotton saree featuring plain weave and handloom craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Mul Cotton · Handloom",
+    "price": 1699,
+    "comparePrice": 2460,
+    "categoryId": "6a1bf2cf77f04f8733c6c762",
+    "categorySlug": "100-count-mul-cotton",
+    "categoryName": "100 Count Mul Cotton",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Mul Cotton",
+      "Handloom",
+      "Saree",
+      "Casual"
+    ],
+    "material": "Mul Cotton",
+    "fabric": "Mul Cotton",
+    "pattern": "Plain Weave",
+    "workType": "Handloom",
+    "occasion": [
+      "Casual",
+      "Party"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Mustard",
+      "Rose"
+    ],
+    "stock": 24,
+    "rating": 4.3,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/15298623/pexels-photo-15298623.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 4,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      }
+    ],
+    "name": "Pastel Mul Cotton Saree",
+    "slug": "pastel-mul-cotton-saree-15",
+    "description": "A handpicked mul cotton saree featuring plain weave and handloom craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Mul Cotton · Handloom",
+    "price": 1399,
+    "comparePrice": 1750,
+    "categoryId": "6a1bf2cf77f04f8733c6c762",
+    "categorySlug": "100-count-mul-cotton",
+    "categoryName": "100 Count Mul Cotton",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Mul Cotton",
+      "Handloom",
+      "Saree",
+      "Office"
+    ],
+    "material": "Mul Cotton",
+    "fabric": "Mul Cotton",
+    "pattern": "Plain Weave",
+    "workType": "Handloom",
+    "occasion": [
+      "Office",
+      "Daily Wear"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Emerald",
+      "Teal"
+    ],
+    "stock": 8,
+    "rating": 4,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/15328445/pexels-photo-15328445.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      }
+    ],
+    "name": "Handwoven 100s Mul Saree",
+    "slug": "handwoven-100s-mul-saree-16",
+    "description": "A handpicked mul cotton saree featuring plain weave and handloom craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Mul Cotton · Handloom",
+    "price": 1099,
+    "comparePrice": 1480,
+    "categoryId": "6a1bf2cf77f04f8733c6c762",
+    "categorySlug": "100-count-mul-cotton",
+    "categoryName": "100 Count Mul Cotton",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Mul Cotton",
+      "Handloom",
+      "Saree",
+      "Party"
+    ],
+    "material": "Mul Cotton",
+    "fabric": "Mul Cotton",
+    "pattern": "Plain Weave",
+    "workType": "Handloom",
+    "occasion": [
+      "Party",
+      "Festive"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Ivory",
+      "Charcoal"
+    ],
+    "stock": 12,
+    "rating": 4.7,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/17040892/pexels-photo-17040892.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      }
+    ],
+    "name": "Handspun Khadi Classic Saree",
+    "slug": "handspun-khadi-classic-saree-17",
+    "description": "A handpicked khadi cotton saree featuring textured khadi and handspun craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Khadi Cotton · Handspun",
+    "price": 1399,
+    "comparePrice": 2030,
+    "categoryId": "6a1bf2d877f04f8733c6c763",
+    "categorySlug": "khadi-cotton",
+    "categoryName": "Khadi Cotton",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Khadi Cotton",
+      "Handspun",
+      "Saree",
+      "Daily Wear"
+    ],
+    "material": "Khadi Cotton",
+    "fabric": "Khadi Cotton",
+    "pattern": "Textured Khadi",
+    "workType": "Handspun",
+    "occasion": [
+      "Daily Wear",
+      "Wedding"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Rose",
+      "Mehendi Green"
+    ],
+    "stock": 16,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/17040982/pexels-photo-17040982.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      }
+    ],
+    "name": "Earthy Khadi Cotton Saree",
+    "slug": "earthy-khadi-cotton-saree-18",
+    "description": "A handpicked khadi cotton saree featuring textured khadi and handspun craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Khadi Cotton · Handspun",
+    "price": 2099,
+    "comparePrice": 2620,
+    "categoryId": "6a1bf2d877f04f8733c6c763",
+    "categorySlug": "khadi-cotton",
+    "categoryName": "Khadi Cotton",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Khadi Cotton",
+      "Handspun",
+      "Saree",
+      "Festive"
+    ],
+    "material": "Khadi Cotton",
+    "fabric": "Khadi Cotton",
+    "pattern": "Textured Khadi",
+    "workType": "Handspun",
+    "occasion": [
+      "Festive",
+      "Casual"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Teal",
+      "Saffron"
+    ],
+    "stock": 20,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": true
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/17113983/pexels-photo-17113983.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      }
+    ],
+    "name": "Natural-Dye Khadi Saree",
+    "slug": "natural-dye-khadi-saree-19",
+    "description": "A handpicked khadi cotton saree featuring textured khadi and handspun craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Khadi Cotton · Handspun",
+    "price": 1499,
+    "comparePrice": 2020,
+    "categoryId": "6a1bf2d877f04f8733c6c763",
+    "categorySlug": "khadi-cotton",
+    "categoryName": "Khadi Cotton",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Khadi Cotton",
+      "Handspun",
+      "Saree",
+      "Wedding"
+    ],
+    "material": "Khadi Cotton",
+    "fabric": "Khadi Cotton",
+    "pattern": "Textured Khadi",
+    "workType": "Handspun",
+    "occasion": [
+      "Wedding",
+      "Office"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Charcoal",
+      "Powder Blue"
+    ],
+    "stock": 24,
+    "rating": 4.7,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/17114015/pexels-photo-17114015.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 5,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      }
+    ],
+    "name": "Gandhi Khadi Heritage Saree",
+    "slug": "gandhi-khadi-heritage-saree-20",
+    "description": "A handpicked khadi cotton saree featuring textured khadi and handspun craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Khadi Cotton · Handspun",
+    "price": 2199,
+    "comparePrice": 3190,
+    "categoryId": "6a1bf2d877f04f8733c6c763",
+    "categorySlug": "khadi-cotton",
+    "categoryName": "Khadi Cotton",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Khadi Cotton",
+      "Handspun",
+      "Saree",
+      "Casual"
+    ],
+    "material": "Khadi Cotton",
+    "fabric": "Khadi Cotton",
+    "pattern": "Textured Khadi",
+    "workType": "Handspun",
+    "occasion": [
+      "Casual",
+      "Party"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Mehendi Green",
+      "Wine"
+    ],
+    "stock": 8,
+    "rating": 4,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/1846014/pexels-photo-1846014.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      }
+    ],
+    "name": "120-Count Linen Luxe Saree",
+    "slug": "120-count-linen-luxe-saree-21",
+    "description": "A handpicked pure linen saree featuring striped and handloom craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Pure Linen · Handloom",
+    "price": 3299,
+    "comparePrice": 4120,
+    "categoryId": "6a1bf31177f04f8733c6c764",
+    "categorySlug": "120-count-pure-linen",
+    "categoryName": "120 Count Pure Linen",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Pure Linen",
+      "Handloom",
+      "Saree",
+      "Office"
+    ],
+    "material": "Pure Linen",
+    "fabric": "Pure Linen",
+    "pattern": "Striped",
+    "workType": "Handloom",
+    "occasion": [
+      "Office",
+      "Daily Wear"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Saffron",
+      "Maroon"
+    ],
+    "stock": 12,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/19857782/pexels-photo-19857782.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 5,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 0,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      }
+    ],
+    "name": "Crisp 120s Pure Linen Saree",
+    "slug": "crisp-120s-pure-linen-saree-22",
+    "description": "A handpicked pure linen saree featuring striped and handloom craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Pure Linen · Handloom",
+    "price": 2599,
+    "comparePrice": 3510,
+    "categoryId": "6a1bf31177f04f8733c6c764",
+    "categorySlug": "120-count-pure-linen",
+    "categoryName": "120 Count Pure Linen",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Pure Linen",
+      "Handloom",
+      "Saree",
+      "Party"
+    ],
+    "material": "Pure Linen",
+    "fabric": "Pure Linen",
+    "pattern": "Striped",
+    "workType": "Handloom",
+    "occasion": [
+      "Party",
+      "Festive"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Powder Blue",
+      "Indigo"
+    ],
+    "stock": 16,
+    "rating": 4,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/20161456/pexels-photo-20161456.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 0,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      }
+    ],
+    "name": "Striped 120 Linen Saree",
+    "slug": "striped-120-linen-saree-23",
+    "description": "A handpicked pure linen saree featuring striped and handloom craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Pure Linen · Handloom",
+    "price": 1899,
+    "comparePrice": 2750,
+    "categoryId": "6a1bf31177f04f8733c6c764",
+    "categorySlug": "120-count-pure-linen",
+    "categoryName": "120 Count Pure Linen",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Pure Linen",
+      "Handloom",
+      "Saree",
+      "Daily Wear"
+    ],
+    "material": "Pure Linen",
+    "fabric": "Pure Linen",
+    "pattern": "Striped",
+    "workType": "Handloom",
+    "occasion": [
+      "Daily Wear",
+      "Wedding"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Wine",
+      "Mustard"
+    ],
+    "stock": 20,
+    "rating": 4.3,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/20957555/pexels-photo-20957555.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      }
+    ],
+    "name": "100-Count Linen Staple Saree",
+    "slug": "100-count-linen-staple-saree-24",
+    "description": "A handpicked pure linen saree featuring solid and handloom craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Pure Linen · Handloom",
+    "price": 1899,
+    "comparePrice": 2370,
+    "categoryId": "6a1bf33477f04f8733c6c765",
+    "categorySlug": "100-count-linen",
+    "categoryName": "100 Count Linen",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Pure Linen",
+      "Handloom",
+      "Saree",
+      "Festive"
+    ],
+    "material": "Pure Linen",
+    "fabric": "Pure Linen",
+    "pattern": "Solid",
+    "workType": "Handloom",
+    "occasion": [
+      "Festive",
+      "Casual"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Maroon",
+      "Emerald"
+    ],
+    "stock": 24,
+    "rating": 5,
+    "isActive": true,
+    "isFeatured": true
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/27139274/pexels-photo-27139274.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      }
+    ],
+    "name": "Breathable Pure Linen Saree",
+    "slug": "breathable-pure-linen-saree-25",
+    "description": "A handpicked pure linen saree featuring solid and handloom craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Pure Linen · Handloom",
+    "price": 2099,
+    "comparePrice": 2830,
+    "categoryId": "6a1bf33477f04f8733c6c765",
+    "categorySlug": "100-count-linen",
+    "categoryName": "100 Count Linen",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Pure Linen",
+      "Handloom",
+      "Saree",
+      "Wedding"
+    ],
+    "material": "Pure Linen",
+    "fabric": "Pure Linen",
+    "pattern": "Solid",
+    "workType": "Handloom",
+    "occasion": [
+      "Wedding",
+      "Office"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Indigo",
+      "Ivory"
+    ],
+    "stock": 8,
+    "rating": 4.7,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/27575104/pexels-photo-27575104.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      }
+    ],
+    "name": "Solid 100s Linen Saree",
+    "slug": "solid-100s-linen-saree-26",
+    "description": "A handpicked pure linen saree featuring solid and handloom craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Pure Linen · Handloom",
+    "price": 2299,
+    "comparePrice": 3330,
+    "categoryId": "6a1bf33477f04f8733c6c765",
+    "categorySlug": "100-count-linen",
+    "categoryName": "100 Count Linen",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Pure Linen",
+      "Handloom",
+      "Saree",
+      "Casual"
+    ],
+    "material": "Pure Linen",
+    "fabric": "Pure Linen",
+    "pattern": "Solid",
+    "workType": "Handloom",
+    "occasion": [
+      "Casual",
+      "Party"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Mustard",
+      "Rose"
+    ],
+    "stock": 12,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/27630600/pexels-photo-27630600.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      }
+    ],
+    "name": "Sequin Silk-Linen Shimmer Saree",
+    "slug": "sequin-silk-linen-shimmer-saree-27",
+    "description": "A handpicked silk linen saree featuring all-over sequin and sequin work craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Silk Linen · Sequin Work",
+    "price": 3999,
+    "comparePrice": 5000,
+    "categoryId": "6a1bf36c77f04f8733c6c766",
+    "categorySlug": "sequin-silk-linen",
+    "categoryName": "Sequin Silk Linen",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Silk Linen",
+      "Sequin Work",
+      "Saree",
+      "Office"
+    ],
+    "material": "Silk Linen",
+    "fabric": "Silk Linen",
+    "pattern": "All-over Sequin",
+    "workType": "Sequin Work",
+    "occasion": [
+      "Office",
+      "Daily Wear"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Emerald",
+      "Teal"
+    ],
+    "stock": 16,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/27719401/pexels-photo-27719401.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      }
+    ],
+    "name": "Starlit Sequin Silk Linen Saree",
+    "slug": "starlit-sequin-silk-linen-saree-28",
+    "description": "A handpicked silk linen saree featuring all-over sequin and sequin work craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Silk Linen · Sequin Work",
+    "price": 5299,
+    "comparePrice": 7150,
+    "categoryId": "6a1bf36c77f04f8733c6c766",
+    "categorySlug": "sequin-silk-linen",
+    "categoryName": "Sequin Silk Linen",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Silk Linen",
+      "Sequin Work",
+      "Saree",
+      "Party"
+    ],
+    "material": "Silk Linen",
+    "fabric": "Silk Linen",
+    "pattern": "All-over Sequin",
+    "workType": "Sequin Work",
+    "occasion": [
+      "Party",
+      "Festive"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Ivory",
+      "Charcoal"
+    ],
+    "stock": 20,
+    "rating": 4.3,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/27719404/pexels-photo-27719404.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 1,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 2,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      }
+    ],
+    "name": "Glitter Sequin Silk-Linen Saree",
+    "slug": "glitter-sequin-silk-linen-saree-29",
+    "description": "A handpicked silk linen saree featuring all-over sequin and sequin work craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Silk Linen · Sequin Work",
+    "price": 3499,
+    "comparePrice": 5070,
+    "categoryId": "6a1bf36c77f04f8733c6c766",
+    "categorySlug": "sequin-silk-linen",
+    "categoryName": "Sequin Silk Linen",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Silk Linen",
+      "Sequin Work",
+      "Saree",
+      "Daily Wear"
+    ],
+    "material": "Silk Linen",
+    "fabric": "Silk Linen",
+    "pattern": "All-over Sequin",
+    "workType": "Sequin Work",
+    "occasion": [
+      "Daily Wear",
+      "Wedding"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Rose",
+      "Mehendi Green"
+    ],
+    "stock": 24,
+    "rating": 4.3,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/27819381/pexels-photo-27819381.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 1,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      }
+    ],
+    "name": "Minimal Silk-Linen Saree",
+    "slug": "minimal-silk-linen-saree-30",
+    "description": "A handpicked silk linen saree featuring solid and plain craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Silk Linen · Plain",
+    "price": 3499,
+    "comparePrice": 4370,
+    "categoryId": "6a1bf38d77f04f8733c6c767",
+    "categorySlug": "plain-silk-linen",
+    "categoryName": "Plain Silk Linen",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Silk Linen",
+      "Plain",
+      "Saree",
+      "Festive"
+    ],
+    "material": "Silk Linen",
+    "fabric": "Silk Linen",
+    "pattern": "Solid",
+    "workType": "Plain",
+    "occasion": [
+      "Festive",
+      "Casual"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Teal",
+      "Saffron"
+    ],
+    "stock": 8,
+    "rating": 3.5,
+    "isActive": true,
+    "isFeatured": true
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/28054616/pexels-photo-28054616.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 2,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      }
+    ],
+    "name": "Plain Silk-Linen Grace Saree",
+    "slug": "plain-silk-linen-grace-saree-31",
+    "description": "A handpicked silk linen saree featuring solid and plain craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Silk Linen · Plain",
+    "price": 2499,
+    "comparePrice": 3370,
+    "categoryId": "6a1bf38d77f04f8733c6c767",
+    "categorySlug": "plain-silk-linen",
+    "categoryName": "Plain Silk Linen",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Silk Linen",
+      "Plain",
+      "Saree",
+      "Wedding"
+    ],
+    "material": "Silk Linen",
+    "fabric": "Silk Linen",
+    "pattern": "Solid",
+    "workType": "Plain",
+    "occasion": [
+      "Wedding",
+      "Office"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Charcoal",
+      "Powder Blue"
+    ],
+    "stock": 12,
+    "rating": 4.3,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/28058186/pexels-photo-28058186.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      }
+    ],
+    "name": "Solid Silk-Linen Everyday Saree",
+    "slug": "solid-silk-linen-everyday-saree-32",
+    "description": "A handpicked silk linen saree featuring solid and plain craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Silk Linen · Plain",
+    "price": 3599,
+    "comparePrice": 5220,
+    "categoryId": "6a1bf38d77f04f8733c6c767",
+    "categorySlug": "plain-silk-linen",
+    "categoryName": "Plain Silk Linen",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Silk Linen",
+      "Plain",
+      "Saree",
+      "Casual"
+    ],
+    "material": "Silk Linen",
+    "fabric": "Silk Linen",
+    "pattern": "Solid",
+    "workType": "Plain",
+    "occasion": [
+      "Casual",
+      "Party"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Mehendi Green",
+      "Wine"
+    ],
+    "stock": 16,
+    "rating": 4.8,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/28135787/pexels-photo-28135787.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      }
+    ],
+    "name": "Muslin Silk Whisper Saree",
+    "slug": "muslin-silk-whisper-saree-33",
+    "description": "A handpicked muslin silk saree featuring fine sheer and handloom craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Muslin Silk · Handloom",
+    "price": 3599,
+    "comparePrice": 4500,
+    "categoryId": "6a1bf3a677f04f8733c6c768",
+    "categorySlug": "muslin-silk",
+    "categoryName": "Muslin Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Muslin Silk",
+      "Handloom",
+      "Saree",
+      "Office"
+    ],
+    "material": "Muslin Silk",
+    "fabric": "Muslin Silk",
+    "pattern": "Fine Sheer",
+    "workType": "Handloom",
+    "occasion": [
+      "Office",
+      "Daily Wear"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Saffron",
+      "Maroon"
+    ],
+    "stock": 20,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/28316406/pexels-photo-28316406.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      }
+    ],
+    "name": "Sheer Muslin Silk Saree",
+    "slug": "sheer-muslin-silk-saree-34",
+    "description": "A handpicked muslin silk saree featuring fine sheer and handloom craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Muslin Silk · Handloom",
+    "price": 3499,
+    "comparePrice": 4720,
+    "categoryId": "6a1bf3a677f04f8733c6c768",
+    "categorySlug": "muslin-silk",
+    "categoryName": "Muslin Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Muslin Silk",
+      "Handloom",
+      "Saree",
+      "Party"
+    ],
+    "material": "Muslin Silk",
+    "fabric": "Muslin Silk",
+    "pattern": "Fine Sheer",
+    "workType": "Handloom",
+    "occasion": [
+      "Party",
+      "Festive"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Powder Blue",
+      "Indigo"
+    ],
+    "stock": 24,
+    "rating": 4.3,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/28517477/pexels-photo-28517477.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      }
+    ],
+    "name": "Featherlight Muslin Silk Saree",
+    "slug": "featherlight-muslin-silk-saree-35",
+    "description": "A handpicked muslin silk saree featuring fine sheer and handloom craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Muslin Silk · Handloom",
+    "price": 3399,
+    "comparePrice": 4930,
+    "categoryId": "6a1bf3a677f04f8733c6c768",
+    "categorySlug": "muslin-silk",
+    "categoryName": "Muslin Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Muslin Silk",
+      "Handloom",
+      "Saree",
+      "Daily Wear"
+    ],
+    "material": "Muslin Silk",
+    "fabric": "Muslin Silk",
+    "pattern": "Fine Sheer",
+    "workType": "Handloom",
+    "occasion": [
+      "Daily Wear",
+      "Wedding"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Wine",
+      "Mustard"
+    ],
+    "stock": 8,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/28943461/pexels-photo-28943461.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      }
+    ],
+    "name": "Kora Silk Heritage Saree",
+    "slug": "kora-silk-heritage-saree-36",
+    "description": "A handpicked kora silk saree featuring temple border and zari border craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Kora Silk · Zari Border",
+    "price": 3199,
+    "comparePrice": 4000,
+    "categoryId": "6a1bf3b277f04f8733c6c769",
+    "categorySlug": "kora-silk",
+    "categoryName": "Kora Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Kora Silk",
+      "Zari Border",
+      "Saree",
+      "Festive"
+    ],
+    "material": "Kora Silk",
+    "fabric": "Kora Silk",
+    "pattern": "Temple Border",
+    "workType": "Zari Border",
+    "occasion": [
+      "Festive",
+      "Casual"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Maroon",
+      "Emerald"
+    ],
+    "stock": 12,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": true
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/28943464/pexels-photo-28943464.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 3,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      }
+    ],
+    "name": "Crisp Kora Silk Zari Saree",
+    "slug": "crisp-kora-silk-zari-saree-37",
+    "description": "A handpicked kora silk saree featuring temple border and zari border craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Kora Silk · Zari Border",
+    "price": 2899,
+    "comparePrice": 3910,
+    "categoryId": "6a1bf3b277f04f8733c6c769",
+    "categorySlug": "kora-silk",
+    "categoryName": "Kora Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Kora Silk",
+      "Zari Border",
+      "Saree",
+      "Wedding"
+    ],
+    "material": "Kora Silk",
+    "fabric": "Kora Silk",
+    "pattern": "Temple Border",
+    "workType": "Zari Border",
+    "occasion": [
+      "Wedding",
+      "Office"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Indigo",
+      "Ivory"
+    ],
+    "stock": 16,
+    "rating": 4,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/28943465/pexels-photo-28943465.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 3,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 4,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      }
+    ],
+    "name": "Banarasi Kora Silk Saree",
+    "slug": "banarasi-kora-silk-saree-38",
+    "description": "A handpicked kora silk saree featuring temple border and zari border craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Kora Silk · Zari Border",
+    "price": 5399,
+    "comparePrice": 7830,
+    "categoryId": "6a1bf3b277f04f8733c6c769",
+    "categorySlug": "kora-silk",
+    "categoryName": "Kora Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Kora Silk",
+      "Zari Border",
+      "Saree",
+      "Casual"
+    ],
+    "material": "Kora Silk",
+    "fabric": "Kora Silk",
+    "pattern": "Temple Border",
+    "workType": "Zari Border",
+    "occasion": [
+      "Casual",
+      "Party"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Mustard",
+      "Rose"
+    ],
+    "stock": 20,
+    "rating": 4.3,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/28943474/pexels-photo-28943474.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 4,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      }
+    ],
+    "name": "Matka Silk Rustic Saree",
+    "slug": "matka-silk-rustic-saree-39",
+    "description": "A handpicked matka silk saree featuring slub texture and handloom craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Matka Silk · Handloom",
+    "price": 3799,
+    "comparePrice": 4750,
+    "categoryId": "6a1bf3e677f04f8733c6c76a",
+    "categorySlug": "matka-silk",
+    "categoryName": "Matka Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Matka Silk",
+      "Handloom",
+      "Saree",
+      "Office"
+    ],
+    "material": "Matka Silk",
+    "fabric": "Matka Silk",
+    "pattern": "Slub Texture",
+    "workType": "Handloom",
+    "occasion": [
+      "Office",
+      "Daily Wear"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Emerald",
+      "Teal"
+    ],
+    "stock": 24,
+    "rating": 4,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/28943484/pexels-photo-28943484.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      }
+    ],
+    "name": "Textured Matka Silk Saree",
+    "slug": "textured-matka-silk-saree-40",
+    "description": "A handpicked matka silk saree featuring slub texture and handloom craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Matka Silk · Handloom",
+    "price": 4499,
+    "comparePrice": 6070,
+    "categoryId": "6a1bf3e677f04f8733c6c76a",
+    "categorySlug": "matka-silk",
+    "categoryName": "Matka Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Matka Silk",
+      "Handloom",
+      "Saree",
+      "Party"
+    ],
+    "material": "Matka Silk",
+    "fabric": "Matka Silk",
+    "pattern": "Slub Texture",
+    "workType": "Handloom",
+    "occasion": [
+      "Party",
+      "Festive"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Ivory",
+      "Charcoal"
+    ],
+    "stock": 8,
+    "rating": 4.7,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/28943495/pexels-photo-28943495.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      }
+    ],
+    "name": "Bhagalpuri Matka Silk Saree",
+    "slug": "bhagalpuri-matka-silk-saree-41",
+    "description": "A handpicked matka silk saree featuring slub texture and handloom craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Matka Silk · Handloom",
+    "price": 2599,
+    "comparePrice": 3770,
+    "categoryId": "6a1bf3e677f04f8733c6c76a",
+    "categorySlug": "matka-silk",
+    "categoryName": "Matka Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Matka Silk",
+      "Handloom",
+      "Saree",
+      "Daily Wear"
+    ],
+    "material": "Matka Silk",
+    "fabric": "Matka Silk",
+    "pattern": "Slub Texture",
+    "workType": "Handloom",
+    "occasion": [
+      "Daily Wear",
+      "Wedding"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Rose",
+      "Mehendi Green"
+    ],
+    "stock": 12,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/28943520/pexels-photo-28943520.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      }
+    ],
+    "name": "Chanderi Silk Sheen Saree",
+    "slug": "chanderi-silk-sheen-saree-42",
+    "description": "A handpicked chanderi silk saree featuring butti and zari buti craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Chanderi Silk · Zari Buti",
+    "price": 2499,
+    "comparePrice": 3120,
+    "categoryId": "6a1bf3f777f04f8733c6c76b",
+    "categorySlug": "chanderi-silk",
+    "categoryName": "Chanderi Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Chanderi Silk",
+      "Zari Buti",
+      "Saree",
+      "Festive"
+    ],
+    "material": "Chanderi Silk",
+    "fabric": "Chanderi Silk",
+    "pattern": "Butti",
+    "workType": "Zari Buti",
+    "occasion": [
+      "Festive",
+      "Casual"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Teal",
+      "Saffron"
+    ],
+    "stock": 16,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": true
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/28943531/pexels-photo-28943531.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      }
+    ],
+    "name": "Royal Chanderi Buti Saree",
+    "slug": "royal-chanderi-buti-saree-43",
+    "description": "A handpicked chanderi silk saree featuring butti and zari buti craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Chanderi Silk · Zari Buti",
+    "price": 2699,
+    "comparePrice": 3640,
+    "categoryId": "6a1bf3f777f04f8733c6c76b",
+    "categorySlug": "chanderi-silk",
+    "categoryName": "Chanderi Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Chanderi Silk",
+      "Zari Buti",
+      "Saree",
+      "Wedding"
+    ],
+    "material": "Chanderi Silk",
+    "fabric": "Chanderi Silk",
+    "pattern": "Butti",
+    "workType": "Zari Buti",
+    "occasion": [
+      "Wedding",
+      "Office"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Charcoal",
+      "Powder Blue"
+    ],
+    "stock": 20,
+    "rating": 4.7,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/28943543/pexels-photo-28943543.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 5,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      }
+    ],
+    "name": "Gold-Buti Chanderi Silk Saree",
+    "slug": "gold-buti-chanderi-silk-saree-44",
+    "description": "A handpicked chanderi silk saree featuring butti and zari buti craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Chanderi Silk · Zari Buti",
+    "price": 2899,
+    "comparePrice": 4200,
+    "categoryId": "6a1bf3f777f04f8733c6c76b",
+    "categorySlug": "chanderi-silk",
+    "categoryName": "Chanderi Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Chanderi Silk",
+      "Zari Buti",
+      "Saree",
+      "Casual"
+    ],
+    "material": "Chanderi Silk",
+    "fabric": "Chanderi Silk",
+    "pattern": "Butti",
+    "workType": "Zari Buti",
+    "occasion": [
+      "Casual",
+      "Party"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Mehendi Green",
+      "Wine"
+    ],
+    "stock": 24,
+    "rating": 4,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/28943579/pexels-photo-28943579.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      }
+    ],
+    "name": "Pastel Chanderi Silk Saree",
+    "slug": "pastel-chanderi-silk-saree-45",
+    "description": "A handpicked chanderi silk saree featuring butti and zari buti craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Chanderi Silk · Zari Buti",
+    "price": 3099,
+    "comparePrice": 3870,
+    "categoryId": "6a1bf3f777f04f8733c6c76b",
+    "categorySlug": "chanderi-silk",
+    "categoryName": "Chanderi Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Chanderi Silk",
+      "Zari Buti",
+      "Saree",
+      "Office"
+    ],
+    "material": "Chanderi Silk",
+    "fabric": "Chanderi Silk",
+    "pattern": "Butti",
+    "workType": "Zari Buti",
+    "occasion": [
+      "Office",
+      "Daily Wear"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Saffron",
+      "Maroon"
+    ],
+    "stock": 8,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/28943601/pexels-photo-28943601.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 5,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 0,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      }
+    ],
+    "name": "Kota Doria Featherweight Saree",
+    "slug": "kota-doria-featherweight-saree-46",
+    "description": "A handpicked kota doria saree featuring kota check and handloom craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Kota Doria · Handloom",
+    "price": 2699,
+    "comparePrice": 3640,
+    "categoryId": "6a1bf49477f04f8733c6c76d",
+    "categorySlug": "kota-doria",
+    "categoryName": "Kota Doria",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Kota Doria",
+      "Handloom",
+      "Saree",
+      "Party"
+    ],
+    "material": "Kota Doria",
+    "fabric": "Kota Doria",
+    "pattern": "Kota Check",
+    "workType": "Handloom",
+    "occasion": [
+      "Party",
+      "Festive"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Powder Blue",
+      "Indigo"
+    ],
+    "stock": 12,
+    "rating": 4,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/28943602/pexels-photo-28943602.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 0,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      }
+    ],
+    "name": "Classic Kota Check Saree",
+    "slug": "classic-kota-check-saree-47",
+    "description": "A handpicked kota doria saree featuring kota check and handloom craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Kota Doria · Handloom",
+    "price": 1999,
+    "comparePrice": 2900,
+    "categoryId": "6a1bf49477f04f8733c6c76d",
+    "categorySlug": "kota-doria",
+    "categoryName": "Kota Doria",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Kota Doria",
+      "Handloom",
+      "Saree",
+      "Daily Wear"
+    ],
+    "material": "Kota Doria",
+    "fabric": "Kota Doria",
+    "pattern": "Kota Check",
+    "workType": "Handloom",
+    "occasion": [
+      "Daily Wear",
+      "Wedding"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Wine",
+      "Mustard"
+    ],
+    "stock": 16,
+    "rating": 4.3,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/28943608/pexels-photo-28943608.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      }
+    ],
+    "name": "Zari-Border Kota Doria Saree",
+    "slug": "zari-border-kota-doria-saree-48",
+    "description": "A handpicked kota doria saree featuring kota check and handloom craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Kota Doria · Handloom",
+    "price": 1299,
+    "comparePrice": 1620,
+    "categoryId": "6a1bf49477f04f8733c6c76d",
+    "categorySlug": "kota-doria",
+    "categoryName": "Kota Doria",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Kota Doria",
+      "Handloom",
+      "Saree",
+      "Festive"
+    ],
+    "material": "Kota Doria",
+    "fabric": "Kota Doria",
+    "pattern": "Kota Check",
+    "workType": "Handloom",
+    "occasion": [
+      "Festive",
+      "Casual"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Maroon",
+      "Emerald"
+    ],
+    "stock": 20,
+    "rating": 5,
+    "isActive": true,
+    "isFeatured": true
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/28943610/pexels-photo-28943610.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      }
+    ],
+    "name": "Maheshwari Silk Classic Saree",
+    "slug": "maheshwari-silk-classic-saree-49",
+    "description": "A handpicked maheshwari silk saree featuring reversible border and zari border craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Maheshwari Silk · Zari Border",
+    "price": 3399,
+    "comparePrice": 4590,
+    "categoryId": "6a1bf54177f04f8733c6c76e",
+    "categorySlug": "maheshwari-silk",
+    "categoryName": "Maheshwari Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Maheshwari Silk",
+      "Zari Border",
+      "Saree",
+      "Wedding"
+    ],
+    "material": "Maheshwari Silk",
+    "fabric": "Maheshwari Silk",
+    "pattern": "Reversible Border",
+    "workType": "Zari Border",
+    "occasion": [
+      "Wedding",
+      "Office"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Indigo",
+      "Ivory"
+    ],
+    "stock": 24,
+    "rating": 4.7,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/28943617/pexels-photo-28943617.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      }
+    ],
+    "name": "Reversible Maheshwari Saree",
+    "slug": "reversible-maheshwari-saree-50",
+    "description": "A handpicked maheshwari silk saree featuring reversible border and zari border craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Maheshwari Silk · Zari Border",
+    "price": 2399,
+    "comparePrice": 3480,
+    "categoryId": "6a1bf54177f04f8733c6c76e",
+    "categorySlug": "maheshwari-silk",
+    "categoryName": "Maheshwari Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Maheshwari Silk",
+      "Zari Border",
+      "Saree",
+      "Casual"
+    ],
+    "material": "Maheshwari Silk",
+    "fabric": "Maheshwari Silk",
+    "pattern": "Reversible Border",
+    "workType": "Zari Border",
+    "occasion": [
+      "Casual",
+      "Party"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Mustard",
+      "Rose"
+    ],
+    "stock": 8,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/28943670/pexels-photo-28943670.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      }
+    ],
+    "name": "Temple-Border Maheshwari Saree",
+    "slug": "temple-border-maheshwari-saree-51",
+    "description": "A handpicked maheshwari silk saree featuring reversible border and zari border craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Maheshwari Silk · Zari Border",
+    "price": 3499,
+    "comparePrice": 4370,
+    "categoryId": "6a1bf54177f04f8733c6c76e",
+    "categorySlug": "maheshwari-silk",
+    "categoryName": "Maheshwari Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Maheshwari Silk",
+      "Zari Border",
+      "Saree",
+      "Office"
+    ],
+    "material": "Maheshwari Silk",
+    "fabric": "Maheshwari Silk",
+    "pattern": "Reversible Border",
+    "workType": "Zari Border",
+    "occasion": [
+      "Office",
+      "Daily Wear"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Emerald",
+      "Teal"
+    ],
+    "stock": 12,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/28943676/pexels-photo-28943676.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      }
+    ],
+    "name": "Block-Print Maheshwari Saree",
+    "slug": "block-print-maheshwari-saree-52",
+    "description": "A handpicked maheshwari silk saree featuring floral block and block print craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Maheshwari Silk · Block Print",
+    "price": 2799,
+    "comparePrice": 3780,
+    "categoryId": "6a1bf56477f04f8733c6c76f",
+    "categorySlug": "block-print-maheshwari-silk",
+    "categoryName": "Block Print Maheshwari Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Maheshwari Silk",
+      "Block Print",
+      "Saree",
+      "Party"
+    ],
+    "material": "Maheshwari Silk",
+    "fabric": "Maheshwari Silk",
+    "pattern": "Floral Block",
+    "workType": "Block Print",
+    "occasion": [
+      "Party",
+      "Festive"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Ivory",
+      "Charcoal"
+    ],
+    "stock": 16,
+    "rating": 4.3,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/29026116/pexels-photo-29026116.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 1,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 2,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      }
+    ],
+    "name": "Bagh-Print Maheshwari Silk Saree",
+    "slug": "bagh-print-maheshwari-silk-saree-53",
+    "description": "A handpicked maheshwari silk saree featuring floral block and block print craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Maheshwari Silk · Block Print",
+    "price": 3899,
+    "comparePrice": 5650,
+    "categoryId": "6a1bf56477f04f8733c6c76f",
+    "categorySlug": "block-print-maheshwari-silk",
+    "categoryName": "Block Print Maheshwari Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Maheshwari Silk",
+      "Block Print",
+      "Saree",
+      "Daily Wear"
+    ],
+    "material": "Maheshwari Silk",
+    "fabric": "Maheshwari Silk",
+    "pattern": "Floral Block",
+    "workType": "Block Print",
+    "occasion": [
+      "Daily Wear",
+      "Wedding"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Rose",
+      "Mehendi Green"
+    ],
+    "stock": 20,
+    "rating": 4.3,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/30004204/pexels-photo-30004204.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 1,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      }
+    ],
+    "name": "Indigo Block Maheshwari Saree",
+    "slug": "indigo-block-maheshwari-saree-54",
+    "description": "A handpicked maheshwari silk saree featuring floral block and block print craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Maheshwari Silk · Block Print",
+    "price": 2899,
+    "comparePrice": 3620,
+    "categoryId": "6a1bf56477f04f8733c6c76f",
+    "categorySlug": "block-print-maheshwari-silk",
+    "categoryName": "Block Print Maheshwari Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Maheshwari Silk",
+      "Block Print",
+      "Saree",
+      "Festive"
+    ],
+    "material": "Maheshwari Silk",
+    "fabric": "Maheshwari Silk",
+    "pattern": "Floral Block",
+    "workType": "Block Print",
+    "occasion": [
+      "Festive",
+      "Casual"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Teal",
+      "Saffron"
+    ],
+    "stock": 24,
+    "rating": 3.5,
+    "isActive": true,
+    "isFeatured": true
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/30682943/pexels-photo-30682943.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 2,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      }
+    ],
+    "name": "Block-Print Chanderi Saree",
+    "slug": "block-print-chanderi-saree-55",
+    "description": "A handpicked chanderi silk saree featuring floral block and block print craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Chanderi Silk · Block Print",
+    "price": 3599,
+    "comparePrice": 4860,
+    "categoryId": "6a1bf58477f04f8733c6c770",
+    "categorySlug": "block-print-chanderi-silk",
+    "categoryName": "Block Print Chanderi Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Chanderi Silk",
+      "Block Print",
+      "Saree",
+      "Wedding"
+    ],
+    "material": "Chanderi Silk",
+    "fabric": "Chanderi Silk",
+    "pattern": "Floral Block",
+    "workType": "Block Print",
+    "occasion": [
+      "Wedding",
+      "Office"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Charcoal",
+      "Powder Blue"
+    ],
+    "stock": 8,
+    "rating": 4.3,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/30703862/pexels-photo-30703862.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      }
+    ],
+    "name": "Hand-Block Chanderi Silk Saree",
+    "slug": "hand-block-chanderi-silk-saree-56",
+    "description": "A handpicked chanderi silk saree featuring floral block and block print craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Chanderi Silk · Block Print",
+    "price": 4099,
+    "comparePrice": 5940,
+    "categoryId": "6a1bf58477f04f8733c6c770",
+    "categorySlug": "block-print-chanderi-silk",
+    "categoryName": "Block Print Chanderi Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Chanderi Silk",
+      "Block Print",
+      "Saree",
+      "Casual"
+    ],
+    "material": "Chanderi Silk",
+    "fabric": "Chanderi Silk",
+    "pattern": "Floral Block",
+    "workType": "Block Print",
+    "occasion": [
+      "Casual",
+      "Party"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Mehendi Green",
+      "Wine"
+    ],
+    "stock": 12,
+    "rating": 4.8,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/31856233/pexels-photo-31856233.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      }
+    ],
+    "name": "Botanical Block Chanderi Saree",
+    "slug": "botanical-block-chanderi-saree-57",
+    "description": "A handpicked chanderi silk saree featuring floral block and block print craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Chanderi Silk · Block Print",
+    "price": 4599,
+    "comparePrice": 5750,
+    "categoryId": "6a1bf58477f04f8733c6c770",
+    "categorySlug": "block-print-chanderi-silk",
+    "categoryName": "Block Print Chanderi Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Chanderi Silk",
+      "Block Print",
+      "Saree",
+      "Office"
+    ],
+    "material": "Chanderi Silk",
+    "fabric": "Chanderi Silk",
+    "pattern": "Floral Block",
+    "workType": "Block Print",
+    "occasion": [
+      "Office",
+      "Daily Wear"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Saffron",
+      "Maroon"
+    ],
+    "stock": 16,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/31984087/pexels-photo-31984087.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      }
+    ],
+    "name": "Designer Saree with Readymade Blouse",
+    "slug": "designer-saree-with-readymade-blouse-58",
+    "description": "A handpicked art silk saree featuring contemporary and designer craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Art Silk · Designer",
+    "price": 6299,
+    "comparePrice": 8500,
+    "categoryId": "6a1bf65977f04f8733c6c772",
+    "categorySlug": "with-readymade-blouse",
+    "categoryName": "With Readymade Blouse",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Art Silk",
+      "Designer",
+      "Saree",
+      "Party"
+    ],
+    "material": "Art Silk",
+    "fabric": "Art Silk",
+    "pattern": "Contemporary",
+    "workType": "Designer",
+    "occasion": [
+      "Party",
+      "Festive"
+    ],
+    "blouseIncluded": true,
+    "colors": [
+      "Powder Blue",
+      "Indigo"
+    ],
+    "stock": 20,
+    "rating": 4.3,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/32038882/pexels-photo-32038882.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      }
+    ],
+    "name": "Ready-to-Wear Designer Saree",
+    "slug": "ready-to-wear-designer-saree-59",
+    "description": "A handpicked art silk saree featuring contemporary and designer craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Art Silk · Designer",
+    "price": 3599,
+    "comparePrice": 5220,
+    "categoryId": "6a1bf65977f04f8733c6c772",
+    "categorySlug": "with-readymade-blouse",
+    "categoryName": "With Readymade Blouse",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Art Silk",
+      "Designer",
+      "Saree",
+      "Daily Wear"
+    ],
+    "material": "Art Silk",
+    "fabric": "Art Silk",
+    "pattern": "Contemporary",
+    "workType": "Designer",
+    "occasion": [
+      "Daily Wear",
+      "Wedding"
+    ],
+    "blouseIncluded": true,
+    "colors": [
+      "Wine",
+      "Mustard"
+    ],
+    "stock": 24,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/32312140/pexels-photo-32312140.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      }
+    ],
+    "name": "Party Designer Saree with Blouse",
+    "slug": "party-designer-saree-with-blouse-60",
+    "description": "A handpicked art silk saree featuring contemporary and designer craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Art Silk · Designer",
+    "price": 4999,
+    "comparePrice": 6250,
+    "categoryId": "6a1bf65977f04f8733c6c772",
+    "categorySlug": "with-readymade-blouse",
+    "categoryName": "With Readymade Blouse",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Art Silk",
+      "Designer",
+      "Saree",
+      "Festive"
+    ],
+    "material": "Art Silk",
+    "fabric": "Art Silk",
+    "pattern": "Contemporary",
+    "workType": "Designer",
+    "occasion": [
+      "Festive",
+      "Casual"
+    ],
+    "blouseIncluded": true,
+    "colors": [
+      "Maroon",
+      "Emerald"
+    ],
+    "stock": 8,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": true
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/32315363/pexels-photo-32315363.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 3,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      }
+    ],
+    "name": "Festive Designer Saree Set",
+    "slug": "festive-designer-saree-set-61",
+    "description": "A handpicked art silk saree featuring contemporary and designer craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Art Silk · Designer",
+    "price": 6399,
+    "comparePrice": 8640,
+    "categoryId": "6a1bf65977f04f8733c6c772",
+    "categorySlug": "with-readymade-blouse",
+    "categoryName": "With Readymade Blouse",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Art Silk",
+      "Designer",
+      "Saree",
+      "Wedding"
+    ],
+    "material": "Art Silk",
+    "fabric": "Art Silk",
+    "pattern": "Contemporary",
+    "workType": "Designer",
+    "occasion": [
+      "Wedding",
+      "Office"
+    ],
+    "blouseIncluded": true,
+    "colors": [
+      "Indigo",
+      "Ivory"
+    ],
+    "stock": 12,
+    "rating": 4,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/32383364/pexels-photo-32383364.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 3,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 4,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      }
+    ],
+    "name": "Designer Saree (Unstitched Blouse)",
+    "slug": "designer-saree-unstitched-blouse-62",
+    "description": "A handpicked art silk saree featuring contemporary and designer craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Art Silk · Designer",
+    "price": 5899,
+    "comparePrice": 8550,
+    "categoryId": "6a1bf66c77f04f8733c6c773",
+    "categorySlug": "without-readymade-blouse",
+    "categoryName": "Without Readymade Blouse",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Art Silk",
+      "Designer",
+      "Saree",
+      "Casual"
+    ],
+    "material": "Art Silk",
+    "fabric": "Art Silk",
+    "pattern": "Contemporary",
+    "workType": "Designer",
+    "occasion": [
+      "Casual",
+      "Party"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Mustard",
+      "Rose"
+    ],
+    "stock": 16,
+    "rating": 4.3,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/33078845/pexels-photo-33078845.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 4,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      }
+    ],
+    "name": "Statement Designer Drape Saree",
+    "slug": "statement-designer-drape-saree-63",
+    "description": "A handpicked art silk saree featuring contemporary and designer craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Art Silk · Designer",
+    "price": 5199,
+    "comparePrice": 6500,
+    "categoryId": "6a1bf66c77f04f8733c6c773",
+    "categorySlug": "without-readymade-blouse",
+    "categoryName": "Without Readymade Blouse",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Art Silk",
+      "Designer",
+      "Saree",
+      "Office"
+    ],
+    "material": "Art Silk",
+    "fabric": "Art Silk",
+    "pattern": "Contemporary",
+    "workType": "Designer",
+    "occasion": [
+      "Office",
+      "Daily Wear"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Emerald",
+      "Teal"
+    ],
+    "stock": 20,
+    "rating": 4,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/33225567/pexels-photo-33225567.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      }
+    ],
+    "name": "Contemporary Designer Saree",
+    "slug": "contemporary-designer-saree-64",
+    "description": "A handpicked art silk saree featuring contemporary and designer craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Art Silk · Designer",
+    "price": 4499,
+    "comparePrice": 6070,
+    "categoryId": "6a1bf66c77f04f8733c6c773",
+    "categorySlug": "without-readymade-blouse",
+    "categoryName": "Without Readymade Blouse",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Art Silk",
+      "Designer",
+      "Saree",
+      "Party"
+    ],
+    "material": "Art Silk",
+    "fabric": "Art Silk",
+    "pattern": "Contemporary",
+    "workType": "Designer",
+    "occasion": [
+      "Party",
+      "Festive"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Ivory",
+      "Charcoal"
+    ],
+    "stock": 24,
+    "rating": 4.7,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/33276621/pexels-photo-33276621.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      }
+    ],
+    "name": "Ruffle Designer Saree",
+    "slug": "ruffle-designer-saree-65",
+    "description": "A handpicked art silk saree featuring contemporary and designer craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Art Silk · Designer",
+    "price": 3799,
+    "comparePrice": 5510,
+    "categoryId": "6a1bf66c77f04f8733c6c773",
+    "categorySlug": "without-readymade-blouse",
+    "categoryName": "Without Readymade Blouse",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Art Silk",
+      "Designer",
+      "Saree",
+      "Daily Wear"
+    ],
+    "material": "Art Silk",
+    "fabric": "Art Silk",
+    "pattern": "Contemporary",
+    "workType": "Designer",
+    "occasion": [
+      "Daily Wear",
+      "Wedding"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Rose",
+      "Mehendi Green"
+    ],
+    "stock": 8,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/33556315/pexels-photo-33556315.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      }
+    ],
+    "name": "Narayanpet Temple Border Saree",
+    "slug": "narayanpet-temple-border-saree-66",
+    "description": "A handpicked cotton silk saree featuring temple & checks and handloom craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Cotton Silk · Handloom",
+    "price": 2399,
+    "comparePrice": 3000,
+    "categoryId": "6a1bf77c77f04f8733c6c774",
+    "categorySlug": "narayanpet-sarees",
+    "categoryName": "Narayanpet Sarees",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Cotton Silk",
+      "Handloom",
+      "Saree",
+      "Festive"
+    ],
+    "material": "Cotton Silk",
+    "fabric": "Cotton Silk",
+    "pattern": "Temple & Checks",
+    "workType": "Handloom",
+    "occasion": [
+      "Festive",
+      "Casual"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Teal",
+      "Saffron"
+    ],
+    "stock": 12,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": true
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/33718198/pexels-photo-33718198.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      }
+    ],
+    "name": "Classic Narayanpet Checks Saree",
+    "slug": "classic-narayanpet-checks-saree-67",
+    "description": "A handpicked cotton silk saree featuring temple & checks and handloom craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Cotton Silk · Handloom",
+    "price": 3499,
+    "comparePrice": 4720,
+    "categoryId": "6a1bf77c77f04f8733c6c774",
+    "categorySlug": "narayanpet-sarees",
+    "categoryName": "Narayanpet Sarees",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Cotton Silk",
+      "Handloom",
+      "Saree",
+      "Wedding"
+    ],
+    "material": "Cotton Silk",
+    "fabric": "Cotton Silk",
+    "pattern": "Temple & Checks",
+    "workType": "Handloom",
+    "occasion": [
+      "Wedding",
+      "Office"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Charcoal",
+      "Powder Blue"
+    ],
+    "stock": 16,
+    "rating": 4.7,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/33754389/pexels-photo-33754389.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 5,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      }
+    ],
+    "name": "Traditional Narayanpet Silk Saree",
+    "slug": "traditional-narayanpet-silk-saree-68",
+    "description": "A handpicked cotton silk saree featuring temple & checks and handloom craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Cotton Silk · Handloom",
+    "price": 2799,
+    "comparePrice": 4060,
+    "categoryId": "6a1bf77c77f04f8733c6c774",
+    "categorySlug": "narayanpet-sarees",
+    "categoryName": "Narayanpet Sarees",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Cotton Silk",
+      "Handloom",
+      "Saree",
+      "Casual"
+    ],
+    "material": "Cotton Silk",
+    "fabric": "Cotton Silk",
+    "pattern": "Temple & Checks",
+    "workType": "Handloom",
+    "occasion": [
+      "Casual",
+      "Party"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Mehendi Green",
+      "Wine"
+    ],
+    "stock": 20,
+    "rating": 4,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/34155068/pexels-photo-34155068.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      }
+    ],
+    "name": "Pochampally Ikkat Silk Saree",
+    "slug": "pochampally-ikkat-silk-saree-69",
+    "description": "A handpicked ikkat silk saree featuring ikat and ikat weave craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Ikkat Silk · Ikat Weave",
+    "price": 5899,
+    "comparePrice": 7370,
+    "categoryId": "6a1bf883ee62396f29c5e95b",
+    "categorySlug": "ikkat-silk",
+    "categoryName": "Ikkat Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Ikkat Silk",
+      "Ikat Weave",
+      "Saree",
+      "Office"
+    ],
+    "material": "Ikkat Silk",
+    "fabric": "Ikkat Silk",
+    "pattern": "Ikat",
+    "workType": "Ikat Weave",
+    "occasion": [
+      "Office",
+      "Daily Wear"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Saffron",
+      "Maroon"
+    ],
+    "stock": 24,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/34155081/pexels-photo-34155081.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 5,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 0,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      }
+    ],
+    "name": "Telia Ikkat Silk Saree",
+    "slug": "telia-ikkat-silk-saree-70",
+    "description": "A handpicked ikkat silk saree featuring ikat and ikat weave craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Ikkat Silk · Ikat Weave",
+    "price": 4099,
+    "comparePrice": 5530,
+    "categoryId": "6a1bf883ee62396f29c5e95b",
+    "categorySlug": "ikkat-silk",
+    "categoryName": "Ikkat Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Ikkat Silk",
+      "Ikat Weave",
+      "Saree",
+      "Party"
+    ],
+    "material": "Ikkat Silk",
+    "fabric": "Ikkat Silk",
+    "pattern": "Ikat",
+    "workType": "Ikat Weave",
+    "occasion": [
+      "Party",
+      "Festive"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Powder Blue",
+      "Indigo"
+    ],
+    "stock": 8,
+    "rating": 4,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/34220240/pexels-photo-34220240.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 0,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      }
+    ],
+    "name": "Double-Ikat Pochampally Saree",
+    "slug": "double-ikat-pochampally-saree-71",
+    "description": "A handpicked ikkat silk saree featuring ikat and ikat weave craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Ikkat Silk · Ikat Weave",
+    "price": 5399,
+    "comparePrice": 7830,
+    "categoryId": "6a1bf883ee62396f29c5e95b",
+    "categorySlug": "ikkat-silk",
+    "categoryName": "Ikkat Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Ikkat Silk",
+      "Ikat Weave",
+      "Saree",
+      "Daily Wear"
+    ],
+    "material": "Ikkat Silk",
+    "fabric": "Ikkat Silk",
+    "pattern": "Ikat",
+    "workType": "Ikat Weave",
+    "occasion": [
+      "Daily Wear",
+      "Wedding"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Wine",
+      "Mustard"
+    ],
+    "stock": 12,
+    "rating": 4.3,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/34359443/pexels-photo-34359443.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      }
+    ],
+    "name": "Sambalpuri Ikkat Saree",
+    "slug": "sambalpuri-ikkat-saree-72",
+    "description": "A handpicked ikkat silk saree featuring ikat and ikat weave craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Ikkat Silk · Ikat Weave",
+    "price": 3599,
+    "comparePrice": 4500,
+    "categoryId": "6a1bf883ee62396f29c5e95b",
+    "categorySlug": "ikkat-silk",
+    "categoryName": "Ikkat Silk",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Ikkat Silk",
+      "Ikat Weave",
+      "Saree",
+      "Festive"
+    ],
+    "material": "Ikkat Silk",
+    "fabric": "Ikkat Silk",
+    "pattern": "Ikat",
+    "workType": "Ikat Weave",
+    "occasion": [
+      "Festive",
+      "Casual"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Maroon",
+      "Emerald"
+    ],
+    "stock": 16,
+    "rating": 5,
+    "isActive": true,
+    "isFeatured": true
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/34359444/pexels-photo-34359444.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      }
+    ],
+    "name": "Modal Cotton Easywear Saree",
+    "slug": "modal-cotton-easywear-saree-73",
+    "description": "A handpicked modal cotton saree featuring printed and digital print craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Modal Cotton · Digital Print",
+    "price": 1499,
+    "comparePrice": 2020,
+    "categoryId": "6a1bf8e677f04f8733c6c775",
+    "categorySlug": "modal-cotton",
+    "categoryName": "Modal Cotton",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Modal Cotton",
+      "Digital Print",
+      "Saree",
+      "Wedding"
+    ],
+    "material": "Modal Cotton",
+    "fabric": "Modal Cotton",
+    "pattern": "Printed",
+    "workType": "Digital Print",
+    "occasion": [
+      "Wedding",
+      "Office"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Indigo",
+      "Ivory"
+    ],
+    "stock": 20,
+    "rating": 4.7,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/34368242/pexels-photo-34368242.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      }
+    ],
+    "name": "Printed Modal Comfort Saree",
+    "slug": "printed-modal-comfort-saree-74",
+    "description": "A handpicked modal cotton saree featuring printed and digital print craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Modal Cotton · Digital Print",
+    "price": 2199,
+    "comparePrice": 3190,
+    "categoryId": "6a1bf8e677f04f8733c6c775",
+    "categorySlug": "modal-cotton",
+    "categoryName": "Modal Cotton",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Modal Cotton",
+      "Digital Print",
+      "Saree",
+      "Casual"
+    ],
+    "material": "Modal Cotton",
+    "fabric": "Modal Cotton",
+    "pattern": "Printed",
+    "workType": "Digital Print",
+    "occasion": [
+      "Casual",
+      "Party"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Mustard",
+      "Rose"
+    ],
+    "stock": 24,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/34481843/pexels-photo-34481843.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      }
+    ],
+    "name": "Floral Modal Cotton Saree",
+    "slug": "floral-modal-cotton-saree-75",
+    "description": "A handpicked modal cotton saree featuring printed and digital print craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Modal Cotton · Digital Print",
+    "price": 1599,
+    "comparePrice": 2000,
+    "categoryId": "6a1bf8e677f04f8733c6c775",
+    "categorySlug": "modal-cotton",
+    "categoryName": "Modal Cotton",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Modal Cotton",
+      "Digital Print",
+      "Saree",
+      "Office"
+    ],
+    "material": "Modal Cotton",
+    "fabric": "Modal Cotton",
+    "pattern": "Printed",
+    "workType": "Digital Print",
+    "occasion": [
+      "Office",
+      "Daily Wear"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Emerald",
+      "Teal"
+    ],
+    "stock": 8,
+    "rating": 4.5,
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "imageUrl": "https://images.pexels.com/photos/34964322/pexels-photo-34964322.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      }
+    ],
+    "name": "Geometric Modal Cotton Saree",
+    "slug": "geometric-modal-cotton-saree-76",
+    "description": "A handpicked modal cotton saree featuring printed and digital print craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
+    "shortDescription": "Modal Cotton · Digital Print",
+    "price": 2299,
+    "comparePrice": 3100,
+    "categoryId": "6a1bf8e677f04f8733c6c775",
+    "categorySlug": "modal-cotton",
+    "categoryName": "Modal Cotton",
+    "brand": "Saakie by KNK",
+    "tags": [
+      "Modal Cotton",
+      "Digital Print",
+      "Saree",
+      "Party"
+    ],
+    "material": "Modal Cotton",
+    "fabric": "Modal Cotton",
+    "pattern": "Printed",
+    "workType": "Digital Print",
+    "occasion": [
+      "Party",
+      "Festive"
+    ],
+    "blouseIncluded": false,
+    "colors": [
+      "Ivory",
+      "Charcoal"
+    ],
+    "stock": 12,
+    "rating": 4.3,
+    "isActive": true,
+    "isFeatured": false
+  }
+]
