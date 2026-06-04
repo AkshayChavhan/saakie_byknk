@@ -22,6 +22,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@serwist/next": "^9.5.11",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@vitejs/plugin-react": "^4.5.1",
@@ -29,6 +30,7 @@
     "@vitest/ui": "^3.1.4",
     "jsdom": "^26.1.0",
     "prisma": "^5.8.0",
+    "serwist": "^9.5.11",
     "vitest": "^3.1.4"
   },
   "dependencies": {

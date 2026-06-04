@@ -58,5 +58,11 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // `standalone:` variant — applies only when the site is launched as an
+    // installed PWA (display-mode: standalone). Used by the mobile bottom nav.
+    function ({ addVariant }) {
+      addVariant('standalone', '@media all and (display-mode: standalone)')
+    },
+  ],
 }
