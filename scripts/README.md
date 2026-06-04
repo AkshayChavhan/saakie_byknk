@@ -167,6 +167,32 @@ Storefront → GET /api/products
 
 ---
 
+## Logging in as a demo user
+
+After running the seed (`--push`), six demo reviewer accounts exist. They are
+regular `USER`-role accounts (not admin) — useful for demoing the customer
+experience (account page, wishlist, cart, leaving reviews).
+
+Go to **`/sign-in`** and use any of these. **All share the password
+`demo-password`.**
+
+| Email                      | Password        |
+| -------------------------- | --------------- |
+| `priya.demo@saakie.test`   | `demo-password` |
+| `anjali.demo@saakie.test`  | `demo-password` |
+| `sneha.demo@saakie.test`   | `demo-password` |
+| `kavita.demo@saakie.test`  | `demo-password` |
+| `divya.demo@saakie.test`   | `demo-password` |
+| `ritu.demo@saakie.test`    | `demo-password` |
+
+- Login is the standard Credentials flow (`auth.ts` → `bcrypt.compare`); the
+  seed stores the bcrypt hash of `demo-password`.
+- These users exist **only in the database `.env.local` points at** — run the
+  seed against the demo DB, and they won't (and shouldn't) exist on production.
+- They have no pre-created cart/wishlist; those are created on first use.
+
+---
+
 ## Safety notes
 
 - **Target check:** the script writes to whatever `DATABASE_URL` resolves to.
