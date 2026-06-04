@@ -23,9 +23,12 @@ royalty-free Indian-saree image** from Pexels.
   (`comparePrice`), fabric, pattern, work type, occasion, stock, rating, tags.
 - Assigns each product a **unique** Indian-saree image (no repeats) from a pool
   of 118 verified Pexels photo IDs (`scripts/data/saree-image-ids.json`).
+- Generates **2–4 APPROVED reviews per product** (~228 total) authored by **6
+  demo reviewer users**, so the star rating on the storefront is backed by real
+  review records. Each product's `rating` equals the average of its reviews.
 - Writes a human-readable preview to `sample-sarees.json` and prints a table.
-- On `--push`, inserts the products into `products` and one image per product
-  into `images` (linked by `productId`, `isPrimary: true`).
+- On `--push`, inserts: products → `products`, one image per product →
+  `images`, demo users → `users` (upserted by email), reviews → `reviews`.
 
 ---
 
@@ -104,19 +107,21 @@ node scripts/seed-sample-sarees.mjs [--push] [--reset]
         ▼  (--push)
   ┌───────────────────────────────────────────────┐
   │ 5. (--reset only) deleteMany products + images  │
+  │    + demo reviews (demo users matched by email) │
   └───────────────────────────────────────────────┘
         │
         ▼
   ┌───────────────────────────────────────────────┐
-  │ 6. INSERT:                                      │
-  │    • 76 docs → `products`                       │
-  │    • 76 docs → `images`  (productId, isPrimary) │
+  │ 6. Upsert 6 demo users (by email) → `users`     │
+  │    INSERT:                                      │
+  │    • 76 docs  → `products`                      │
+  │    • 76 docs  → `images`   (productId,isPrimary)│
+  │    • ~228 docs→ `reviews`  (APPROVED, by demo)  │
   └───────────────────────────────────────────────┘
         │
         ▼
   ┌───────────────────────────────────────────────┐
-  │ 7. Print "Inserted N products and N images"     │
-  │    → disconnect                                 │
+  │ 7. Print inserted counts → disconnect           │
   └───────────────────────────────────────────────┘
 ```
 
@@ -147,12 +152,18 @@ Storefront → GET /api/products
 
 ## What gets written vs. left alone
 
-| Collection            | Action                                              |
-| --------------------- | --------------------------------------------------- |
-| `products`            | +76 inserted (replaced if `--reset`).               |
-| `images`              | +76 inserted (one per product).                     |
-| `categories`          | **Read-only** — products just reference existing IDs.|
-| users / carts / orders| **Untouched.**                                       |
+| Collection            | Action                                                      |
+| --------------------- | ----------------------------------------------------------- |
+| `products`            | +76 inserted (replaced if `--reset`).                       |
+| `images`              | +76 inserted (one per product).                             |
+| `reviews`             | +~228 inserted (APPROVED; demo reviews cleared on `--reset`).|
+| `users`               | 6 demo reviewers upserted by email (`@saakie.test`).         |
+| `categories`          | **Read-only** — products just reference existing IDs.        |
+| carts / orders        | **Untouched.**                                               |
+
+> Demo users use the `@saakie.test` email domain and a shared dummy password,
+> so they're easy to identify and `--reset` only removes **demo** reviews/users,
+> never real ones.
 
 ---
 

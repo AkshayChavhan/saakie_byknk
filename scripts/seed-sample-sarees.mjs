@@ -6,10 +6,12 @@
 //
 // All content here is original/synthetic (no third-party catalog data). Products
 // are mapped onto the categories that already exist in the connected database,
-// so categoryId always resolves. Images are intentionally left empty — the app
-// falls back to /images/placeholder-product.svg.
+// so categoryId always resolves. Each product gets a unique royalty-free Indian
+// saree image, plus a few APPROVED sample reviews authored by demo users so the
+// star rating on the storefront is backed by real review records.
 import { MongoClient, ObjectId } from 'mongodb';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import bcrypt from 'bcryptjs';
 
 const args = process.argv.slice(2);
 const PUSH = args.includes('--push');
@@ -52,6 +54,31 @@ const PALETTE = {
 const COLOR_NAMES = Object.keys(PALETTE)
 
 const OCCASIONS = ['Festive', 'Wedding', 'Casual', 'Office', 'Party', 'Daily Wear']
+
+// ── Demo reviewer accounts. Synthetic users (no real PII) created only so the
+//    sample reviews have an author. Marked with a `demo: true` flag and a shared
+//    email domain so they're easy to identify / clean up. ──────────────────────
+const DEMO_USERS = [
+  { name: 'Priya Sharma', email: 'priya.demo@saakie.test' },
+  { name: 'Anjali Mehta', email: 'anjali.demo@saakie.test' },
+  { name: 'Sneha Reddy', email: 'sneha.demo@saakie.test' },
+  { name: 'Kavita Iyer', email: 'kavita.demo@saakie.test' },
+  { name: 'Divya Nair', email: 'divya.demo@saakie.test' },
+  { name: 'Ritu Desai', email: 'ritu.demo@saakie.test' },
+]
+
+// Review snippets. (rating is a whole number 1-5, per the schema.) Picked
+// deterministically per product so runs stay stable.
+const REVIEW_TEXTS = [
+  { rating: 5, title: 'Absolutely beautiful', comment: 'The fabric feels premium and the drape is gorgeous. Got so many compliments!' },
+  { rating: 5, title: 'Loved it', comment: 'Colour is exactly as shown. Lightweight and very comfortable to wear all day.' },
+  { rating: 4, title: 'Very good quality', comment: 'Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person.' },
+  { rating: 5, title: 'Worth every rupee', comment: 'Elegant and well-finished. Perfect for the festive season.' },
+  { rating: 4, title: 'Nice for the price', comment: 'Good everyday saree. Soft material, easy to manage. Would buy again.' },
+  { rating: 5, title: 'Stunning piece', comment: 'The zari/border detailing is exquisite. Looks even better than the pictures.' },
+  { rating: 4, title: 'Happy with it', comment: 'Comfortable and breathable. The blouse piece matched well.' },
+  { rating: 3, title: 'Decent', comment: 'It is okay for casual wear. Texture is fine but nothing exceptional.' },
+]
 
 // Royalty-free Indian-saree photos from Pexels (Pexels License: free for
 // commercial use, no attribution required). The IDs in scripts/data/
@@ -121,8 +148,25 @@ function buildProducts(categoriesBySlug) {
       const occ = [pick(OCCASIONS, i), pick(OCCASIONS, i + 2)]
       // Each product gets a DISTINCT image (sequential from the verified pool).
       const imageUrl = IMAGE_POOL[i - 1]
+      // 2-4 deterministic reviews per product, each by a distinct demo user
+      // (one review per user per product, per the API rule).
+      const reviewCount = 2 + (i % 3) // 2, 3, or 4
+      const reviews = []
+      for (let r = 0; r < reviewCount; r++) {
+        const t = REVIEW_TEXTS[(i + r) % REVIEW_TEXTS.length]
+        reviews.push({
+          userIndex: (i + r) % DEMO_USERS.length, // which demo user authored it
+          rating: t.rating,
+          title: t.title,
+          comment: t.comment,
+        })
+      }
+      // Product.rating mirrors the average of its (approved) reviews so the
+      // listing sort and the detail page agree.
+      const avg = reviews.reduce((s, rv) => s + rv.rating, 0) / reviews.length
       products.push({
         imageUrl,
+        reviews,
         name,
         slug: slugify(name) + '-' + (i),
         description:
@@ -145,7 +189,7 @@ function buildProducts(categoriesBySlug) {
         blouseIncluded: !!def.blouse,
         colors: [c1, c2],
         stock: 8 + (i % 5) * 4,
-        rating: Number((3.8 + (i % 12) * 0.1).toFixed(1)),
+        rating: Number(avg.toFixed(1)),
         isActive: true,
         isFeatured: i % 6 === 0,
       })
@@ -180,12 +224,14 @@ async function main() {
   const review = products.map((p) => ({ ...p, categoryId: String(p.categoryId) }))
   writeFileSync('sample-sarees.json', JSON.stringify(review, null, 2))
 
+  const totalReviews = products.reduce((n, p) => n + (p.reviews?.length || 0), 0)
   console.log(`Generated ${products.length} sample sarees across ${new Set(products.map((p) => p.categorySlug)).size} categories.`)
+  console.log(`Plus ${totalReviews} reviews by ${DEMO_USERS.length} demo users.`)
   console.log(`Review file: sample-sarees.json\n`)
-  console.log('  #  NAME                                  CATEGORY                    PRICE   MRP    FABRIC')
+  console.log('  #  NAME                                  CATEGORY                    PRICE   MRP   ★RATE  REVIEWS')
   products.forEach((p, idx) => {
     console.log(
-      `  ${String(idx + 1).padStart(2)} ${p.name.padEnd(38)} ${p.categoryName.padEnd(26)} ₹${String(p.price).padStart(5)} ₹${String(p.comparePrice).padStart(5)}  ${p.fabric}`
+      `  ${String(idx + 1).padStart(2)} ${p.name.padEnd(38)} ${p.categoryName.padEnd(26)} ₹${String(p.price).padStart(5)} ₹${String(p.comparePrice).padStart(5)}  ${p.rating.toFixed(1)}   ${p.reviews?.length || 0}`
     )
   })
 
@@ -197,19 +243,57 @@ async function main() {
 
   const coll = db.collection('products')
   const imagesColl = db.collection('images')
+  const reviewsColl = db.collection('reviews')
+  const usersColl = db.collection('users')
+
   if (RESET) {
     const delImg = await imagesColl.deleteMany({})
     const del = await coll.deleteMany({})
-    console.log(`\n--reset: removed ${del.deletedCount} product(s) and ${delImg.deletedCount} image(s).`)
+    // Only remove the demo reviewers/reviews (identified by the .test domain),
+    // never real users or their reviews.
+    const demoEmails = DEMO_USERS.map((u) => u.email)
+    const demoUserDocs = await usersColl.find({ email: { $in: demoEmails } }).project({ _id: 1 }).toArray()
+    const demoUserIds = demoUserDocs.map((u) => u._id)
+    const delRev = await reviewsColl.deleteMany({ userId: { $in: demoUserIds } })
+    console.log(
+      `\n--reset: removed ${del.deletedCount} product(s), ${delImg.deletedCount} image(s), ${delRev.deletedCount} demo review(s).`
+    )
   }
 
   const now = new Date()
+
+  // 1. Ensure the demo reviewer users exist (upsert by email). Reused across
+  //    runs so we don't pile up duplicate accounts.
+  const demoPassword = await bcrypt.hash('demo-password', 10)
+  const userIdByIndex = []
+  for (let u = 0; u < DEMO_USERS.length; u++) {
+    const { name, email } = DEMO_USERS[u]
+    const existing = await usersColl.findOne({ email })
+    if (existing) {
+      userIdByIndex[u] = existing._id
+    } else {
+      const _id = new ObjectId()
+      await usersColl.insertOne({
+        _id,
+        email,
+        password: demoPassword,
+        name,
+        role: 'USER',
+        createdAt: now,
+        updatedAt: now,
+      })
+      userIdByIndex[u] = _id
+    }
+  }
+
+  // 2. Build product + image + review docs.
   const productDocs = []
   const imageDocs = []
+  const reviewDocs = []
   for (const p of products) {
     const productId = new ObjectId()
     // Strip helper-only fields that aren't part of the Product schema.
-    const { categorySlug, categoryName, colors, imageUrl, ...rest } = p
+    const { categorySlug, categoryName, colors, imageUrl, reviews, ...rest } = p
     productDocs.push({
       _id: productId,
       ...rest,
@@ -240,11 +324,31 @@ async function main() {
         productId,
       })
     }
+    // Reviews — APPROVED so they show publicly, each by a distinct demo user.
+    for (const rv of reviews || []) {
+      reviewDocs.push({
+        _id: new ObjectId(),
+        userId: userIdByIndex[rv.userIndex],
+        productId,
+        rating: rv.rating,
+        title: rv.title,
+        comment: rv.comment,
+        images: [],
+        isVerified: true,
+        status: 'APPROVED',
+        createdAt: now,
+        updatedAt: now,
+      })
+    }
   }
 
   const res = await coll.insertMany(productDocs, { ordered: false })
   const imgRes = imageDocs.length ? await imagesColl.insertMany(imageDocs, { ordered: false }) : { insertedCount: 0 }
-  console.log(`\nInserted ${res.insertedCount} products and ${imgRes.insertedCount} images into "${dbName}".`)
+  const revRes = reviewDocs.length ? await reviewsColl.insertMany(reviewDocs, { ordered: false }) : { insertedCount: 0 }
+  console.log(
+    `\nInserted ${res.insertedCount} products, ${imgRes.insertedCount} images, ${revRes.insertedCount} reviews into "${dbName}".`
+  )
+  console.log(`Demo reviewer accounts: ${DEMO_USERS.length} (emails @saakie.test).`)
   await client.close()
 }
 

@@ -1,6 +1,26 @@
 [
   {
     "imageUrl": "https://images.pexels.com/photos/10156154/pexels-photo-10156154.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      }
+    ],
     "name": "Hand-Block Chiffon Saree",
     "slug": "hand-block-chiffon-saree-1",
     "description": "A handpicked chiffon saree featuring floral block print and block print craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
@@ -31,12 +51,38 @@
       "Ivory"
     ],
     "stock": 12,
-    "rating": 3.9,
+    "rating": 4.7,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/11505677/pexels-photo-11505677.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      }
+    ],
     "name": "Sanganeri Bloom Chiffon Saree",
     "slug": "sanganeri-bloom-chiffon-saree-2",
     "description": "A handpicked chiffon saree featuring floral block print and block print craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
@@ -67,12 +113,26 @@
       "Rose"
     ],
     "stock": 16,
-    "rating": 4,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/11555712/pexels-photo-11555712.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      }
+    ],
     "name": "Jaipuri Block Chiffon Saree",
     "slug": "jaipuri-block-chiffon-saree-3",
     "description": "A handpicked chiffon saree featuring floral block print and block print craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
@@ -103,12 +163,32 @@
       "Teal"
     ],
     "stock": 20,
-    "rating": 4.1,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/11629757/pexels-photo-11629757.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      }
+    ],
     "name": "Dabu-Print Chiffon Saree",
     "slug": "dabu-print-chiffon-saree-4",
     "description": "A handpicked chiffon saree featuring floral block print and block print craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
@@ -139,12 +219,38 @@
       "Charcoal"
     ],
     "stock": 24,
-    "rating": 4.2,
+    "rating": 4.3,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/11647283/pexels-photo-11647283.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 1,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 2,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      }
+    ],
     "name": "Aari Handwork Chiffon Saree",
     "slug": "aari-handwork-chiffon-saree-5",
     "description": "A handpicked chiffon saree featuring sequin & thread and hand embroidery craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
@@ -181,6 +287,20 @@
   },
   {
     "imageUrl": "https://images.pexels.com/photos/11647287/pexels-photo-11647287.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 1,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      }
+    ],
     "name": "Mirror-Work Chiffon Saree",
     "slug": "mirror-work-chiffon-saree-6",
     "description": "A handpicked chiffon saree featuring sequin & thread and hand embroidery craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
@@ -211,12 +331,32 @@
       "Saffron"
     ],
     "stock": 12,
-    "rating": 4.4,
+    "rating": 3.5,
     "isActive": true,
     "isFeatured": true
   },
   {
     "imageUrl": "https://images.pexels.com/photos/11647288/pexels-photo-11647288.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 2,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      }
+    ],
     "name": "Zardozi Chiffon Saree",
     "slug": "zardozi-chiffon-saree-7",
     "description": "A handpicked chiffon saree featuring sequin & thread and hand embroidery craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
@@ -247,12 +387,38 @@
       "Powder Blue"
     ],
     "stock": 16,
-    "rating": 4.5,
+    "rating": 4.3,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/12498401/pexels-photo-12498401.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      }
+    ],
     "name": "Resham Embroidered Chiffon Saree",
     "slug": "resham-embroidered-chiffon-saree-8",
     "description": "A handpicked chiffon saree featuring sequin & thread and hand embroidery craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
@@ -283,12 +449,26 @@
       "Wine"
     ],
     "stock": 20,
-    "rating": 4.6,
+    "rating": 4.8,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/12567318/pexels-photo-12567318.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      }
+    ],
     "name": "120-Count Mulmul Breeze Saree",
     "slug": "120-count-mulmul-breeze-saree-9",
     "description": "A handpicked mul cotton saree featuring fine weave and handloom craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
@@ -319,12 +499,32 @@
       "Maroon"
     ],
     "stock": 24,
-    "rating": 4.7,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/13155748/pexels-photo-13155748.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      }
+    ],
     "name": "Featherlight 120s Mul Cotton Saree",
     "slug": "featherlight-120s-mul-cotton-saree-10",
     "description": "A handpicked mul cotton saree featuring fine weave and handloom craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
@@ -355,12 +555,38 @@
       "Indigo"
     ],
     "stock": 8,
-    "rating": 4.8,
+    "rating": 4.3,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/13192074/pexels-photo-13192074.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      }
+    ],
     "name": "Bengal Mulmul 120 Saree",
     "slug": "bengal-mulmul-120-saree-11",
     "description": "A handpicked mul cotton saree featuring fine weave and handloom craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
@@ -391,12 +617,26 @@
       "Mustard"
     ],
     "stock": 12,
-    "rating": 4.9,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/14205210/pexels-photo-14205210.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      }
+    ],
     "name": "Summer Mul Cotton Saree",
     "slug": "summer-mul-cotton-saree-12",
     "description": "A handpicked mul cotton saree featuring fine weave and handloom craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
@@ -427,12 +667,32 @@
       "Emerald"
     ],
     "stock": 16,
-    "rating": 3.8,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": true
   },
   {
     "imageUrl": "https://images.pexels.com/photos/14664840/pexels-photo-14664840.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 3,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      }
+    ],
     "name": "100-Count Soft Mul Saree",
     "slug": "100-count-soft-mul-saree-13",
     "description": "A handpicked mul cotton saree featuring plain weave and handloom craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
@@ -463,12 +723,38 @@
       "Ivory"
     ],
     "stock": 20,
-    "rating": 3.9,
+    "rating": 4,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/14928074/pexels-photo-14928074.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 3,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 4,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      }
+    ],
     "name": "Everyday Mulmul Cotton Saree",
     "slug": "everyday-mulmul-cotton-saree-14",
     "description": "A handpicked mul cotton saree featuring plain weave and handloom craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
@@ -499,12 +785,26 @@
       "Rose"
     ],
     "stock": 24,
-    "rating": 4,
+    "rating": 4.3,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/15298623/pexels-photo-15298623.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 4,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      }
+    ],
     "name": "Pastel Mul Cotton Saree",
     "slug": "pastel-mul-cotton-saree-15",
     "description": "A handpicked mul cotton saree featuring plain weave and handloom craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
@@ -535,12 +835,32 @@
       "Teal"
     ],
     "stock": 8,
-    "rating": 4.1,
+    "rating": 4,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/15328445/pexels-photo-15328445.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      }
+    ],
     "name": "Handwoven 100s Mul Saree",
     "slug": "handwoven-100s-mul-saree-16",
     "description": "A handpicked mul cotton saree featuring plain weave and handloom craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
@@ -571,12 +891,38 @@
       "Charcoal"
     ],
     "stock": 12,
-    "rating": 4.2,
+    "rating": 4.7,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/17040892/pexels-photo-17040892.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      }
+    ],
     "name": "Handspun Khadi Classic Saree",
     "slug": "handspun-khadi-classic-saree-17",
     "description": "A handpicked khadi cotton saree featuring textured khadi and handspun craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
@@ -607,12 +953,26 @@
       "Mehendi Green"
     ],
     "stock": 16,
-    "rating": 4.3,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/17040982/pexels-photo-17040982.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      }
+    ],
     "name": "Earthy Khadi Cotton Saree",
     "slug": "earthy-khadi-cotton-saree-18",
     "description": "A handpicked khadi cotton saree featuring textured khadi and handspun craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
@@ -643,12 +1003,32 @@
       "Saffron"
     ],
     "stock": 20,
-    "rating": 4.4,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": true
   },
   {
     "imageUrl": "https://images.pexels.com/photos/17113983/pexels-photo-17113983.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      }
+    ],
     "name": "Natural-Dye Khadi Saree",
     "slug": "natural-dye-khadi-saree-19",
     "description": "A handpicked khadi cotton saree featuring textured khadi and handspun craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
@@ -679,12 +1059,38 @@
       "Powder Blue"
     ],
     "stock": 24,
-    "rating": 4.5,
+    "rating": 4.7,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/17114015/pexels-photo-17114015.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 5,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      }
+    ],
     "name": "Gandhi Khadi Heritage Saree",
     "slug": "gandhi-khadi-heritage-saree-20",
     "description": "A handpicked khadi cotton saree featuring textured khadi and handspun craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
@@ -715,12 +1121,26 @@
       "Wine"
     ],
     "stock": 8,
-    "rating": 4.6,
+    "rating": 4,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/1846014/pexels-photo-1846014.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      }
+    ],
     "name": "120-Count Linen Luxe Saree",
     "slug": "120-count-linen-luxe-saree-21",
     "description": "A handpicked pure linen saree featuring striped and handloom craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
@@ -751,12 +1171,32 @@
       "Maroon"
     ],
     "stock": 12,
-    "rating": 4.7,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/19857782/pexels-photo-19857782.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 5,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 0,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      }
+    ],
     "name": "Crisp 120s Pure Linen Saree",
     "slug": "crisp-120s-pure-linen-saree-22",
     "description": "A handpicked pure linen saree featuring striped and handloom craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
@@ -787,12 +1227,38 @@
       "Indigo"
     ],
     "stock": 16,
-    "rating": 4.8,
+    "rating": 4,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/20161456/pexels-photo-20161456.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 0,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      }
+    ],
     "name": "Striped 120 Linen Saree",
     "slug": "striped-120-linen-saree-23",
     "description": "A handpicked pure linen saree featuring striped and handloom craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
@@ -823,12 +1289,26 @@
       "Mustard"
     ],
     "stock": 20,
-    "rating": 4.9,
+    "rating": 4.3,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/20957555/pexels-photo-20957555.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      }
+    ],
     "name": "100-Count Linen Staple Saree",
     "slug": "100-count-linen-staple-saree-24",
     "description": "A handpicked pure linen saree featuring solid and handloom craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
@@ -859,12 +1339,32 @@
       "Emerald"
     ],
     "stock": 24,
-    "rating": 3.8,
+    "rating": 5,
     "isActive": true,
     "isFeatured": true
   },
   {
     "imageUrl": "https://images.pexels.com/photos/27139274/pexels-photo-27139274.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      }
+    ],
     "name": "Breathable Pure Linen Saree",
     "slug": "breathable-pure-linen-saree-25",
     "description": "A handpicked pure linen saree featuring solid and handloom craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
@@ -895,12 +1395,38 @@
       "Ivory"
     ],
     "stock": 8,
-    "rating": 3.9,
+    "rating": 4.7,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/27575104/pexels-photo-27575104.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      }
+    ],
     "name": "Solid 100s Linen Saree",
     "slug": "solid-100s-linen-saree-26",
     "description": "A handpicked pure linen saree featuring solid and handloom craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
@@ -931,12 +1457,26 @@
       "Rose"
     ],
     "stock": 12,
-    "rating": 4,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/27630600/pexels-photo-27630600.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      }
+    ],
     "name": "Sequin Silk-Linen Shimmer Saree",
     "slug": "sequin-silk-linen-shimmer-saree-27",
     "description": "A handpicked silk linen saree featuring all-over sequin and sequin work craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
@@ -967,12 +1507,32 @@
       "Teal"
     ],
     "stock": 16,
-    "rating": 4.1,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/27719401/pexels-photo-27719401.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      }
+    ],
     "name": "Starlit Sequin Silk Linen Saree",
     "slug": "starlit-sequin-silk-linen-saree-28",
     "description": "A handpicked silk linen saree featuring all-over sequin and sequin work craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1003,12 +1563,38 @@
       "Charcoal"
     ],
     "stock": 20,
-    "rating": 4.2,
+    "rating": 4.3,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/27719404/pexels-photo-27719404.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 1,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 2,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      }
+    ],
     "name": "Glitter Sequin Silk-Linen Saree",
     "slug": "glitter-sequin-silk-linen-saree-29",
     "description": "A handpicked silk linen saree featuring all-over sequin and sequin work craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1045,6 +1631,20 @@
   },
   {
     "imageUrl": "https://images.pexels.com/photos/27819381/pexels-photo-27819381.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 1,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      }
+    ],
     "name": "Minimal Silk-Linen Saree",
     "slug": "minimal-silk-linen-saree-30",
     "description": "A handpicked silk linen saree featuring solid and plain craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1075,12 +1675,32 @@
       "Saffron"
     ],
     "stock": 8,
-    "rating": 4.4,
+    "rating": 3.5,
     "isActive": true,
     "isFeatured": true
   },
   {
     "imageUrl": "https://images.pexels.com/photos/28054616/pexels-photo-28054616.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 2,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      }
+    ],
     "name": "Plain Silk-Linen Grace Saree",
     "slug": "plain-silk-linen-grace-saree-31",
     "description": "A handpicked silk linen saree featuring solid and plain craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1111,12 +1731,38 @@
       "Powder Blue"
     ],
     "stock": 12,
-    "rating": 4.5,
+    "rating": 4.3,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/28058186/pexels-photo-28058186.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      }
+    ],
     "name": "Solid Silk-Linen Everyday Saree",
     "slug": "solid-silk-linen-everyday-saree-32",
     "description": "A handpicked silk linen saree featuring solid and plain craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1147,12 +1793,26 @@
       "Wine"
     ],
     "stock": 16,
-    "rating": 4.6,
+    "rating": 4.8,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/28135787/pexels-photo-28135787.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      }
+    ],
     "name": "Muslin Silk Whisper Saree",
     "slug": "muslin-silk-whisper-saree-33",
     "description": "A handpicked muslin silk saree featuring fine sheer and handloom craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1183,12 +1843,32 @@
       "Maroon"
     ],
     "stock": 20,
-    "rating": 4.7,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/28316406/pexels-photo-28316406.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      }
+    ],
     "name": "Sheer Muslin Silk Saree",
     "slug": "sheer-muslin-silk-saree-34",
     "description": "A handpicked muslin silk saree featuring fine sheer and handloom craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1219,12 +1899,38 @@
       "Indigo"
     ],
     "stock": 24,
-    "rating": 4.8,
+    "rating": 4.3,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/28517477/pexels-photo-28517477.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      }
+    ],
     "name": "Featherlight Muslin Silk Saree",
     "slug": "featherlight-muslin-silk-saree-35",
     "description": "A handpicked muslin silk saree featuring fine sheer and handloom craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1255,12 +1961,26 @@
       "Mustard"
     ],
     "stock": 8,
-    "rating": 4.9,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/28943461/pexels-photo-28943461.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      }
+    ],
     "name": "Kora Silk Heritage Saree",
     "slug": "kora-silk-heritage-saree-36",
     "description": "A handpicked kora silk saree featuring temple border and zari border craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1291,12 +2011,32 @@
       "Emerald"
     ],
     "stock": 12,
-    "rating": 3.8,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": true
   },
   {
     "imageUrl": "https://images.pexels.com/photos/28943464/pexels-photo-28943464.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 3,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      }
+    ],
     "name": "Crisp Kora Silk Zari Saree",
     "slug": "crisp-kora-silk-zari-saree-37",
     "description": "A handpicked kora silk saree featuring temple border and zari border craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1327,12 +2067,38 @@
       "Ivory"
     ],
     "stock": 16,
-    "rating": 3.9,
+    "rating": 4,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/28943465/pexels-photo-28943465.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 3,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 4,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      }
+    ],
     "name": "Banarasi Kora Silk Saree",
     "slug": "banarasi-kora-silk-saree-38",
     "description": "A handpicked kora silk saree featuring temple border and zari border craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1363,12 +2129,26 @@
       "Rose"
     ],
     "stock": 20,
-    "rating": 4,
+    "rating": 4.3,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/28943474/pexels-photo-28943474.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 4,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      }
+    ],
     "name": "Matka Silk Rustic Saree",
     "slug": "matka-silk-rustic-saree-39",
     "description": "A handpicked matka silk saree featuring slub texture and handloom craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1399,12 +2179,32 @@
       "Teal"
     ],
     "stock": 24,
-    "rating": 4.1,
+    "rating": 4,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/28943484/pexels-photo-28943484.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      }
+    ],
     "name": "Textured Matka Silk Saree",
     "slug": "textured-matka-silk-saree-40",
     "description": "A handpicked matka silk saree featuring slub texture and handloom craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1435,12 +2235,38 @@
       "Charcoal"
     ],
     "stock": 8,
-    "rating": 4.2,
+    "rating": 4.7,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/28943495/pexels-photo-28943495.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      }
+    ],
     "name": "Bhagalpuri Matka Silk Saree",
     "slug": "bhagalpuri-matka-silk-saree-41",
     "description": "A handpicked matka silk saree featuring slub texture and handloom craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1471,12 +2297,26 @@
       "Mehendi Green"
     ],
     "stock": 12,
-    "rating": 4.3,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/28943520/pexels-photo-28943520.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      }
+    ],
     "name": "Chanderi Silk Sheen Saree",
     "slug": "chanderi-silk-sheen-saree-42",
     "description": "A handpicked chanderi silk saree featuring butti and zari buti craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1507,12 +2347,32 @@
       "Saffron"
     ],
     "stock": 16,
-    "rating": 4.4,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": true
   },
   {
     "imageUrl": "https://images.pexels.com/photos/28943531/pexels-photo-28943531.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      }
+    ],
     "name": "Royal Chanderi Buti Saree",
     "slug": "royal-chanderi-buti-saree-43",
     "description": "A handpicked chanderi silk saree featuring butti and zari buti craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1543,12 +2403,38 @@
       "Powder Blue"
     ],
     "stock": 20,
-    "rating": 4.5,
+    "rating": 4.7,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/28943543/pexels-photo-28943543.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 5,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      }
+    ],
     "name": "Gold-Buti Chanderi Silk Saree",
     "slug": "gold-buti-chanderi-silk-saree-44",
     "description": "A handpicked chanderi silk saree featuring butti and zari buti craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1579,12 +2465,26 @@
       "Wine"
     ],
     "stock": 24,
-    "rating": 4.6,
+    "rating": 4,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/28943579/pexels-photo-28943579.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      }
+    ],
     "name": "Pastel Chanderi Silk Saree",
     "slug": "pastel-chanderi-silk-saree-45",
     "description": "A handpicked chanderi silk saree featuring butti and zari buti craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1615,12 +2515,32 @@
       "Maroon"
     ],
     "stock": 8,
-    "rating": 4.7,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/28943601/pexels-photo-28943601.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 5,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 0,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      }
+    ],
     "name": "Kota Doria Featherweight Saree",
     "slug": "kota-doria-featherweight-saree-46",
     "description": "A handpicked kota doria saree featuring kota check and handloom craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1651,12 +2571,38 @@
       "Indigo"
     ],
     "stock": 12,
-    "rating": 4.8,
+    "rating": 4,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/28943602/pexels-photo-28943602.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 0,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      }
+    ],
     "name": "Classic Kota Check Saree",
     "slug": "classic-kota-check-saree-47",
     "description": "A handpicked kota doria saree featuring kota check and handloom craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1687,12 +2633,26 @@
       "Mustard"
     ],
     "stock": 16,
-    "rating": 4.9,
+    "rating": 4.3,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/28943608/pexels-photo-28943608.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      }
+    ],
     "name": "Zari-Border Kota Doria Saree",
     "slug": "zari-border-kota-doria-saree-48",
     "description": "A handpicked kota doria saree featuring kota check and handloom craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1723,12 +2683,32 @@
       "Emerald"
     ],
     "stock": 20,
-    "rating": 3.8,
+    "rating": 5,
     "isActive": true,
     "isFeatured": true
   },
   {
     "imageUrl": "https://images.pexels.com/photos/28943610/pexels-photo-28943610.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      }
+    ],
     "name": "Maheshwari Silk Classic Saree",
     "slug": "maheshwari-silk-classic-saree-49",
     "description": "A handpicked maheshwari silk saree featuring reversible border and zari border craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1759,12 +2739,38 @@
       "Ivory"
     ],
     "stock": 24,
-    "rating": 3.9,
+    "rating": 4.7,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/28943617/pexels-photo-28943617.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      }
+    ],
     "name": "Reversible Maheshwari Saree",
     "slug": "reversible-maheshwari-saree-50",
     "description": "A handpicked maheshwari silk saree featuring reversible border and zari border craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1795,12 +2801,26 @@
       "Rose"
     ],
     "stock": 8,
-    "rating": 4,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/28943670/pexels-photo-28943670.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      }
+    ],
     "name": "Temple-Border Maheshwari Saree",
     "slug": "temple-border-maheshwari-saree-51",
     "description": "A handpicked maheshwari silk saree featuring reversible border and zari border craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1831,12 +2851,32 @@
       "Teal"
     ],
     "stock": 12,
-    "rating": 4.1,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/28943676/pexels-photo-28943676.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      }
+    ],
     "name": "Block-Print Maheshwari Saree",
     "slug": "block-print-maheshwari-saree-52",
     "description": "A handpicked maheshwari silk saree featuring floral block and block print craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1867,12 +2907,38 @@
       "Charcoal"
     ],
     "stock": 16,
-    "rating": 4.2,
+    "rating": 4.3,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/29026116/pexels-photo-29026116.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 1,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 2,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      }
+    ],
     "name": "Bagh-Print Maheshwari Silk Saree",
     "slug": "bagh-print-maheshwari-silk-saree-53",
     "description": "A handpicked maheshwari silk saree featuring floral block and block print craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1909,6 +2975,20 @@
   },
   {
     "imageUrl": "https://images.pexels.com/photos/30004204/pexels-photo-30004204.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 1,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      }
+    ],
     "name": "Indigo Block Maheshwari Saree",
     "slug": "indigo-block-maheshwari-saree-54",
     "description": "A handpicked maheshwari silk saree featuring floral block and block print craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1939,12 +3019,32 @@
       "Saffron"
     ],
     "stock": 24,
-    "rating": 4.4,
+    "rating": 3.5,
     "isActive": true,
     "isFeatured": true
   },
   {
     "imageUrl": "https://images.pexels.com/photos/30682943/pexels-photo-30682943.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 2,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      }
+    ],
     "name": "Block-Print Chanderi Saree",
     "slug": "block-print-chanderi-saree-55",
     "description": "A handpicked chanderi silk saree featuring floral block and block print craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
@@ -1975,12 +3075,38 @@
       "Powder Blue"
     ],
     "stock": 8,
-    "rating": 4.5,
+    "rating": 4.3,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/30703862/pexels-photo-30703862.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      }
+    ],
     "name": "Hand-Block Chanderi Silk Saree",
     "slug": "hand-block-chanderi-silk-saree-56",
     "description": "A handpicked chanderi silk saree featuring floral block and block print craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
@@ -2011,12 +3137,26 @@
       "Wine"
     ],
     "stock": 12,
-    "rating": 4.6,
+    "rating": 4.8,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/31856233/pexels-photo-31856233.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      }
+    ],
     "name": "Botanical Block Chanderi Saree",
     "slug": "botanical-block-chanderi-saree-57",
     "description": "A handpicked chanderi silk saree featuring floral block and block print craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
@@ -2047,12 +3187,32 @@
       "Maroon"
     ],
     "stock": 16,
-    "rating": 4.7,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/31984087/pexels-photo-31984087.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      }
+    ],
     "name": "Designer Saree with Readymade Blouse",
     "slug": "designer-saree-with-readymade-blouse-58",
     "description": "A handpicked art silk saree featuring contemporary and designer craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
@@ -2083,12 +3243,38 @@
       "Indigo"
     ],
     "stock": 20,
-    "rating": 4.8,
+    "rating": 4.3,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/32038882/pexels-photo-32038882.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      }
+    ],
     "name": "Ready-to-Wear Designer Saree",
     "slug": "ready-to-wear-designer-saree-59",
     "description": "A handpicked art silk saree featuring contemporary and designer craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
@@ -2119,12 +3305,26 @@
       "Mustard"
     ],
     "stock": 24,
-    "rating": 4.9,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/32312140/pexels-photo-32312140.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      }
+    ],
     "name": "Party Designer Saree with Blouse",
     "slug": "party-designer-saree-with-blouse-60",
     "description": "A handpicked art silk saree featuring contemporary and designer craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
@@ -2155,12 +3355,32 @@
       "Emerald"
     ],
     "stock": 8,
-    "rating": 3.8,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": true
   },
   {
     "imageUrl": "https://images.pexels.com/photos/32315363/pexels-photo-32315363.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 3,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      }
+    ],
     "name": "Festive Designer Saree Set",
     "slug": "festive-designer-saree-set-61",
     "description": "A handpicked art silk saree featuring contemporary and designer craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
@@ -2191,12 +3411,38 @@
       "Ivory"
     ],
     "stock": 12,
-    "rating": 3.9,
+    "rating": 4,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/32383364/pexels-photo-32383364.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 3,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 4,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      }
+    ],
     "name": "Designer Saree (Unstitched Blouse)",
     "slug": "designer-saree-unstitched-blouse-62",
     "description": "A handpicked art silk saree featuring contemporary and designer craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
@@ -2227,12 +3473,26 @@
       "Rose"
     ],
     "stock": 16,
-    "rating": 4,
+    "rating": 4.3,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/33078845/pexels-photo-33078845.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 4,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      }
+    ],
     "name": "Statement Designer Drape Saree",
     "slug": "statement-designer-drape-saree-63",
     "description": "A handpicked art silk saree featuring contemporary and designer craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
@@ -2263,12 +3523,32 @@
       "Teal"
     ],
     "stock": 20,
-    "rating": 4.1,
+    "rating": 4,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/33225567/pexels-photo-33225567.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      }
+    ],
     "name": "Contemporary Designer Saree",
     "slug": "contemporary-designer-saree-64",
     "description": "A handpicked art silk saree featuring contemporary and designer craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
@@ -2299,12 +3579,38 @@
       "Charcoal"
     ],
     "stock": 24,
-    "rating": 4.2,
+    "rating": 4.7,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/33276621/pexels-photo-33276621.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      }
+    ],
     "name": "Ruffle Designer Saree",
     "slug": "ruffle-designer-saree-65",
     "description": "A handpicked art silk saree featuring contemporary and designer craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
@@ -2335,12 +3641,26 @@
       "Mehendi Green"
     ],
     "stock": 8,
-    "rating": 4.3,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/33556315/pexels-photo-33556315.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      }
+    ],
     "name": "Narayanpet Temple Border Saree",
     "slug": "narayanpet-temple-border-saree-66",
     "description": "A handpicked cotton silk saree featuring temple & checks and handloom craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
@@ -2371,12 +3691,32 @@
       "Saffron"
     ],
     "stock": 12,
-    "rating": 4.4,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": true
   },
   {
     "imageUrl": "https://images.pexels.com/photos/33718198/pexels-photo-33718198.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      }
+    ],
     "name": "Classic Narayanpet Checks Saree",
     "slug": "classic-narayanpet-checks-saree-67",
     "description": "A handpicked cotton silk saree featuring temple & checks and handloom craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
@@ -2407,12 +3747,38 @@
       "Powder Blue"
     ],
     "stock": 16,
-    "rating": 4.5,
+    "rating": 4.7,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/33754389/pexels-photo-33754389.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 5,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      }
+    ],
     "name": "Traditional Narayanpet Silk Saree",
     "slug": "traditional-narayanpet-silk-saree-68",
     "description": "A handpicked cotton silk saree featuring temple & checks and handloom craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
@@ -2443,12 +3809,26 @@
       "Wine"
     ],
     "stock": 20,
-    "rating": 4.6,
+    "rating": 4,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/34155068/pexels-photo-34155068.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      }
+    ],
     "name": "Pochampally Ikkat Silk Saree",
     "slug": "pochampally-ikkat-silk-saree-69",
     "description": "A handpicked ikkat silk saree featuring ikat and ikat weave craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
@@ -2479,12 +3859,32 @@
       "Maroon"
     ],
     "stock": 24,
-    "rating": 4.7,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/34155081/pexels-photo-34155081.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      },
+      {
+        "userIndex": 5,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 0,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      }
+    ],
     "name": "Telia Ikkat Silk Saree",
     "slug": "telia-ikkat-silk-saree-70",
     "description": "A handpicked ikkat silk saree featuring ikat and ikat weave craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
@@ -2515,12 +3915,38 @@
       "Indigo"
     ],
     "stock": 8,
-    "rating": 4.8,
+    "rating": 4,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/34220240/pexels-photo-34220240.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 5,
+        "rating": 3,
+        "title": "Decent",
+        "comment": "It is okay for casual wear. Texture is fine but nothing exceptional."
+      },
+      {
+        "userIndex": 0,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      }
+    ],
     "name": "Double-Ikat Pochampally Saree",
     "slug": "double-ikat-pochampally-saree-71",
     "description": "A handpicked ikkat silk saree featuring ikat and ikat weave craftsmanship. Lightweight, elegant drape suited for daily wear and wedding occasions. Comes with an unstitched blouse piece unless noted.",
@@ -2551,12 +3977,26 @@
       "Mustard"
     ],
     "stock": 12,
-    "rating": 4.9,
+    "rating": 4.3,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/34359443/pexels-photo-34359443.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 0,
+        "rating": 5,
+        "title": "Absolutely beautiful",
+        "comment": "The fabric feels premium and the drape is gorgeous. Got so many compliments!"
+      },
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      }
+    ],
     "name": "Sambalpuri Ikkat Saree",
     "slug": "sambalpuri-ikkat-saree-72",
     "description": "A handpicked ikkat silk saree featuring ikat and ikat weave craftsmanship. Lightweight, elegant drape suited for festive and casual occasions. Comes with an unstitched blouse piece unless noted.",
@@ -2587,12 +4027,32 @@
       "Emerald"
     ],
     "stock": 16,
-    "rating": 3.8,
+    "rating": 5,
     "isActive": true,
     "isFeatured": true
   },
   {
     "imageUrl": "https://images.pexels.com/photos/34359444/pexels-photo-34359444.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 1,
+        "rating": 5,
+        "title": "Loved it",
+        "comment": "Colour is exactly as shown. Lightweight and very comfortable to wear all day."
+      },
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      }
+    ],
     "name": "Modal Cotton Easywear Saree",
     "slug": "modal-cotton-easywear-saree-73",
     "description": "A handpicked modal cotton saree featuring printed and digital print craftsmanship. Lightweight, elegant drape suited for wedding and office occasions. Comes with an unstitched blouse piece unless noted.",
@@ -2623,12 +4083,38 @@
       "Ivory"
     ],
     "stock": 20,
-    "rating": 3.9,
+    "rating": 4.7,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/34368242/pexels-photo-34368242.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 2,
+        "rating": 4,
+        "title": "Very good quality",
+        "comment": "Lovely saree, the work is neat. Delivery was on time. Slightly less vibrant in person."
+      },
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      }
+    ],
     "name": "Printed Modal Comfort Saree",
     "slug": "printed-modal-comfort-saree-74",
     "description": "A handpicked modal cotton saree featuring printed and digital print craftsmanship. Lightweight, elegant drape suited for casual and party occasions. Comes with an unstitched blouse piece unless noted.",
@@ -2659,12 +4145,26 @@
       "Rose"
     ],
     "stock": 24,
-    "rating": 4,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/34481843/pexels-photo-34481843.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 3,
+        "rating": 5,
+        "title": "Worth every rupee",
+        "comment": "Elegant and well-finished. Perfect for the festive season."
+      },
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      }
+    ],
     "name": "Floral Modal Cotton Saree",
     "slug": "floral-modal-cotton-saree-75",
     "description": "A handpicked modal cotton saree featuring printed and digital print craftsmanship. Lightweight, elegant drape suited for office and daily wear occasions. Comes with an unstitched blouse piece unless noted.",
@@ -2695,12 +4195,32 @@
       "Teal"
     ],
     "stock": 8,
-    "rating": 4.1,
+    "rating": 4.5,
     "isActive": true,
     "isFeatured": false
   },
   {
     "imageUrl": "https://images.pexels.com/photos/34964322/pexels-photo-34964322.jpeg?auto=compress&cs=tinysrgb&w=900",
+    "reviews": [
+      {
+        "userIndex": 4,
+        "rating": 4,
+        "title": "Nice for the price",
+        "comment": "Good everyday saree. Soft material, easy to manage. Would buy again."
+      },
+      {
+        "userIndex": 5,
+        "rating": 5,
+        "title": "Stunning piece",
+        "comment": "The zari/border detailing is exquisite. Looks even better than the pictures."
+      },
+      {
+        "userIndex": 0,
+        "rating": 4,
+        "title": "Happy with it",
+        "comment": "Comfortable and breathable. The blouse piece matched well."
+      }
+    ],
     "name": "Geometric Modal Cotton Saree",
     "slug": "geometric-modal-cotton-saree-76",
     "description": "A handpicked modal cotton saree featuring printed and digital print craftsmanship. Lightweight, elegant drape suited for party and festive occasions. Comes with an unstitched blouse piece unless noted.",
@@ -2731,7 +4251,7 @@
       "Charcoal"
     ],
     "stock": 12,
-    "rating": 4.2,
+    "rating": 4.3,
     "isActive": true,
     "isFeatured": false
   }
