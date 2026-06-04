@@ -32,7 +32,7 @@ export async function GET() {
       comparePrice: product.comparePrice || product.price * 1.3,
       rating: product._count.reviews > 0 ? 4.5 : 0,
       reviews: product._count.reviews,
-      image: product.images[0]?.url || '/images/placeholder-product.jpg',
+      image: product.images[0]?.url || '/images/placeholder-product.svg',
       category: product.category,
       inStock: product.stock > 0,
     }));

@@ -361,7 +361,7 @@ export default function ProductDetailPage() {
     const orderData = {
       productId: product.id,
       productName: product.name,
-      productImage: product.images[0]?.url || '/images/placeholder-product.jpg',
+      productImage: product.images[0]?.url || '/images/placeholder-product.svg',
       selectedColor: product.colors.find(c => c.id === selectedColor)?.name || 'Default',
       selectedSize: product.sizes.find(s => s.id === selectedSize)?.name || 'Free Size',
       quantity,
@@ -526,7 +526,7 @@ export default function ProductDetailPage() {
             <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden group">
               {product.images.length > 0 ? (
                 <Image
-                  src={product.images[selectedImageIndex]?.url || '/images/placeholder-product.jpg'}
+                  src={product.images[selectedImageIndex]?.url || '/images/placeholder-product.svg'}
                   alt={product.images[selectedImageIndex]?.alt || product.name}
                   fill
                   className="object-cover"
@@ -1329,7 +1329,7 @@ export default function ProductDetailPage() {
                   <div className="flex items-center space-x-4">
                     <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
                       <Image
-                        src={orderDetails?.productImage || '/images/placeholder-product.jpg'}
+                        src={orderDetails?.productImage || '/images/placeholder-product.svg'}
                         alt={orderDetails?.productName || 'Product'}
                         width={64}
                         height={64}

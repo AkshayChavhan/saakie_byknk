@@ -5,6 +5,8 @@ import { SessionProvider } from 'next-auth/react'
 import { useState } from 'react'
 import { ChatBubble } from '@/components/chat'
 import { ToastProvider } from '@/components/ui/toast'
+import { InstallPrompt } from '@/components/pwa/install-prompt'
+import { BottomNav } from '@/components/layout/bottom-nav'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -25,6 +27,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <ToastProvider>
           {children}
           <ChatBubble />
+          <InstallPrompt />
+          <BottomNav />
         </ToastProvider>
       </QueryClientProvider>
     </SessionProvider>

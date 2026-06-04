@@ -802,3 +802,41 @@
     animation: none;
   }
 }
+
+/* ── PWA: safe-area insets & app-like behaviour ───────────────────────────── */
+/* Pads around the iOS notch / home indicator. Pairs with viewport-fit=cover
+   (set in the layout viewport export). Applied to the sticky header, footer and
+   bottom nav so their backgrounds extend edge-to-edge without clipping content. */
+@layer utilities {
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pl-safe {
+    padding-left: env(safe-area-inset-left);
+  }
+  .pr-safe {
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Curb the browser pull-to-refresh / rubber-band bounce so the installed app
+   feels less "web page" and more "app". */
+html {
+  overscroll-behavior-y: contain;
+}
+
+/* When launched as an installed PWA, give the page bottom room for the mobile
+   bottom navigation bar (rendered only on small standalone displays). */
+@media all and (display-mode: standalone) {
+  body {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+  }
+}
+@media all and (display-mode: standalone) and (min-width: 640px) {
+  body {
+    padding-bottom: 0;
+  }
+}

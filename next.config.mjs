@@ -1,3 +1,18 @@
+import withSerwistInit from '@serwist/next'
+
+// @serwist/next v9 is ESM-only, which is why this config is `.mjs` (ESM) rather
+// than the previous CommonJS `next.config.js`. Serwist compiles the service
+// worker source (app/sw.ts) into public/sw.js at build time, injecting the
+// precache manifest. It is disabled in development to avoid stale-cache pain
+// while iterating — the SW only activates in `next build` + `next start`.
+const withSerwist = withSerwistInit({
+  swSrc: 'app/sw.ts',
+  swDest: 'public/sw.js',
+  cacheOnNavigation: true,
+  reloadOnOnline: true,
+  disable: process.env.NODE_ENV === 'development',
+})
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -31,4 +46,4 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+export default withSerwist(nextConfig)
