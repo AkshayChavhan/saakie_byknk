@@ -95,7 +95,7 @@ export function Header() {
   }, [mobileMenuOpen])
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm pt-safe">
+    <header className="sticky top-0 z-50 bg-black shadow-sm pt-safe">
       {/* <div className="bg-red-600 text-white py-2 text-center text-sm">
         <p>Free shipping on orders above ₹2,999 | Cash on Delivery Available</p>
       </div> */}
@@ -236,6 +236,37 @@ export function Header() {
                 className="text-sm font-medium text-white hover:text-gray-300"
               >
                 Sign In
+              </Link>
+            )}
+          </div>
+        </div>
+
+        {/* Mobile: horizontally-scrollable nav row. The logo takes the full
+            width of the top bar on mobile, so the links live on a second row
+            here (and remain available in the hamburger menu too). Always
+            visible — it stays put as the page scrolls. */}
+        <div className="lg:hidden -mx-4 sm:-mx-6 border-t border-gray-800">
+          <div className="flex items-center gap-1 overflow-x-auto px-4 sm:px-6 py-2 scrollbar-hide">
+            {navigation.map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={cn(
+                  'whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-colors',
+                  pathname === item.href
+                    ? 'bg-white/15 text-white'
+                    : 'text-gray-300 hover:text-white hover:bg-white/10'
+                )}
+              >
+                {item.name}
+              </Link>
+            ))}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                Admin
               </Link>
             )}
           </div>
