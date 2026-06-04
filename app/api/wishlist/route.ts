@@ -68,16 +68,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Product already in wishlist' }, { status: 400 });
     }
 
-    await prisma.wishlistItem.create({
+    const item = await prisma.wishlistItem.create({
       data: { wishlistId: wishlist.id, productId },
     });
 
-    const updatedWishlist = await prisma.wishlist.findUnique({
-      where: { userId: r.id },
-      include: wishlistInclude,
-    });
-
-    return NextResponse.json(updatedWishlist);
+    // The client toggles optimistically and doesn't use the full wishlist here,
+    // so skip the extra hydrated re-fetch (saves a slow round-trip).
+    return NextResponse.json({ success: true, item }, { status: 201 });
   } catch (error) {
     return apiError(error);
   }

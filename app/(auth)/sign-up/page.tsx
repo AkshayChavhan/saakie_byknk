@@ -4,6 +4,14 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
+import { User, Mail, Lock } from 'lucide-react'
+import { AuthShell } from '@/components/auth/auth-shell'
+import {
+  TextField,
+  PasswordField,
+  SubmitButton,
+  ErrorBanner,
+} from '@/components/auth/auth-fields'
 
 export default function SignUpPage() {
   const router = useRouter()
@@ -34,7 +42,15 @@ export default function SignUpPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        setError(data.error || 'Could not create your account. Please try again.')
+        // The API returns errors as either a string (`{ error: '...' }`) or an
+        // object (`{ error: { message, code } }`). Normalise to a string so we
+        // never hand React a non-renderable object (React error #31).
+        const message =
+          typeof data.error === 'string'
+            ? data.error
+            : data.error?.message ||
+              'Could not create your account. Please try again.'
+        setError(message)
         setIsLoading(false)
         return
       }
@@ -63,85 +79,67 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Or{' '}
-            <Link href="/sign-in" className="font-medium text-red-600 hover:text-red-500">
-              sign in to existing account
-            </Link>
-          </p>
-        </div>
+    <AuthShell
+      eyebrow="Join the family"
+      title="Create your account"
+      subtitle="Begin your journey through India's finest handpicked sarees."
+      panelQuote="From the loom to your wardrobe — join a legacy of artisans."
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {error && <ErrorBanner message={error} />}
 
-        <form onSubmit={handleSubmit} className="bg-white shadow-xl rounded-lg p-8 space-y-5">
-          {error && (
-            <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          )}
+        <TextField
+          id="name"
+          label="Full name"
+          icon={User}
+          autoComplete="name"
+          required
+          value={name}
+          onChange={setName}
+          placeholder="Your name"
+        />
 
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Full name
-            </label>
-            <input
-              id="name"
-              type="text"
-              autoComplete="name"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-red-600 focus:ring-red-600 focus:outline-none focus:ring-1"
-            />
-          </div>
+        <TextField
+          id="email"
+          label="Email address"
+          type="email"
+          icon={Mail}
+          autoComplete="email"
+          required
+          value={email}
+          onChange={setEmail}
+          placeholder="you@example.com"
+        />
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email address
-            </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-red-600 focus:ring-red-600 focus:outline-none focus:ring-1"
-            />
-          </div>
+        <PasswordField
+          id="password"
+          label="Password"
+          icon={Lock}
+          autoComplete="new-password"
+          required
+          minLength={8}
+          value={password}
+          onChange={setPassword}
+          placeholder="Create a password"
+          hint="At least 8 characters."
+        />
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-red-600 focus:ring-red-600 focus:outline-none focus:ring-1"
-            />
-            <p className="mt-1 text-xs text-gray-500">At least 8 characters.</p>
-          </div>
+        <SubmitButton loading={isLoading} loadingLabel="Creating account…">
+          Create account
+        </SubmitButton>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-red-600 text-white py-2.5 rounded-md font-medium hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        {/* When Google OAuth is added later, a `signIn('google')` button goes here. */}
+
+        <p className="pt-1 text-center text-sm text-maroon-700/80">
+          Already have an account?{' '}
+          <Link
+            href="/sign-in"
+            className="font-semibold text-maroon-700 underline-offset-2 hover:underline"
           >
-            {isLoading ? 'Creating account…' : 'Create account'}
-          </button>
-
-          {/* When Google OAuth is added later, a `signIn('google')` button goes here. */}
-        </form>
-      </div>
-    </div>
+            Sign in
+          </Link>
+        </p>
+      </form>
+    </AuthShell>
   )
 }

@@ -12,6 +12,9 @@ import type { NextAuthConfig } from 'next-auth';
  * listed here; provider logic that needs Node APIs stays in `auth.ts`.
  */
 export const authConfig = {
+  // Trust the deployment host. On Vercel this is usually inferred, but being
+  // explicit avoids `UntrustedHost` 500s behind the proxy / on custom domains.
+  trustHost: true,
   pages: {
     signIn: '/sign-in',
   },

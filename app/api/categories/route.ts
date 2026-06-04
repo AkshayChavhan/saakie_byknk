@@ -7,8 +7,10 @@ export const revalidate = 60;
 
 export async function GET() {
   try {
+    // Only top-level categories on the public storefront — sub-categories
+    // are surfaced from within their parent's page (/categories/[slug]).
     const categories = await prisma.category.findMany({
-      where: { isActive: true },
+      where: { isActive: true, parentId: null },
       select: {
         id: true,
         name: true,
