@@ -4,8 +4,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { useSession, signOut } from 'next-auth/react'
-import { Search, Heart, LogOut, User } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { Search, Heart, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { CartIcon } from '@/components/cart'
 
@@ -33,7 +33,6 @@ export function Header() {
   const [isClosing, setIsClosing] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
   const { data: session, status } = useSession()
@@ -172,63 +171,21 @@ export function Header() {
 
                 <CartIcon />
 
-                <div className="relative">
-                  <button
-                    onClick={() => setUserMenuOpen((open) => !open)}
-                    className="p-2 rounded-full bg-gray-800 text-white hover:bg-gray-700 transition-colors"
-                    aria-label="Account menu"
-                  >
-                    <User size={20} />
-                  </button>
-
-                  {userMenuOpen && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setUserMenuOpen(false)}
-                        aria-hidden="true"
-                      />
-                      <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
-                        {session?.user?.email && (
-                          <div className="px-4 py-2 border-b border-gray-100">
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              {session.user.name || 'My Account'}
-                            </p>
-                            <p className="text-xs text-gray-500 truncate">
-                              {session.user.email}
-                            </p>
-                          </div>
-                        )}
-                        <Link
-                          href="/wishlist"
-                          onClick={() => setUserMenuOpen(false)}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                        >
-                          Wishlist
-                        </Link>
-                        {isAdmin && (
-                          <Link
-                            href="/admin"
-                            onClick={() => setUserMenuOpen(false)}
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                          >
-                            Admin Dashboard
-                          </Link>
-                        )}
-                        <button
-                          onClick={() => {
-                            setUserMenuOpen(false)
-                            signOut({ callbackUrl: '/' })
-                          }}
-                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                        >
-                          <LogOut size={16} />
-                          Sign Out
-                        </button>
-                      </div>
-                    </>
+                {/* Account goes straight to the account page (profile, orders,
+                    sign out). Wishlist has its own heart icon above, so it is
+                    intentionally NOT duplicated here. */}
+                <Link
+                  href="/account"
+                  aria-label="Account"
+                  className={cn(
+                    'p-2 rounded-full transition-colors',
+                    pathname === '/account'
+                      ? 'bg-white text-gray-900'
+                      : 'bg-gray-800 text-white hover:bg-gray-700'
                   )}
-                </div>
+                >
+                  <User size={20} />
+                </Link>
               </>
             ) : (
               <Link
