@@ -59,12 +59,12 @@ const OCCASIONS = ['Festive', 'Wedding', 'Casual', 'Office', 'Party', 'Daily Wea
 //    sample reviews have an author. Marked with a `demo: true` flag and a shared
 //    email domain so they're easy to identify / clean up. ──────────────────────
 const DEMO_USERS = [
-  { name: 'Priya Sharma', email: 'priya.demo@saakie.test' },
-  { name: 'Anjali Mehta', email: 'anjali.demo@saakie.test' },
-  { name: 'Sneha Reddy', email: 'sneha.demo@saakie.test' },
-  { name: 'Kavita Iyer', email: 'kavita.demo@saakie.test' },
-  { name: 'Divya Nair', email: 'divya.demo@saakie.test' },
-  { name: 'Ritu Desai', email: 'ritu.demo@saakie.test' },
+  { name: 'Krutika Sharma', email: 'krutika.demo@saakie.test' },
+  { name: 'Akshay Mehta', email: 'akshay.demo@saakie.test' },
+  { name: 'Roshani Reddy', email: 'roshani.demo@saakie.test' },
+  { name: 'Pramila Iyer', email: 'pramila.demo@saakie.test' },
+  { name: 'Kalyani Nair', email: 'kalyani.demo@saakie.test' },
+  { name: 'Neha Desai', email: 'neha.demo@saakie.test' },
 ]
 
 // Review snippets. (rating is a whole number 1-5, per the schema.) Picked
