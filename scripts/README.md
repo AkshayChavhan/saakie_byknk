@@ -176,14 +176,14 @@ experience (account page, wishlist, cart, leaving reviews).
 Go to **`/sign-in`** and use any of these. **All share the password
 `demo-password`.**
 
-| Email                      | Password        |
-| -------------------------- | --------------- |
-| `priya.demo@saakie.test`   | `demo-password` |
-| `anjali.demo@saakie.test`  | `demo-password` |
-| `sneha.demo@saakie.test`   | `demo-password` |
-| `kavita.demo@saakie.test`  | `demo-password` |
-| `divya.demo@saakie.test`   | `demo-password` |
-| `ritu.demo@saakie.test`    | `demo-password` |
+| Name           | Email                       | Password        |
+| -------------- | --------------------------- | --------------- |
+| Krutika Sharma | `krutika.demo@saakie.test`  | `demo-password` |
+| Akshay Mehta   | `akshay.demo@saakie.test`   | `demo-password` |
+| Roshani Reddy  | `roshani.demo@saakie.test`  | `demo-password` |
+| Pramila Iyer   | `pramila.demo@saakie.test`  | `demo-password` |
+| Kalyani Nair   | `kalyani.demo@saakie.test`  | `demo-password` |
+| Neha Desai     | `neha.demo@saakie.test`     | `demo-password` |
 
 - Login is the standard Credentials flow (`auth.ts` → `bcrypt.compare`); the
   seed stores the bcrypt hash of `demo-password`.
