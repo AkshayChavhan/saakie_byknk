@@ -23,7 +23,7 @@ export async function GET() {
       id: category.id,
       name: category.name,
       slug: category.slug,
-      image: category.image || '/images/placeholder-category.jpg',
+      image: category.image || '/images/placeholder-category.svg',
       count: category._count.products,
     }));
 
