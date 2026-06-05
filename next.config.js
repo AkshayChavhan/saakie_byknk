@@ -1,7 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['res.cloudinary.com', 'images.unsplash.com', 'saakie.vercel.app'],
+    // Hosts allowed through the Next.js image optimizer. `images.pexels.com`
+    // is needed for the royalty-free demo saree photos (see scripts/
+    // seed-sample-sarees.mjs); without it the optimizer blocks them and the
+    // product images render broken.
+    remotePatterns: [
+      { protocol: 'https', hostname: 'res.cloudinary.com' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'images.pexels.com' },
+      { protocol: 'https', hostname: 'saakie.vercel.app' },
+    ],
   },
   serverExternalPackages: ['@prisma/client'],
   experimental: {
