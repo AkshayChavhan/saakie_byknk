@@ -4,6 +4,7 @@ import { stripe } from '@/lib/stripe';
 import { razorpay } from '@/lib/razorpay';
 import { requireAuth } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { normalizePaymentMethod, isMethodAllowed } from '@/lib/payment';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -37,6 +38,23 @@ export async function POST(request: Request) {
       }
     }
 
+    // Enforce per-product payment modes: a COD-only product cannot be paid via a
+    // prepaid gateway, and vice-versa.
+    const chosenMethod = normalizePaymentMethod(paymentGateway);
+    const disallowed = cart.items.find(
+      (item) => !isMethodAllowed(chosenMethod, item.product.paymentModes)
+    );
+    if (disallowed) {
+      return NextResponse.json(
+        {
+          error: `"${disallowed.product.name}" does not accept ${
+            chosenMethod === 'COD' ? 'Cash on Delivery' : 'prepaid (online) payment'
+          }. Please choose a different payment method.`,
+        },
+        { status: 409 }
+      );
+    }
+
     const subtotal = cart.items.reduce(
       (total, item) => total + item.product.price * item.quantity,
       0
@@ -60,7 +78,7 @@ export async function POST(request: Request) {
         total,
         shippingAddressId,
         billingAddressId: billingAddressId || shippingAddressId,
-        paymentMethod: paymentGateway?.toUpperCase() || 'PENDING',
+        paymentMethod: chosenMethod,
         status: 'PENDING',
         paymentStatus: 'PENDING',
         items: {

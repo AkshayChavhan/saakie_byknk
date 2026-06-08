@@ -25,8 +25,13 @@ const PUBLIC_PAGES = [
   '/care-instructions',
   '/size-guide',
   '/shipping-returns',
+  '/privacy-policy',
+  '/terms-of-service',
+  '/return-policy',
+  '/disclaimer',
   '/sign-in',
   '/sign-up',
+  '/offline', // service-worker offline fallback; must be reachable while signed out
 ];
 
 function isPublicPage(pathname: string): boolean {

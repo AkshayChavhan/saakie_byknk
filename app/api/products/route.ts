@@ -96,7 +96,7 @@ export async function GET(request: Request) {
       comparePrice: product.comparePrice || product.price * 1.3,
       rating: product._count.reviews > 0 ? 4.5 : 0,
       reviews: product._count.reviews,
-      image: product.images[0]?.url || '/images/placeholder-product.jpg',
+      image: product.images[0]?.url || '/images/placeholder-product.svg',
       colors: ['#000000'],
       category: product.category,
       stock: product.stock,

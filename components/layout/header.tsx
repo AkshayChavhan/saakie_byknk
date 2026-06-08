@@ -4,8 +4,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { useSession, signOut } from 'next-auth/react'
-import { Search, Heart, LogOut, User } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { Search, Heart, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { CartIcon } from '@/components/cart'
 
@@ -33,23 +33,13 @@ export function Header() {
   const [isClosing, setIsClosing] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
   const { data: session, status } = useSession()
   const isSignedIn = status === 'authenticated'
   const role = session?.user?.role
   const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN'
-  const [isScrolled, setIsScrolled] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50)
-    }
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
 
   // Handle menu close with animation
   const handleCloseMenu = useCallback(() => {
@@ -104,47 +94,37 @@ export function Header() {
   }, [mobileMenuOpen])
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm">
+    <header className="sticky top-0 z-50 bg-black shadow-sm pt-safe">
       {/* <div className="bg-red-600 text-white py-2 text-center text-sm">
         <p>Free shipping on orders above ₹2,999 | Cash on Delivery Available</p>
       </div> */}
       
       <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
-            {/* Mobile: Animated hamburger menu button */}
+          <div className="flex items-center flex-1 min-w-0">
+            {/* Mobile: Animated hamburger menu button — always visible so the
+                side menu stays openable at any scroll position. */}
             <button
               onClick={toggleMenu}
-              className="lg:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
+              className="lg:hidden p-2 rounded-md text-white hover:bg-gray-800 transition-colors"
               aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             >
-              {isScrolled && !mobileMenuOpen ? (
-                <Image
-                  src="/images/saakie.jpg"
-                  alt="Saakie by KNK"
-                  width={100}
-                  height={32}
-                  className="h-6 w-auto"
-                />
-              ) : (
-                <HamburgerIcon isOpen={mobileMenuOpen || isClosing} />
-              )}
+              <HamburgerIcon isOpen={mobileMenuOpen || isClosing} />
             </button>
 
-            {/* Desktop: Always show logo. Mobile: Only show when not scrolled */}
+            {/* Logo is always visible (mobile + desktop), beside the hamburger.
+                It spans up to the full header width; height stays capped to the
+                bar — a touch larger on mobile than desktop. */}
             <Link
               href="/"
-              className={cn(
-                "ml-4 lg:ml-0 flex items-center transition-opacity duration-300",
-                isScrolled ? "lg:opacity-100 opacity-0 pointer-events-none lg:pointer-events-auto" : "opacity-100"
-              )}
+              className="ml-4 lg:ml-0 flex items-center flex-1 min-w-0 max-w-full"
             >
               <Image
-                src="/images/saakie.jpg"
+                src="/images/saakieLogo.png"
                 alt="Saakie by KNK"
                 width={150}
                 height={50}
-                className="h-8 w-auto sm:h-10 lg:h-12"
+                className="w-full h-auto max-h-14 lg:max-h-12 object-contain object-left"
                 priority
               />
             </Link>
@@ -156,8 +136,8 @@ export function Header() {
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  'text-sm font-medium transition-colors hover:text-red-600',
-                  pathname === item.href ? 'text-red-600' : 'text-gray-700'
+                  'text-sm font-medium transition-colors hover:text-gray-300',
+                  pathname === item.href ? 'text-white font-semibold' : 'text-gray-200'
                 )}
               >
                 {item.name}
@@ -167,7 +147,7 @@ export function Header() {
               <>
                 <Link
                   href="/admin"
-                  className="text-sm font-medium text-gray-700 hover:text-red-600 transition-colors"
+                  className="text-sm font-medium text-gray-200 hover:text-gray-300 transition-colors"
                 >
                   Admin
                 </Link>
@@ -178,83 +158,72 @@ export function Header() {
           <div className="flex items-center space-x-4">
             <button
               onClick={() => setSearchOpen(!searchOpen)}
-              className="p-2 rounded-md text-gray-700 hover:bg-gray-100"
+              className="p-2 rounded-md text-white hover:bg-gray-800"
             >
               <Search size={20} />
             </button>
             
             {isSignedIn ? (
               <>
-                <Link href="/wishlist" className="p-2 rounded-md text-gray-700 hover:bg-gray-100">
+                <Link href="/wishlist" className="p-2 rounded-md text-white hover:bg-gray-800">
                   <Heart size={20} />
                 </Link>
 
                 <CartIcon />
 
-                <div className="relative">
-                  <button
-                    onClick={() => setUserMenuOpen((open) => !open)}
-                    className="p-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
-                    aria-label="Account menu"
-                  >
-                    <User size={20} />
-                  </button>
-
-                  {userMenuOpen && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setUserMenuOpen(false)}
-                        aria-hidden="true"
-                      />
-                      <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
-                        {session?.user?.email && (
-                          <div className="px-4 py-2 border-b border-gray-100">
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              {session.user.name || 'My Account'}
-                            </p>
-                            <p className="text-xs text-gray-500 truncate">
-                              {session.user.email}
-                            </p>
-                          </div>
-                        )}
-                        <Link
-                          href="/wishlist"
-                          onClick={() => setUserMenuOpen(false)}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                        >
-                          Wishlist
-                        </Link>
-                        {isAdmin && (
-                          <Link
-                            href="/admin"
-                            onClick={() => setUserMenuOpen(false)}
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                          >
-                            Admin Dashboard
-                          </Link>
-                        )}
-                        <button
-                          onClick={() => {
-                            setUserMenuOpen(false)
-                            signOut({ callbackUrl: '/' })
-                          }}
-                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                        >
-                          <LogOut size={16} />
-                          Sign Out
-                        </button>
-                      </div>
-                    </>
+                {/* Account goes straight to the account page (profile, orders,
+                    sign out). Wishlist has its own heart icon above, so it is
+                    intentionally NOT duplicated here. */}
+                <Link
+                  href="/account"
+                  aria-label="Account"
+                  className={cn(
+                    'p-2 rounded-full transition-colors',
+                    pathname === '/account'
+                      ? 'bg-white text-gray-900'
+                      : 'bg-gray-800 text-white hover:bg-gray-700'
                   )}
-                </div>
+                >
+                  <User size={20} />
+                </Link>
               </>
             ) : (
               <Link
                 href="/sign-in"
-                className="text-sm font-medium text-gray-700 hover:text-primary"
+                className="text-sm font-medium text-white hover:text-gray-300"
               >
                 Sign In
+              </Link>
+            )}
+          </div>
+        </div>
+
+        {/* Mobile: horizontally-scrollable nav row. The logo takes the full
+            width of the top bar on mobile, so the links live on a second row
+            here (and remain available in the hamburger menu too). Always
+            visible — it stays put as the page scrolls. */}
+        <div className="lg:hidden -mx-4 sm:-mx-6 border-t border-gray-800">
+          <div className="flex items-center gap-1 overflow-x-auto px-4 sm:px-6 py-2 scrollbar-hide">
+            {navigation.map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={cn(
+                  'whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-colors',
+                  pathname === item.href
+                    ? 'bg-white/15 text-white'
+                    : 'text-gray-300 hover:text-white hover:bg-white/10'
+                )}
+              >
+                {item.name}
+              </Link>
+            ))}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                Admin
               </Link>
             )}
           </div>
@@ -305,20 +274,27 @@ export function Header() {
               isClosing ? "sidebar-slide-out" : "sidebar-slide-in"
             )}
           >
-            {/* Menu Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-800">
-              <Link href="/" onClick={handleCloseMenu}>
+            {/* Menu Header — black bar so the logo's dark background blends in
+                seamlessly, matching the main top header. */}
+            <div className="flex items-center justify-between gap-3 p-4 bg-black border-b border-gray-800">
+              {/* Logo grows to fill the row; the close button keeps its size. */}
+              <Link
+                href="/"
+                onClick={handleCloseMenu}
+                className="flex flex-1 min-w-0 items-center"
+              >
                 <Image
-                  src="/images/saakie.jpg"
-                  alt="Saakie by KNK"
-                  width={120}
-                  height={40}
-                  className="h-8 w-auto brightness-0 invert"
-                />
+                src="/images/saakieLogo.png"
+                alt="Saakie by KNK"
+                width={240}
+                height={50}
+                className="w-full h-auto max-h-28 object-contain object-left"
+                priority
+              />
               </Link>
               <button
                 onClick={handleCloseMenu}
-                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+                className="shrink-0 p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
                 aria-label="Close menu"
               >
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -72,11 +72,12 @@ export async function GET(
       slug: p.slug,
       price: p.price,
       comparePrice: p.comparePrice ?? p.price,
-      image: p.images[0]?.url || '/images/placeholder-product.jpg',
+      image: p.images[0]?.url || '/images/placeholder-product.svg',
     }));
 
     return NextResponse.json({
       ...product,
+      inStock: product.stock > 0,
       avgRating,
       reviewCount: product._count.reviews,
       relatedProducts,

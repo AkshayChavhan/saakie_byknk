@@ -759,3 +759,113 @@
   outline: 2px solid #9ca3af;
   outline-offset: 2px;
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Saree-themed auth screens (sign-in / sign-up)
+   Decorative-only styles. Everything is pure CSS/SVG — no image assets — so
+   the silk + zari look renders even where product imagery is missing.
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* Slow diagonal gold sheen sweeping across the decorative silk panel. */
+@keyframes zariSheen {
+  0%   { transform: translateX(-120%) skewX(-12deg); }
+  100% { transform: translateX(220%)  skewX(-12deg); }
+}
+.animate-zari-sheen {
+  animation: zariSheen 7s ease-in-out infinite;
+}
+
+/* Very slow drift for the paisley/mandala motif layer — adds life without
+   distracting from the form. */
+@keyframes motifDrift {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-14px) rotate(2deg); }
+}
+.animate-motif-drift {
+  animation: motifDrift 14s ease-in-out infinite;
+}
+
+/* Animated zari-gold gradient used for headings and the brand rule. */
+.text-zari-gradient {
+  background: linear-gradient(100deg, #9a7b13 0%, #e6c757 30%, #fff4cf 50%, #e6c757 70%, #9a7b13 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Respect users who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-zari-sheen,
+  .animate-motif-drift {
+    animation: none;
+  }
+}
+
+/* ── PWA: safe-area insets & app-like behaviour ───────────────────────────── */
+/* Pads around the iOS notch / home indicator. Pairs with viewport-fit=cover
+   (set in the layout viewport export). Applied to the sticky header, footer and
+   bottom nav so their backgrounds extend edge-to-edge without clipping content. */
+/* These ONLY apply when the site runs as an installed PWA (display-mode:
+   standalone). In a normal browser tab the chrome already covers the notch, and
+   env(safe-area-inset-top) shifts as the address bar shows/hides on scroll —
+   applying it there made the sticky header visibly bounce. So in a browser tab
+   these resolve to 0. */
+@layer utilities {
+  .pt-safe,
+  .pb-safe,
+  .pl-safe,
+  .pr-safe {
+    --safe-top: 0px;
+    --safe-bottom: 0px;
+    --safe-left: 0px;
+    --safe-right: 0px;
+  }
+  .pt-safe {
+    padding-top: var(--safe-top);
+  }
+  .pb-safe {
+    padding-bottom: var(--safe-bottom);
+  }
+  .pl-safe {
+    padding-left: var(--safe-left);
+  }
+  .pr-safe {
+    padding-right: var(--safe-right);
+  }
+}
+
+@media all and (display-mode: standalone) {
+  .pt-safe {
+    --safe-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    --safe-bottom: env(safe-area-inset-bottom);
+  }
+  .pl-safe {
+    --safe-left: env(safe-area-inset-left);
+  }
+  .pr-safe {
+    --safe-right: env(safe-area-inset-right);
+  }
+}
+
+/* Curb the browser pull-to-refresh / rubber-band bounce so the installed app
+   feels less "web page" and more "app". */
+html {
+  overscroll-behavior-y: contain;
+}
+
+/* When launched as an installed PWA, give the page bottom room for the mobile
+   bottom navigation bar (rendered only on small standalone displays). */
+@media all and (display-mode: standalone) {
+  body {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+  }
+}
+@media all and (display-mode: standalone) and (min-width: 640px) {
+  body {
+    padding-bottom: 0;
+  }
+}

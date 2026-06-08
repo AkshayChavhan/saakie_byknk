@@ -33,6 +33,19 @@ export async function GET(
           take: limitNum,
           orderBy: { createdAt: 'desc' },
         },
+        // Active sub-categories of this category, with their own product counts,
+        // so the storefront can show them as tiles above this category's products.
+        children: {
+          where: { isActive: true },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            image: true,
+            _count: { select: { products: true } },
+          },
+          orderBy: { name: 'asc' },
+        },
         _count: { select: { products: true } },
       },
     });
@@ -45,6 +58,13 @@ export async function GET(
 
     return NextResponse.json({
       ...category,
+      children: category.children.map((child) => ({
+        id: child.id,
+        name: child.name,
+        slug: child.slug,
+        image: child.image || '/images/placeholder-category.svg',
+        count: child._count.products,
+      })),
       pagination: {
         page: pageNum,
         limit: limitNum,

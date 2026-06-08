@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { normalizePaymentMethod, isMethodAllowed } from '@/lib/payment';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -48,6 +49,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
     }
 
+    // Enforce the payment modes the admin defined per product: every product in
+    // the cart must accept the chosen method, otherwise reject the order.
+    const chosenMethod = normalizePaymentMethod(paymentMethod);
+    const disallowed = cart.items.find(
+      (item) => !isMethodAllowed(chosenMethod, item.product.paymentModes)
+    );
+    if (disallowed) {
+      return NextResponse.json(
+        {
+          error: `"${disallowed.product.name}" is not available for ${
+            chosenMethod === 'COD' ? 'Cash on Delivery' : 'this payment method'
+          }. Please choose a different payment method.`,
+        },
+        { status: 409 }
+      );
+    }
+
     const subtotal = cart.items.reduce(
       (total, item) => total + item.product.price * item.quantity,
       0
@@ -71,7 +89,7 @@ export async function POST(request: Request) {
         total,
         shippingAddressId,
         billingAddressId: billingAddressId || shippingAddressId,
-        paymentMethod: paymentMethod || 'PENDING',
+        paymentMethod: chosenMethod,
         items: {
           create: cart.items.map((item) => ({
             productId: item.productId,

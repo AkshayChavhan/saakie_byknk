@@ -8,6 +8,10 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-playfair)', 'Georgia', 'serif'],
+      },
       colors: {
         primary: {
           50: '#fef2f2',
@@ -32,7 +36,38 @@ module.exports = {
           700: '#a04509',
           800: '#84360f',
           900: '#702c10',
-        }
+        },
+        // Indian saree palette — deep Banarasi maroon, marigold, and zari gold.
+        // Used across the auth screens and available app-wide.
+        maroon: {
+          50: '#fbf3f3',
+          100: '#f6e1e1',
+          200: '#edc2c4',
+          300: '#df979b',
+          400: '#cd6469',
+          500: '#b94047',
+          600: '#9c2f37',
+          700: '#7d2128',
+          800: '#5e1b21',
+          900: '#4a1418',
+        },
+        marigold: {
+          50: '#fff8eb',
+          100: '#fdecc8',
+          200: '#fbd789',
+          300: '#f9bd4b',
+          400: '#f7a31e',
+          500: '#e6870b',
+          600: '#c86507',
+          700: '#a4480a',
+          800: '#85380f',
+          900: '#702f10',
+        },
+        zari: {
+          DEFAULT: '#c9a227',
+          light: '#e6c757',
+          dark: '#9a7b13',
+        },
       },
       screens: {
         'xs': '475px',
@@ -58,5 +93,11 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // `standalone:` variant — applies only when the site is launched as an
+    // installed PWA (display-mode: standalone). Used by the mobile bottom nav.
+    function ({ addVariant }) {
+      addVariant('standalone', '@media all and (display-mode: standalone)')
+    },
+  ],
 }

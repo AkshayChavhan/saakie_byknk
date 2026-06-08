@@ -56,6 +56,7 @@ export async function POST(request: Request) {
       width,
       height,
       blouseIncluded,
+      paymentModes,
       colors,
       sizes,
       isActive = true,
@@ -148,6 +149,10 @@ export async function POST(request: Request) {
         weight: weight ? parseFloat(weight) : null,
         dimensions,
         blouseIncluded: blouseIncluded === true || blouseIncluded === 'true',
+        paymentModes:
+          Array.isArray(paymentModes) && paymentModes.length > 0
+            ? paymentModes
+            : ['PREPAID'],
         isActive: isActive === true || isActive === 'true',
         isFeatured: isFeatured === true || isFeatured === 'true',
         images:

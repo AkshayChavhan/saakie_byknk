@@ -87,6 +87,7 @@ model Product {
   fabric        String?
   workType      String?
   blouseIncluded Boolean @default(false)
+  paymentModes  PaymentMode[] @default([PREPAID])
   isActive      Boolean  @default(true)
   isFeatured    Boolean  @default(false)
   reviews       Review[]
@@ -324,6 +325,12 @@ enum PaymentStatus {
   FAILED
   REFUNDED
   CANCELLED
+}
+
+// How a product accepts payment. PREPAID = pay via the online payment gateway.
+enum PaymentMode {
+  COD
+  PREPAID
 }
 
 model HeroSlide {

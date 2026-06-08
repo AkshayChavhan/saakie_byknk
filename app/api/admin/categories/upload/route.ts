@@ -74,7 +74,9 @@ export async function POST(request: Request) {
         isActive,
       },
       include: {
-        _count: { select: { products: true } },
+        parent: { select: { id: true, name: true } },
+        children: { select: { id: true, name: true } },
+        _count: { select: { products: true, children: true } },
       },
     });
 

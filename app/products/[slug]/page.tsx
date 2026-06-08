@@ -25,6 +25,7 @@ import {
   Check
 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
+import { isMethodAllowed, describeModes } from '@/lib/payment'
 import { fetchApi, cartApi, wishlistApi } from '@/lib/api'
 
 interface ProductImage {
@@ -96,6 +97,7 @@ interface Product {
   workType: string | null
   blouseIncluded: boolean
   weight: number | null
+  paymentModes?: ('COD' | 'PREPAID')[]
   images: ProductImage[]
   colors: Color[]
   sizes: Size[]
@@ -161,6 +163,9 @@ export default function ProductDetailPage() {
   // Wishlist State
   const [wishlistBusy, setWishlistBusy] = useState(false)
 
+  // Share State — brief "Link copied!" feedback after the clipboard fallback.
+  const [linkCopied, setLinkCopied] = useState(false)
+
   // Review Form State
   const { status: authStatus } = useSession()
   const [reviewRating, setReviewRating] = useState(0)
@@ -213,6 +218,32 @@ export default function ProductDetailPage() {
       cancelled = true
     }
   }, [authStatus, product])
+
+  const handleShare = async () => {
+    if (!product) return
+    const url = typeof window !== 'undefined' ? window.location.href : ''
+    const shareData = {
+      title: product.name,
+      text: `Check out ${product.name} on Saakie by KNK`,
+      url,
+    }
+    // Native share sheet on supported devices (mobile); clipboard fallback otherwise.
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share(shareData)
+        return
+      } catch {
+        // User dismissed the share sheet, or it failed — fall through to copy.
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    } catch {
+      alert('Could not share. Copy the link from your browser address bar.')
+    }
+  }
 
   const handleToggleWishlist = async () => {
     if (!product) return
@@ -319,11 +350,18 @@ export default function ProductDetailPage() {
 
   const handleCashOnDelivery = () => {
     if (!product) return
-    
+
+    // Honor the payment modes the admin set for this product. If COD isn't
+    // allowed, block it (the order API enforces this too).
+    if (!isMethodAllowed('COD', product.paymentModes)) {
+      alert('This product is available on Prepaid (online payment) only — Cash on Delivery is not available.')
+      return
+    }
+
     const orderData = {
       productId: product.id,
       productName: product.name,
-      productImage: product.images[0]?.url || '/images/placeholder-product.jpg',
+      productImage: product.images[0]?.url || '/images/placeholder-product.svg',
       selectedColor: product.colors.find(c => c.id === selectedColor)?.name || 'Default',
       selectedSize: product.sizes.find(s => s.id === selectedSize)?.name || 'Free Size',
       quantity,
@@ -448,16 +486,19 @@ export default function ProductDetailPage() {
           <div className="flex items-center space-x-2">
             <button
               onClick={handleToggleWishlist}
-              disabled={wishlistBusy}
               aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-              className="p-2 disabled:opacity-50"
+              className="p-2 active:scale-90 transition-transform"
             >
               <Heart
                 size={24}
-                className={isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}
+                className={`transition-colors ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
               />
             </button>
-            <button className="p-2">
+            <button
+              onClick={handleShare}
+              aria-label="Share this product"
+              className="p-2"
+            >
               <Share2 size={24} className="text-gray-600" />
             </button>
           </div>
@@ -485,7 +526,7 @@ export default function ProductDetailPage() {
             <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden group">
               {product.images.length > 0 ? (
                 <Image
-                  src={product.images[selectedImageIndex]?.url || '/images/placeholder-product.jpg'}
+                  src={product.images[selectedImageIndex]?.url || '/images/placeholder-product.svg'}
                   alt={product.images[selectedImageIndex]?.alt || product.name}
                   fill
                   className="object-cover"
@@ -636,11 +677,19 @@ export default function ProductDetailPage() {
               </span>
             </div>
 
+            {/* Accepted payment modes (as set by the seller) */}
+            <div className="flex items-center gap-2">
+              <CreditCard size={16} className="text-gray-500" />
+              <span className="text-sm text-gray-600">
+                Payment: <span className="font-medium text-gray-900">{describeModes(product.paymentModes)}</span>
+              </span>
+            </div>
+
             {/* Description Preview */}
             <div className="space-y-2">
-              <p className="text-gray-700 leading-relaxed">
-                {showFullDescription 
-                  ? product.description 
+              <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                {showFullDescription
+                  ? product.description
                   : `${product.description.slice(0, 150)}${product.description.length > 150 ? '...' : ''}`
                 }
               </p>
@@ -781,8 +830,7 @@ export default function ProductDetailPage() {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={handleToggleWishlist}
-                  disabled={wishlistBusy}
-                  className={`flex items-center justify-center space-x-2 py-3 px-4 border rounded-lg font-medium transition-colors disabled:opacity-60 ${
+                  className={`flex items-center justify-center space-x-2 py-3 px-4 border rounded-lg font-medium transition-colors active:scale-[0.98] ${
                     isWishlisted
                       ? 'border-red-500 text-red-500 bg-red-50'
                       : 'border-gray-300 text-gray-700 hover:border-gray-400'
@@ -792,9 +840,12 @@ export default function ProductDetailPage() {
                   <span>{isWishlisted ? 'Wishlisted' : 'Add to Wishlist'}</span>
                 </button>
 
-                <button className="flex items-center justify-center space-x-2 py-3 px-4 border border-gray-300 text-gray-700 hover:border-gray-400 rounded-lg font-medium transition-colors">
-                  <Share2 size={18} />
-                  <span>Share</span>
+                <button
+                  onClick={handleShare}
+                  className="flex items-center justify-center space-x-2 py-3 px-4 border border-gray-300 text-gray-700 hover:border-gray-400 rounded-lg font-medium transition-colors"
+                >
+                  {linkCopied ? <Check size={18} /> : <Share2 size={18} />}
+                  <span>{linkCopied ? 'Link copied!' : 'Share'}</span>
                 </button>
               </div>
             </div>
@@ -840,13 +891,13 @@ export default function ProductDetailPage() {
           <div className="py-8">
             {activeTab === 'description' && (
               <div className="prose max-w-none">
-                <p className="text-gray-700 leading-relaxed mb-6">
+                <p className="text-gray-700 leading-relaxed mb-6 whitespace-pre-line">
                   {product.description}
                 </p>
                 {product.details && (
                   <div className="bg-gray-50 p-6 rounded-lg">
                     <h3 className="font-medium text-gray-900 mb-4">Additional Details</h3>
-                    <p className="text-gray-700 leading-relaxed">
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-line">
                       {product.details}
                     </p>
                   </div>
@@ -1203,9 +1254,8 @@ export default function ProductDetailPage() {
         <div className="flex space-x-2">
           <button
             onClick={handleToggleWishlist}
-            disabled={wishlistBusy}
             aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-            className={`flex-shrink-0 p-3 border rounded-lg disabled:opacity-60 ${
+            className={`flex-shrink-0 p-3 border rounded-lg active:scale-95 transition-transform ${
               isWishlisted
                 ? 'border-red-500 text-red-500 bg-red-50'
                 : 'border-gray-300 text-gray-700'
@@ -1279,7 +1329,7 @@ export default function ProductDetailPage() {
                   <div className="flex items-center space-x-4">
                     <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
                       <Image
-                        src={orderDetails?.productImage || '/images/placeholder-product.jpg'}
+                        src={orderDetails?.productImage || '/images/placeholder-product.svg'}
                         alt={orderDetails?.productName || 'Product'}
                         width={64}
                         height={64}
