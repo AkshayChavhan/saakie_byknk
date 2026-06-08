@@ -16,7 +16,16 @@ const withSerwist = withSerwistInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['res.cloudinary.com', 'images.unsplash.com', 'saakie.vercel.app'],
+    // Hosts allowed through the Next.js image optimizer. `images.pexels.com`
+    // is required for the royalty-free demo saree photos (see scripts/
+    // seed-sample-sarees.mjs); without it the optimizer blocks them and every
+    // product image renders broken.
+    remotePatterns: [
+      { protocol: 'https', hostname: 'res.cloudinary.com' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'images.pexels.com' },
+      { protocol: 'https', hostname: 'saakie.vercel.app' },
+    ],
     // Allow SVG sources (e.g. /images/placeholder-category.svg) through the
     // image optimizer. Hardened so a served SVG can never execute scripts:
     // it is sandboxed with a strict CSP and sent as an attachment.
