@@ -17,6 +17,7 @@ export async function GET() {
         comparePrice: true,
         stock: true,
         images: { select: { url: true }, take: 1 },
+        colors: { select: { hexCode: true } },
         category: { select: { name: true, slug: true } },
         _count: { select: { reviews: true } },
       },
@@ -33,6 +34,7 @@ export async function GET() {
       rating: product._count.reviews > 0 ? 4.5 : 0,
       reviews: product._count.reviews,
       image: product.images[0]?.url || '/images/placeholder-product.svg',
+      colors: Array.from(new Set(product.colors.map((c) => c.hexCode))),
       category: product.category,
       inStock: product.stock > 0,
     }));

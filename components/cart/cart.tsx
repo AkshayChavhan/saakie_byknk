@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react'
 import { CartItem } from './cart-item'
 import { CartSummary } from './cart-summary'
 import { SareeLoader } from '@/components/ui/saree-loader'
+import { useToast } from '@/components/ui/toast'
 import { cartApi } from '@/lib/api'
 
 interface CartItemType {
@@ -44,6 +45,7 @@ export function Cart({ initialCart }: CartProps) {
   const [isUpdating, setIsUpdating] = useState(false)
   const router = useRouter()
   const { status } = useSession()
+  const toast = useToast()
   const isLoaded = status !== 'loading'
 
   const fetchCart = useCallback(async () => {
@@ -75,7 +77,7 @@ export function Cart({ initialCart }: CartProps) {
       setCart(updatedCart)
     } catch (error) {
       console.error('Failed to update quantity:', error)
-      alert('Failed to update item quantity')
+      toast.error("Couldn't update quantity", 'Please try again.')
     } finally {
       setIsUpdating(false)
     }
@@ -88,7 +90,7 @@ export function Cart({ initialCart }: CartProps) {
       setCart(updatedCart)
     } catch (error) {
       console.error('Failed to remove item:', error)
-      alert('Failed to remove item')
+      toast.error("Couldn't remove the item", 'Please try again.')
     } finally {
       setIsUpdating(false)
     }
@@ -105,7 +107,7 @@ export function Cart({ initialCart }: CartProps) {
       setCart({ ...cart!, items: [], subtotal: 0, itemCount: 0 })
     } catch (error) {
       console.error('Failed to clear cart:', error)
-      alert('Failed to clear cart')
+      toast.error("Couldn't clear your cart", 'Please try again.')
     } finally {
       setIsUpdating(false)
     }

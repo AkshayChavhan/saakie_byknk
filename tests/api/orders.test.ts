@@ -31,6 +31,14 @@ const mockPrisma = {
     create: vi.fn(),
     findMany: vi.fn(),
   },
+  address: {
+    // Used by verifyAddressOwnership: returns how many of the requested ids
+    // belong to the user. Default-implemented per call so happy-path tests
+    // (which pass a single valid address) pass without per-test wiring.
+    count: vi.fn(({ where }: { where: { id: { in: string[] } } }) =>
+      Promise.resolve(where.id.in.length)
+    ),
+  },
 }
 
 vi.mock('@/lib/prisma', () => ({
@@ -50,10 +58,14 @@ function cartWithItem() {
   })
 }
 
-// Sign the request in as `user_123` so requireAuth() resolves to a user.
+// Sign the request in as `user_123` so requireAuth() resolves to a user. Also
+// (re)installs the default address-ownership check: every requested id is owned.
 function signIn() {
   mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
   mockPrisma.user.findUnique.mockResolvedValue(createMockUser({ id: 'user_123' }))
+  mockPrisma.address.count.mockImplementation(({ where }: { where: { id: { in: string[] } } }) =>
+    Promise.resolve(where.id.in.length)
+  )
 }
 
 describe('Orders API', () => {
@@ -79,6 +91,25 @@ describe('Orders API', () => {
       const response = await POST(request)
 
       expect(response.status).toBe(401)
+    })
+
+    it('returns 400 when an address does not belong to the user', async () => {
+      signIn()
+      // Simulate the address not being found in this user's address book.
+      mockPrisma.address.count.mockResolvedValue(0)
+
+      const { POST } = await import('@/app/api/orders/route')
+      const request = new NextRequest('http://localhost:3000/api/orders', {
+        method: 'POST',
+        body: JSON.stringify({ ...validOrderData, shippingAddressId: 'someone_elses_addr' }),
+      })
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data.error.code).toBe('INVALID_ADDRESS')
+      // Must reject before touching the cart or creating an order.
+      expect(mockPrisma.order.create).not.toHaveBeenCalled()
     })
 
     it('creates an order from the user cart', async () => {

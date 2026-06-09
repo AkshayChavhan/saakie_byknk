@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { requireAuth } from '@/lib/server/auth';
+import { requireAuth, verifyAddressOwnership } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
 import { normalizePaymentMethod, isMethodAllowed } from '@/lib/payment';
 
@@ -39,6 +39,11 @@ export async function POST(request: Request) {
     if (r instanceof NextResponse) return r;
 
     const { shippingAddressId, billingAddressId, paymentMethod } = await request.json();
+
+    // Ensure the chosen addresses belong to this user — otherwise an attacker
+    // could attach (and later read back) another user's address by id.
+    const badAddress = await verifyAddressOwnership(r.id, [shippingAddressId, billingAddressId]);
+    if (badAddress) return badAddress;
 
     const cart = await prisma.cart.findUnique({
       where: { userId: r.id },

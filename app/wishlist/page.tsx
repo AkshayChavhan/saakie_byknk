@@ -9,6 +9,7 @@ import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { formatPrice } from '@/lib/utils'
 import { wishlistApi, cartApi } from '@/lib/api'
+import { useToast } from '@/components/ui/toast'
 
 interface WishlistItem {
   id: string
@@ -32,6 +33,7 @@ interface WishlistItem {
 
 export default function WishlistPage() {
   const { status } = useSession()
+  const toast = useToast()
   const isLoaded = status !== 'loading'
   const isSignedIn = status === 'authenticated'
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([])
@@ -84,9 +86,10 @@ export default function WishlistPage() {
         console.error('Error removing from wishlist after add-to-cart:', wishlistError)
       }
       window.dispatchEvent(new CustomEvent('cartUpdated'))
+      toast.success('Added to cart', 'Moved from your wishlist to the cart.')
     } catch (error) {
       console.error('Error adding to cart:', error)
-      alert('Could not add to cart. Please try again.')
+      toast.error("Couldn't add to cart", 'Please try again.')
     } finally {
       setAddingToCart(null)
     }

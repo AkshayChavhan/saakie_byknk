@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Playfair_Display } from 'next/font/google'
 import { Suspense } from 'react'
+import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 import { Providers } from '@/components/providers'
 import { NavigationProgress } from '@/components/ui/navigation-progress'
@@ -17,6 +19,8 @@ const playfair = Playfair_Display({
 })
 
 export const metadata: Metadata = {
+  // Resolves relative OG/canonical URLs (product/category pages set their own).
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
   title: 'Saakie_byknk - Premium Fashion Online',
   description: 'Shop the finest collection of premium fashion online. Premium quality, authentic designs, and fast delivery across India.',
   keywords: 'fashion, online fashion shopping, designer fashion, premium clothing, style, trends',
@@ -73,6 +77,10 @@ export default function RootLayout({
           <NavigationProgress />
         </Suspense>
         <Providers>{children}</Providers>
+        {/* Vercel Analytics (page views) + Speed Insights (Web Vitals).
+            No-ops outside Vercel; no keys or cookie banner required. */}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )

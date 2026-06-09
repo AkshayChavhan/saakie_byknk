@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ShoppingCart, Check } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { cartApi } from '@/lib/api'
+import { useToast } from '@/components/ui/toast'
 
 interface AddToCartButtonProps {
   productId: string
@@ -27,6 +28,7 @@ export function AddToCartButton({
   const [isAdded, setIsAdded] = useState(false)
   const { status } = useSession()
   const router = useRouter()
+  const toast = useToast()
 
   const sizeClasses = {
     sm: 'px-3 py-2 text-sm',
@@ -63,7 +65,7 @@ export function AddToCartButton({
       window.dispatchEvent(new CustomEvent('cartUpdated'))
     } catch (error) {
       console.error('Failed to add to cart:', error)
-      alert('Failed to add item to cart')
+      toast.error("Couldn't add to cart", 'Please try again.')
     } finally {
       setIsLoading(false)
     }
