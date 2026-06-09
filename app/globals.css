@@ -857,15 +857,3 @@ html {
   overscroll-behavior-y: contain;
 }
 
-/* When launched as an installed PWA, give the page bottom room for the mobile
-   bottom navigation bar (rendered only on small standalone displays). */
-@media all and (display-mode: standalone) {
-  body {
-    padding-bottom: calc(4rem + env(safe-area-inset-bottom));
-  }
-}
-@media all and (display-mode: standalone) and (min-width: 640px) {
-  body {
-    padding-bottom: 0;
-  }
-}
