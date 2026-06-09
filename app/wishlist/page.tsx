@@ -74,9 +74,19 @@ export default function WishlistPage() {
     setAddingToCart(productId)
     try {
       await cartApi.addItem({ productId, quantity: 1 })
-      alert('Added to cart!')
+      // The item is now in the cart, so remove it from the wishlist. Update the
+      // list locally and let the header cart icon refresh its count.
+      try {
+        await wishlistApi.removeItem(productId)
+        setWishlistItems(prev => prev.filter(item => item.product.id !== productId))
+      } catch (wishlistError) {
+        // Non-fatal: the item is in the cart even if wishlist cleanup fails.
+        console.error('Error removing from wishlist after add-to-cart:', wishlistError)
+      }
+      window.dispatchEvent(new CustomEvent('cartUpdated'))
     } catch (error) {
       console.error('Error adding to cart:', error)
+      alert('Could not add to cart. Please try again.')
     } finally {
       setAddingToCart(null)
     }
