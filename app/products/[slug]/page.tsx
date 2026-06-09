@@ -24,6 +24,7 @@ import {
 import { formatPrice } from '@/lib/utils'
 import { isMethodAllowed, describeModes } from '@/lib/payment'
 import { fetchApi, cartApi, wishlistApi } from '@/lib/api'
+import { useToast } from '@/components/ui/toast'
 
 interface ProductImage {
   id: string
@@ -122,6 +123,7 @@ interface Product {
 export default function ProductDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const toast = useToast()
   const slug = params.slug as string
   
   const [product, setProduct] = useState<Product | null>(null)
@@ -222,7 +224,7 @@ export default function ProductDetailPage() {
       setLinkCopied(true)
       setTimeout(() => setLinkCopied(false), 2000)
     } catch {
-      alert('Could not share. Copy the link from your browser address bar.')
+      toast.error("Couldn't copy the link", "Copy it from your browser's address bar.")
     }
   }
 
@@ -247,7 +249,7 @@ export default function ProductDetailPage() {
     } catch (err) {
       console.error('Failed to update wishlist:', err)
       setIsWishlisted(!next) // revert
-      alert('Could not update your wishlist. Please try again.')
+      toast.error("Couldn't update your wishlist", 'Please try again.')
     } finally {
       setWishlistBusy(false)
     }
@@ -310,7 +312,7 @@ export default function ProductDetailPage() {
       return
     }
     if (product.stock < quantity) {
-      alert(`Only ${product.stock} item${product.stock === 1 ? '' : 's'} in stock.`)
+      toast.warning('Not enough stock', `Only ${product.stock} item${product.stock === 1 ? '' : 's'} in stock.`)
       return
     }
 
@@ -323,7 +325,7 @@ export default function ProductDetailPage() {
       window.dispatchEvent(new CustomEvent('cartUpdated'))
     } catch (error) {
       console.error('Failed to add to cart:', error)
-      alert(error instanceof Error ? error.message : 'Failed to add item to cart')
+      toast.error("Couldn't add to cart", error instanceof Error ? error.message : 'Please try again.')
     } finally {
       setAddingToCart(false)
     }
@@ -340,7 +342,7 @@ export default function ProductDetailPage() {
       return
     }
     if (product.stock < quantity) {
-      alert(`Only ${product.stock} item${product.stock === 1 ? '' : 's'} in stock.`)
+      toast.warning('Not enough stock', `Only ${product.stock} item${product.stock === 1 ? '' : 's'} in stock.`)
       return
     }
     try {
@@ -350,7 +352,7 @@ export default function ProductDetailPage() {
       router.push('/checkout')
     } catch (error) {
       console.error('Buy Now failed:', error)
-      alert(error instanceof Error ? error.message : 'Could not start checkout')
+      toast.error("Couldn't start checkout", error instanceof Error ? error.message : 'Please try again.')
       setAddingToCart(false)
     }
   }
