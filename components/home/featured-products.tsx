@@ -102,20 +102,21 @@ export function FeaturedProducts() {
           </div>
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {products.map((product) => (
+            {products.map((product, index) => (
             <div
               key={product.id}
-              className="group relative"
+              className="group relative animate-slide-up"
+              style={{ animationDelay: `${index * 80}ms` }}
               onMouseEnter={() => setHoveredProduct(product.id)}
               onMouseLeave={() => setHoveredProduct(null)}
             >
               <Link href={`/products/${product.slug}`}>
-                <div className="relative aspect-[3/4] mb-3 overflow-hidden rounded-lg bg-gray-100">
+                <div className="relative aspect-[3/4] mb-3 overflow-hidden rounded-lg bg-gray-100 transition-shadow duration-300 group-hover:shadow-xl">
                   <Image
                     src={product.image}
                     alt={product.name}
                     fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
                   />
                   {product.isNew && (
                     <span className="absolute top-2 left-2 z-10 bg-primary text-white text-xs px-2 py-1 rounded">
@@ -140,7 +141,7 @@ export function FeaturedProducts() {
                       ? 'opacity-100 translate-y-0'
                       : 'opacity-0 translate-y-4'
                   }`}>
-                    <button className="bg-white p-2 rounded-full shadow-lg hover:bg-gray-100 transition-colors">
+                    <button className="btn-press bg-white p-2 rounded-full shadow-lg hover:bg-gray-100 hover:scale-110 transition-all">
                       <ShoppingCart size={18} className="text-gray-700" />
                     </button>
                   </div>
@@ -185,7 +186,7 @@ export function FeaturedProducts() {
 
               <button
                 onClick={() => toggleWishlist(product.id)}
-                className={`absolute top-2 right-2 p-2 rounded-full transition-all ${
+                className={`btn-press absolute top-2 right-2 p-2 rounded-full transition-all hover:scale-110 active:scale-90 ${
                   wishlist.includes(product.id)
                     ? 'bg-red-500 text-white'
                     : 'bg-white/80 text-gray-700 hover:bg-white'
