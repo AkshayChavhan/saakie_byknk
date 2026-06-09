@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Playfair_Display } from 'next/font/google'
 import { Suspense } from 'react'
+import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 import { Providers } from '@/components/providers'
 import { NavigationProgress } from '@/components/ui/navigation-progress'
@@ -73,6 +75,10 @@ export default function RootLayout({
           <NavigationProgress />
         </Suspense>
         <Providers>{children}</Providers>
+        {/* Vercel Analytics (page views) + Speed Insights (Web Vitals).
+            No-ops outside Vercel; no keys or cookie banner required. */}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
