@@ -111,6 +111,11 @@ export const resetPrismaMocks = () => {
   })
 }
 
-vi.mock('@/lib/db', () => ({
+// Routes import the client as a *default* export (`import prisma from
+// '@/lib/prisma'`), so the mock must expose both `default` and the named
+// `prisma`. Mocking the old `@/lib/db` path (which no module imports anymore)
+// silently no-ops and lets the real PrismaClient run — hence the prior timeouts.
+vi.mock('@/lib/prisma', () => ({
   prisma: mockPrismaClient,
+  default: mockPrismaClient,
 }))

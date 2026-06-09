@@ -8,8 +8,9 @@ const mockPrisma = {
   },
 }
 
-vi.mock('@/lib/db', () => ({
+vi.mock('@/lib/prisma', () => ({
   prisma: mockPrisma,
+  default: mockPrisma,
 }))
 
 describe('Categories API', () => {
@@ -43,7 +44,8 @@ describe('Categories API', () => {
 
       expect(mockPrisma.category.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { isActive: true },
+          // Public storefront shows only top-level categories.
+          where: { isActive: true, parentId: null },
         })
       )
     })
@@ -95,7 +97,7 @@ describe('Categories API', () => {
       const response = await GET()
       const data = await response.json()
 
-      expect(data[0].image).toBe('/images/placeholder-category.jpg')
+      expect(data[0].image).toBe('/images/placeholder-category.svg')
     })
 
     it('includes product count', async () => {
@@ -129,7 +131,7 @@ describe('Categories API', () => {
 
       expect(response.status).toBe(500)
       const data = await response.json()
-      expect(data.error).toBe('Internal server error')
+      expect(data.success).toBe(false)
     })
   })
 })

@@ -15,6 +15,7 @@ describe('FeaturedProducts component', () => {
   const mockProducts = [
     {
       id: 'prod_1',
+      slug: 'silk-saree',
       name: 'Silk Saree',
       price: 5999,
       comparePrice: 7999,
@@ -27,6 +28,7 @@ describe('FeaturedProducts component', () => {
     },
     {
       id: 'prod_2',
+      slug: 'cotton-saree',
       name: 'Cotton Saree',
       price: 2999,
       comparePrice: 3999,
@@ -46,8 +48,8 @@ describe('FeaturedProducts component', () => {
 
     render(<FeaturedProducts />)
 
-    // Check for skeleton elements
-    expect(document.querySelector('.animate-pulse')).toBeInTheDocument()
+    // The initial state renders the SareeLoader animation while data loads.
+    expect(document.querySelector('.saree-drape-outer')).toBeInTheDocument()
   })
 
   it('renders products after successful fetch', async () => {
@@ -240,7 +242,7 @@ describe('FeaturedProducts component', () => {
     await waitFor(() => {
       const productLinks = screen.getAllByRole('link', { name: /Silk Saree|Cotton Saree/i })
       expect(productLinks.length).toBeGreaterThan(0)
-      expect(productLinks[0]).toHaveAttribute('href', '/products/prod_1')
+      expect(productLinks[0]).toHaveAttribute('href', '/products/silk-saree')
     })
   })
 
@@ -269,7 +271,7 @@ describe('FeaturedProducts component', () => {
 
     render(<FeaturedProducts />)
 
-    expect(global.fetch).toHaveBeenCalledWith('/api/products/featured')
+    expect(global.fetch).toHaveBeenCalledWith('/api/products/featured', {})
   })
 
   it('handles network errors gracefully', async () => {

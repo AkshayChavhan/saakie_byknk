@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { Header } from '@/components/layout/header'
 
 // Mock Auth.js client session
@@ -55,12 +55,13 @@ describe('Header component', () => {
     expect(screen.getByText('Sign In')).toBeInTheDocument()
   })
 
-  it('shows account menu button when user is authenticated', () => {
+  it('shows the account link when user is authenticated', () => {
     mockUseSession.mockReturnValue(signedIn())
 
     render(<Header />)
 
-    expect(screen.getByLabelText('Account menu')).toBeInTheDocument()
+    // Account is a direct link to /account (no dropdown menu).
+    expect(screen.getByLabelText('Account')).toBeInTheDocument()
   })
 
   it('shows cart icon when user is authenticated', () => {
@@ -71,44 +72,33 @@ describe('Header component', () => {
     expect(screen.getByTestId('cart-icon')).toBeInTheDocument()
   })
 
-  it('shows Admin Dashboard in account menu for admin users', () => {
+  it('shows an Admin link pointing to /admin for admin users', () => {
     mockUseSession.mockReturnValue(signedIn('ADMIN'))
 
     render(<Header />)
 
-    // Admin link lives inside the account dropdown — open it first.
-    fireEvent.click(screen.getByLabelText('Account menu'))
-
-    const adminLink = screen.getByRole('link', { name: /Admin Dashboard/i })
-    expect(adminLink).toHaveAttribute('href', '/admin')
+    // The desktop nav renders "Admin" links (main nav + category bar); the
+    // mobile menu's "Admin Dashboard" link only mounts when the hamburger
+    // is opened. All "Admin" links target /admin.
+    const adminLinks = screen.getAllByRole('link', { name: 'Admin' })
+    expect(adminLinks.length).toBeGreaterThan(0)
+    adminLinks.forEach((link) => expect(link).toHaveAttribute('href', '/admin'))
   })
 
-  it('does not show Admin Dashboard for non-admin users', () => {
+  it('does not show an Admin link for non-admin users', () => {
     mockUseSession.mockReturnValue(signedIn('USER'))
 
     render(<Header />)
 
-    fireEvent.click(screen.getByLabelText('Account menu'))
-
-    expect(screen.queryByText('Admin Dashboard')).not.toBeInTheDocument()
+    expect(screen.queryAllByRole('link', { name: 'Admin' })).toHaveLength(0)
   })
 
-  it('does not show account menu when user is not authenticated', () => {
+  it('does not show the account link when user is not authenticated', () => {
     mockUseSession.mockReturnValue(signedOut())
 
     render(<Header />)
 
-    expect(screen.queryByLabelText('Account menu')).not.toBeInTheDocument()
-  })
-
-  it('shows a Sign Out option in the account menu', () => {
-    mockUseSession.mockReturnValue(signedIn())
-
-    render(<Header />)
-
-    fireEvent.click(screen.getByLabelText('Account menu'))
-
-    expect(screen.getByText('Sign Out')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Account')).not.toBeInTheDocument()
   })
 
   it('has sticky header styling', () => {

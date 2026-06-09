@@ -14,8 +14,9 @@ const mockPrisma = {
   },
 }
 
-vi.mock('@/lib/db', () => ({
+vi.mock('@/lib/prisma', () => ({
   prisma: mockPrisma,
+  default: mockPrisma,
 }))
 
 describe('Products API', () => {
@@ -207,7 +208,7 @@ describe('Products API', () => {
 
       expect(response.status).toBe(500)
       const data = await response.json()
-      expect(data.error).toBe('Internal server error')
+      expect(data.success).toBe(false)
     })
   })
 })
