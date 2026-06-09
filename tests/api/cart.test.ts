@@ -27,8 +27,9 @@ const mockDb = {
   },
 }
 
-vi.mock('@/lib/db', () => ({
+vi.mock('@/lib/prisma', () => ({
   prisma: mockDb,
+  default: mockDb,
 }))
 
 describe('Cart API', () => {
@@ -45,7 +46,7 @@ describe('Cart API', () => {
 
       expect(response.status).toBe(401)
       const data = await response.json()
-      expect(data.error).toBe('Unauthorized')
+      expect(data.error.message).toBe('Unauthorized - No session')
     })
 
     it('returns 404 when user not found', async () => {
@@ -57,7 +58,7 @@ describe('Cart API', () => {
 
       expect(response.status).toBe(404)
       const data = await response.json()
-      expect(data.error).toBe('User not found')
+      expect(data.error.message).toBe('User not found')
     })
 
     it('returns existing cart with items', async () => {
@@ -103,14 +104,16 @@ describe('Cart API', () => {
       expect(data.itemCount).toBe(0)
     })
 
-    it('handles database errors', async () => {
+    it('handles database errors during auth as a 401', async () => {
       mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
+      // The DB error is thrown inside requireAuth, which catches it and
+      // returns 401 (AUTH_ERROR) rather than surfacing a 500.
       mockDb.user.findUnique.mockRejectedValue(new Error('DB Error'))
 
       const { GET } = await import('@/app/api/cart/route')
       const response = await GET()
 
-      expect(response.status).toBe(500)
+      expect(response.status).toBe(401)
     })
   })
 

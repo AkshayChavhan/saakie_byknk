@@ -1,34 +1,60 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { createMockUser, createMockOrder, createMockAddress, createMockProduct, createMockSession } from '../mocks/factories'
+import {
+  createMockUser,
+  createMockOrder,
+  createMockAddress,
+  createMockCart,
+  createMockCartItem,
+  createMockProduct,
+  createMockSession,
+} from '../mocks/factories'
 
-// Mock Auth.js — `auth()` resolves the session (or null when signed out)
+// Mock Auth.js — `auth()` resolves the session (or null when signed out).
+// `requireAuth()` reads `session.user.id` then loads the user via Prisma.
 const mockAuth = vi.fn()
 vi.mock('@/auth', () => ({
   auth: () => mockAuth(),
 }))
 
-// Mock Prisma
+// Mock Prisma. The order route builds an order from the signed-in user's cart,
+// so we need `user.findUnique` (used by requireAuth), `cart.findUnique`, and
+// `order.create` / `order.findMany`.
 const mockPrisma = {
   user: {
+    findUnique: vi.fn(),
+  },
+  cart: {
     findUnique: vi.fn(),
   },
   order: {
     create: vi.fn(),
     findMany: vi.fn(),
   },
-  address: {
-    create: vi.fn(),
-  },
-  product: {
-    update: vi.fn(),
-  },
-  $disconnect: vi.fn(),
 }
 
-vi.mock('@prisma/client', () => ({
-  PrismaClient: vi.fn(() => mockPrisma),
+vi.mock('@/lib/prisma', () => ({
+  prisma: mockPrisma,
+  default: mockPrisma,
 }))
+
+// A cart with a single COD-eligible item, ready for a successful checkout.
+function cartWithItem() {
+  const product = createMockProduct({
+    id: 'prod_123',
+    price: 5999,
+    paymentModes: ['COD', 'PREPAID'],
+  })
+  return createMockCart({
+    items: [createMockCartItem({ quantity: 1, price: 5999, product })],
+  })
+}
+
+// Sign the request in as `user_123` so requireAuth() resolves to a user.
+function signIn() {
+  mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
+  mockPrisma.user.findUnique.mockResolvedValue(createMockUser({ id: 'user_123' }))
+}
 
 describe('Orders API', () => {
   beforeEach(() => {
@@ -37,34 +63,32 @@ describe('Orders API', () => {
 
   describe('POST /api/orders', () => {
     const validOrderData = {
-      productId: 'prod_123',
-      productName: 'Silk Saree',
-      selectedColor: 'Red',
-      selectedSize: 'Free Size',
-      quantity: 1,
-      price: 5999,
-      total: 5999,
-      name: 'Test User',
-      phone: '+919876543210',
-      address: '123 Main St',
-      city: 'Mumbai',
-      pincode: '400001',
+      shippingAddressId: 'addr_123',
+      billingAddressId: 'addr_123',
       paymentMethod: 'COD',
     }
 
-    it('creates order for guest user', async () => {
+    it('returns 401 when not authenticated', async () => {
       mockAuth.mockResolvedValue(null)
 
-      const mockAddress = createMockAddress({ id: 'addr_123' })
-      const mockOrder = createMockOrder({ id: 'order_123', orderNumber: 'COD123456' })
-
-      mockPrisma.address.create.mockResolvedValue(mockAddress)
-      mockPrisma.order.create.mockResolvedValue({
-        ...mockOrder,
-        items: [],
-        shippingAddress: mockAddress,
+      const { POST } = await import('@/app/api/orders/route')
+      const request = new NextRequest('http://localhost:3000/api/orders', {
+        method: 'POST',
+        body: JSON.stringify(validOrderData),
       })
-      mockPrisma.product.update.mockResolvedValue({})
+      const response = await POST(request)
+
+      expect(response.status).toBe(401)
+    })
+
+    it('creates an order from the user cart', async () => {
+      signIn()
+      mockPrisma.cart.findUnique.mockResolvedValue(cartWithItem())
+      mockPrisma.order.create.mockResolvedValue({
+        ...createMockOrder({ id: 'order_123', userId: 'user_123' }),
+        items: [],
+        shippingAddress: createMockAddress(),
+      })
 
       const { POST } = await import('@/app/api/orders/route')
       const request = new NextRequest('http://localhost:3000/api/orders', {
@@ -74,26 +98,21 @@ describe('Orders API', () => {
       const response = await POST(request)
       const data = await response.json()
 
-      expect(response.status).toBe(200)
-      expect(data.success).toBe(true)
-      expect(data.order).toBeDefined()
-      expect(data.order.orderNumber).toBeDefined()
+      expect(response.status).toBe(201)
+      expect(data.id).toBeDefined()
+      expect(data.orderNumber).toBeDefined()
     })
 
-    it('creates order for authenticated user', async () => {
-      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
-      mockPrisma.user.findUnique.mockResolvedValue(createMockUser({ id: 'user_123' }))
-
-      const mockAddress = createMockAddress({ id: 'addr_123', userId: 'user_123' })
-      const mockOrder = createMockOrder({ id: 'order_123', userId: 'user_123' })
-
-      mockPrisma.address.create.mockResolvedValue(mockAddress)
-      mockPrisma.order.create.mockResolvedValue({
-        ...mockOrder,
-        items: [],
-        shippingAddress: mockAddress,
-      })
-      mockPrisma.product.update.mockResolvedValue({})
+    it('generates an order number with the ORD- prefix', async () => {
+      signIn()
+      mockPrisma.cart.findUnique.mockResolvedValue(cartWithItem())
+      mockPrisma.order.create.mockImplementation(({ data }: { data: { orderNumber: string } }) =>
+        Promise.resolve({
+          ...createMockOrder({ orderNumber: data.orderNumber }),
+          items: [],
+          shippingAddress: createMockAddress(),
+        })
+      )
 
       const { POST } = await import('@/app/api/orders/route')
       const request = new NextRequest('http://localhost:3000/api/orders', {
@@ -103,21 +122,12 @@ describe('Orders API', () => {
       const response = await POST(request)
       const data = await response.json()
 
-      expect(response.status).toBe(200)
-      expect(data.success).toBe(true)
+      expect(data.orderNumber).toMatch(/^ORD-/)
     })
 
-    it('generates unique order number', async () => {
-      mockAuth.mockResolvedValue(null)
-
-      mockPrisma.address.create.mockResolvedValue(createMockAddress())
-      mockPrisma.order.create.mockResolvedValue({
-        ...createMockOrder(),
-        orderNumber: 'COD1234567890',
-        items: [],
-        shippingAddress: createMockAddress(),
-      })
-      mockPrisma.product.update.mockResolvedValue({})
+    it('returns 400 when the cart is empty', async () => {
+      signIn()
+      mockPrisma.cart.findUnique.mockResolvedValue(createMockCart({ items: [] }))
 
       const { POST } = await import('@/app/api/orders/route')
       const request = new NextRequest('http://localhost:3000/api/orders', {
@@ -127,45 +137,42 @@ describe('Orders API', () => {
       const response = await POST(request)
       const data = await response.json()
 
-      expect(data.order.orderNumber).toMatch(/^COD\d+/)
+      expect(response.status).toBe(400)
+      expect(data.error).toBe('Cart is empty')
     })
 
-    it('decrements product stock after order', async () => {
-      mockAuth.mockResolvedValue(null)
-
-      mockPrisma.address.create.mockResolvedValue(createMockAddress())
-      mockPrisma.order.create.mockResolvedValue({
-        ...createMockOrder(),
-        items: [],
-        shippingAddress: createMockAddress(),
+    it('returns 409 when a product does not allow the chosen payment method', async () => {
+      signIn()
+      const product = createMockProduct({
+        id: 'prod_123',
+        name: 'Prepaid-only Saree',
+        paymentModes: ['PREPAID'],
       })
-      mockPrisma.product.update.mockResolvedValue({})
+      mockPrisma.cart.findUnique.mockResolvedValue(
+        createMockCart({ items: [createMockCartItem({ product })] })
+      )
 
       const { POST } = await import('@/app/api/orders/route')
       const request = new NextRequest('http://localhost:3000/api/orders', {
         method: 'POST',
-        body: JSON.stringify({ ...validOrderData, quantity: 2 }),
+        body: JSON.stringify({ ...validOrderData, paymentMethod: 'COD' }),
       })
-      await POST(request)
+      const response = await POST(request)
 
-      expect(mockPrisma.product.update).toHaveBeenCalledWith({
-        where: { id: 'prod_123' },
-        data: {
-          stock: { decrement: 2 },
-        },
-      })
+      expect(response.status).toBe(409)
     })
 
-    it('stores color and size in order notes', async () => {
-      mockAuth.mockResolvedValue(null)
-
-      mockPrisma.address.create.mockResolvedValue(createMockAddress())
+    it('computes the total from cart item prices server-side', async () => {
+      signIn()
+      const product = createMockProduct({ id: 'prod_123', price: 200, paymentModes: ['COD'] })
+      mockPrisma.cart.findUnique.mockResolvedValue(
+        createMockCart({ items: [createMockCartItem({ quantity: 2, product })] })
+      )
       mockPrisma.order.create.mockResolvedValue({
         ...createMockOrder(),
         items: [],
         shippingAddress: createMockAddress(),
       })
-      mockPrisma.product.update.mockResolvedValue({})
 
       const { POST } = await import('@/app/api/orders/route')
       const request = new NextRequest('http://localhost:3000/api/orders', {
@@ -174,18 +181,18 @@ describe('Orders API', () => {
       })
       await POST(request)
 
+      // subtotal 400 (2 * 200) + 99 shipping (under the ₹999 free-shipping threshold)
       expect(mockPrisma.order.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({
-            notes: expect.stringContaining('Red'),
-          }),
+          data: expect.objectContaining({ subtotal: 400, shipping: 99, total: 499 }),
         })
       )
     })
 
-    it('handles database errors', async () => {
-      mockAuth.mockResolvedValue(null)
-      mockPrisma.address.create.mockRejectedValue(new Error('Database error'))
+    it('handles database errors with a 500', async () => {
+      signIn()
+      mockPrisma.cart.findUnique.mockResolvedValue(cartWithItem())
+      mockPrisma.order.create.mockRejectedValue(new Error('Database error'))
 
       const { POST } = await import('@/app/api/orders/route')
       const request = new NextRequest('http://localhost:3000/api/orders', {
@@ -193,133 +200,64 @@ describe('Orders API', () => {
         body: JSON.stringify(validOrderData),
       })
       const response = await POST(request)
+      const data = await response.json()
 
       expect(response.status).toBe(500)
-      const data = await response.json()
-      expect(data.error).toBe('Failed to create order')
-    })
-
-    it('handles foreign key constraint errors', async () => {
-      mockAuth.mockResolvedValue(null)
-      mockPrisma.address.create.mockResolvedValue(createMockAddress())
-      mockPrisma.order.create.mockRejectedValue(new Error('Foreign key constraint failed'))
-
-      const { POST } = await import('@/app/api/orders/route')
-      const request = new NextRequest('http://localhost:3000/api/orders', {
-        method: 'POST',
-        body: JSON.stringify(validOrderData),
-      })
-      const response = await POST(request)
-
-      expect(response.status).toBe(400)
-      const data = await response.json()
-      expect(data.error).toBe('Product not found or invalid data')
-    })
-
-    it('disconnects from database after operation', async () => {
-      mockAuth.mockResolvedValue(null)
-      mockPrisma.address.create.mockResolvedValue(createMockAddress())
-      mockPrisma.order.create.mockResolvedValue({
-        ...createMockOrder(),
-        items: [],
-        shippingAddress: createMockAddress(),
-      })
-      mockPrisma.product.update.mockResolvedValue({})
-
-      const { POST } = await import('@/app/api/orders/route')
-      const request = new NextRequest('http://localhost:3000/api/orders', {
-        method: 'POST',
-        body: JSON.stringify(validOrderData),
-      })
-      await POST(request)
-
-      expect(mockPrisma.$disconnect).toHaveBeenCalled()
+      expect(data.success).toBe(false)
     })
   })
 
   describe('GET /api/orders', () => {
-    it('returns all orders', async () => {
-      const orders = [
-        createMockOrder({ id: 'order_1' }),
-        createMockOrder({ id: 'order_2' }),
-      ]
-      mockPrisma.order.findMany.mockResolvedValue(orders)
+    it('returns 401 when not authenticated', async () => {
+      mockAuth.mockResolvedValue(null)
 
       const { GET } = await import('@/app/api/orders/route')
-      const request = new NextRequest('http://localhost:3000/api/orders')
-      const response = await GET(request)
+      const response = await GET()
+
+      expect(response.status).toBe(401)
+    })
+
+    it('returns the signed-in user orders', async () => {
+      signIn()
+      mockPrisma.order.findMany.mockResolvedValue([
+        createMockOrder({ id: 'order_1' }),
+        createMockOrder({ id: 'order_2' }),
+      ])
+
+      const { GET } = await import('@/app/api/orders/route')
+      const response = await GET()
       const data = await response.json()
 
       expect(response.status).toBe(200)
       expect(Array.isArray(data)).toBe(true)
+      expect(data).toHaveLength(2)
     })
 
-    it('filters by status', async () => {
+    it('scopes orders to the current user, newest first', async () => {
+      signIn()
       mockPrisma.order.findMany.mockResolvedValue([])
 
       const { GET } = await import('@/app/api/orders/route')
-      const request = new NextRequest('http://localhost:3000/api/orders?status=PENDING')
-      await GET(request)
+      await GET()
 
       expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { status: 'PENDING' },
-        })
-      )
-    })
-
-    it('filters by payment status', async () => {
-      mockPrisma.order.findMany.mockResolvedValue([])
-
-      const { GET } = await import('@/app/api/orders/route')
-      const request = new NextRequest('http://localhost:3000/api/orders?paymentStatus=PAID')
-      await GET(request)
-
-      expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { paymentStatus: 'PAID' },
-        })
-      )
-    })
-
-    it('orders by creation date descending', async () => {
-      mockPrisma.order.findMany.mockResolvedValue([])
-
-      const { GET } = await import('@/app/api/orders/route')
-      const request = new NextRequest('http://localhost:3000/api/orders')
-      await GET(request)
-
-      expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
+          where: { userId: 'user_123' },
           orderBy: { createdAt: 'desc' },
         })
       )
     })
 
-    it('limits results to 50', async () => {
-      mockPrisma.order.findMany.mockResolvedValue([])
-
-      const { GET } = await import('@/app/api/orders/route')
-      const request = new NextRequest('http://localhost:3000/api/orders')
-      await GET(request)
-
-      expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          take: 50,
-        })
-      )
-    })
-
-    it('handles database errors', async () => {
+    it('handles database errors with a 500', async () => {
+      signIn()
       mockPrisma.order.findMany.mockRejectedValue(new Error('Database error'))
 
       const { GET } = await import('@/app/api/orders/route')
-      const request = new NextRequest('http://localhost:3000/api/orders')
-      const response = await GET(request)
+      const response = await GET()
+      const data = await response.json()
 
       expect(response.status).toBe(500)
-      const data = await response.json()
-      expect(data.error).toBe('Failed to fetch orders')
+      expect(data.success).toBe(false)
     })
   })
 })

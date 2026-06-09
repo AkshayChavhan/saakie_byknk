@@ -43,8 +43,8 @@ describe('CategoryGrid component', () => {
 
     render(<CategoryGrid />)
 
-    // Check for skeleton elements
-    expect(document.querySelector('.animate-pulse')).toBeInTheDocument()
+    // The initial state renders the SareeLoader (role="status") while loading.
+    expect(screen.getByRole('status')).toBeInTheDocument()
   })
 
   it('renders categories after successful fetch', async () => {
@@ -71,7 +71,7 @@ describe('CategoryGrid component', () => {
     render(<CategoryGrid />)
 
     expect(screen.getByText('Shop by Category')).toBeInTheDocument()
-    expect(screen.getByText(/Browse through our curated collection/)).toBeInTheDocument()
+    expect(screen.getByText(/Browse through our handpicked collection/)).toBeInTheDocument()
   })
 
   it('shows error state when fetch fails', async () => {
@@ -155,7 +155,10 @@ describe('CategoryGrid component', () => {
     render(<CategoryGrid />)
 
     await waitFor(() => {
-      const silkLink = screen.getByRole('link', { name: /Silk Sarees/i })
+      // Each category link carries role="listitem" (overriding the implicit
+      // link role); its accessible name comes from the aria-label, e.g.
+      // "Silk Sarees - 45 products".
+      const silkLink = screen.getByRole('listitem', { name: /Silk Sarees - 45 products/i })
       expect(silkLink).toHaveAttribute('href', '/categories/silk-sarees')
     })
   })
@@ -166,12 +169,13 @@ describe('CategoryGrid component', () => {
       json: () => Promise.resolve(mockCategories),
     })
 
-    render(<CategoryGrid />)
+    const { container } = render(<CategoryGrid />)
 
     await waitFor(() => {
-      const images = screen.getAllByRole('img')
+      // Category images use decorative empty alt text (the name is conveyed by
+      // the link's aria-label), so query the DOM directly rather than by role.
+      const images = container.querySelectorAll('img')
       expect(images.length).toBe(mockCategories.length)
-      expect(images[0]).toHaveAttribute('alt', 'Silk Sarees')
     })
   })
 
@@ -183,7 +187,7 @@ describe('CategoryGrid component', () => {
 
     render(<CategoryGrid />)
 
-    expect(global.fetch).toHaveBeenCalledWith('/api/categories')
+    expect(global.fetch).toHaveBeenCalledWith('/api/categories', {})
   })
 
   it('handles network errors gracefully', async () => {
