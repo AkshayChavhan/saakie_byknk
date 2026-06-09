@@ -10,6 +10,8 @@ import {
 } from '@/lib/ai/tools';
 import { retrieveContext } from '@/lib/ai/retrieval';
 import { apiError } from '@/lib/server/errors';
+import { optionalAuth } from '@/lib/server/auth';
+import { rateLimit, clientIp } from '@/lib/server/rate-limit';
 import type { RecommendedProduct } from '@/types/chat';
 
 export const runtime = 'nodejs';
@@ -51,6 +53,15 @@ const RAG_LIMIT = 6;
 const PRODUCTS_SENTINEL = '\n\n[[PRODUCTS]]';
 
 /**
+ * Rate limit: this endpoint relays to a paid LLM and each request can fan out
+ * to several Claude turns (see MAX_TOOL_ITERATIONS), so it's a denial-of-wallet
+ * target. Cap requests per client per rolling window. Keyed by user id when
+ * signed in, otherwise by IP.
+ */
+const CHAT_RATE_LIMIT = 15;
+const CHAT_RATE_WINDOW_MS = 60_000;
+
+/**
  * Fashion Assistant chat endpoint — Phase 3 (tool calling).
  *
  * Phase 2 streamed plain text. The model still had no live data, so
@@ -83,6 +94,19 @@ const PRODUCTS_SENTINEL = '\n\n[[PRODUCTS]]';
  */
 export async function POST(request: Request) {
   try {
+    // Throttle before doing any expensive work (LLM calls, retrieval). Keyed by
+    // user when signed in so one user can't burn the budget across IPs, and by
+    // IP for anonymous visitors (the chat bubble is shown to everyone).
+    const user = await optionalAuth();
+    const rateKey = user ? `chat:user:${user.id}` : `chat:ip:${clientIp(request)}`;
+    const limit = rateLimit(rateKey, CHAT_RATE_LIMIT, CHAT_RATE_WINDOW_MS, Date.now());
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please slow down and try again shortly.' },
+        { status: 429, headers: { 'Retry-After': String(limit.retryAfter) } }
+      );
+    }
+
     const body = await request.json().catch(() => null);
     const messages: unknown = body?.messages;
 

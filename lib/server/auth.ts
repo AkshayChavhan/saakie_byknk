@@ -107,3 +107,34 @@ export function requireSuperAdmin(user: AuthedUser): NextResponse | null {
   }
   return null;
 }
+
+/**
+ * Verify that every provided address id belongs to `userId`. Returns a 400
+ * NextResponse if any id is missing from the user's address book, otherwise
+ * null. Pass `undefined`/`null` ids to skip them (e.g. an optional billing
+ * address). This guards order/payment creation against attaching another
+ * user's address by guessing its id (IDOR → PII leak via order detail).
+ */
+export async function verifyAddressOwnership(
+  userId: string,
+  addressIds: (string | null | undefined)[]
+): Promise<NextResponse | null> {
+  const ids = Array.from(new Set(addressIds.filter((id): id is string => !!id)));
+  if (ids.length === 0) return null;
+
+  const owned = await prisma.address.count({
+    where: { id: { in: ids }, userId },
+  });
+
+  if (owned !== ids.length) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: { message: 'Invalid shipping or billing address', code: 'INVALID_ADDRESS' },
+      },
+      { status: 400 }
+    );
+  }
+
+  return null;
+}
