@@ -857,3 +857,67 @@ html {
   overscroll-behavior-y: contain;
 }
 
+/* ── Interactive button feedback ──────────────────────────────────────────
+   Reusable press / ripple effects shared by the <Button> component and any
+   element that opts in via these classes. Kept here (not Tailwind config) so
+   the keyframes and the ::after ripple pseudo-element live together. */
+
+/* `.btn-press` — a tactile scale-down on press plus a quick return. Pair with
+   `transition-transform` so the spring-back reads smoothly. Respects
+   prefers-reduced-motion below. */
+.btn-press {
+  transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-press:active {
+  transform: scale(0.96);
+}
+
+/* `.ripple` — a material-style ink ripple that radiates from where the user
+   pressed. The <Button> component sets the ripple origin via the
+   `--ripple-x` / `--ripple-y` custom properties on click. */
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+.ripple::after {
+  content: '';
+  position: absolute;
+  left: var(--ripple-x, 50%);
+  top: var(--ripple-y, 50%);
+  width: 0;
+  height: 0;
+  border-radius: 9999px;
+  background: currentColor;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+/* When the component toggles `data-rippling`, expand + fade the ink out. */
+.ripple[data-rippling='true']::after {
+  animation: rippleExpand 0.6s ease-out;
+}
+@keyframes rippleExpand {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 0.35;
+  }
+  100% {
+    width: 250%;
+    height: 250%;
+    opacity: 0;
+  }
+}
+
+/* Honour users who ask for less motion: drop the press scale and ripple. */
+@media (prefers-reduced-motion: reduce) {
+  .btn-press,
+  .btn-press:active {
+    transform: none;
+    transition: none;
+  }
+  .ripple[data-rippling='true']::after {
+    animation: none;
+  }
+}
+

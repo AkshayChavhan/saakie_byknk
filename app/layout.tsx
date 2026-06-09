@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Playfair_Display } from 'next/font/google'
+import { Suspense } from 'react'
 import './globals.css'
 import { Providers } from '@/components/providers'
+import { NavigationProgress } from '@/components/ui/navigation-progress'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
@@ -64,6 +66,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
       <body className={inter.className}>
+        {/* Top-of-page navigation progress bar. Suspense is required because it
+            reads useSearchParams; without it Next would opt the whole tree into
+            client rendering. */}
+        <Suspense fallback={null}>
+          <NavigationProgress />
+        </Suspense>
         <Providers>{children}</Providers>
       </body>
     </html>
