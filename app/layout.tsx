@@ -19,6 +19,8 @@ const playfair = Playfair_Display({
 })
 
 export const metadata: Metadata = {
+  // Resolves relative OG/canonical URLs (product/category pages set their own).
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
   title: 'Saakie_byknk - Premium Fashion Online',
   description: 'Shop the finest collection of premium fashion online. Premium quality, authentic designs, and fast delivery across India.',
   keywords: 'fashion, online fashion shopping, designer fashion, premium clothing, style, trends',
