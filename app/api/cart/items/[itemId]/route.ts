@@ -82,7 +82,18 @@ export async function DELETE(
 
     await prisma.cartItem.delete({ where: { id: itemId } });
 
-    return NextResponse.json({ message: 'Item removed from cart' });
+    // Return the full updated cart (same shape as PATCH and GET /api/cart) so
+    // the client can setCart(...) directly. Previously this returned only a
+    // { message } object, which made cart.items undefined and crashed the UI.
+    const updatedCart = await prisma.cart.findUnique({
+      where: { userId: r.id },
+      include: cartInclude,
+    });
+    const items = updatedCart?.items ?? [];
+    const subtotal = items.reduce((t, i) => t + i.price * i.quantity, 0);
+    const itemCount = items.reduce((c, i) => c + i.quantity, 0);
+
+    return NextResponse.json({ ...updatedCart, items, subtotal, itemCount });
   } catch (error) {
     return apiError(error);
   }
