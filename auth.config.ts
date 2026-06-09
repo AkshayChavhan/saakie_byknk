@@ -26,24 +26,36 @@ export const authConfig = {
   },
   callbacks: {
     /**
-     * Persist `id` and `role` on the JWT. `user` is only defined on initial
-     * sign-in; on later calls the token already carries the values.
+     * Persist `id`, `role`, `name` and `picture` on the JWT. `user` is only
+     * defined on initial sign-in. When the client calls `session.update({...})`
+     * after editing the profile, the new values arrive in the `session` arg
+     * (trigger === 'update') and are written back onto the token so the change
+     * reflects immediately without a re-login.
      */
-    jwt({ token, user }) {
+    jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role ?? 'USER';
+        token.name = user.name ?? token.name;
+        token.picture = (user as { image?: string | null }).image ?? token.picture;
+      }
+      if (trigger === 'update' && session) {
+        const s = session as { name?: string; image?: string | null };
+        if (typeof s.name === 'string') token.name = s.name;
+        if (s.image !== undefined) token.picture = s.image;
       }
       return token;
     },
     /**
-     * Expose `id` and `role` on `session.user` so client and server code can
-     * read them without an extra round-trip.
+     * Expose `id`, `role`, `name` and `image` on `session.user` so client and
+     * server code can read them without an extra round-trip.
      */
     session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = (token.role as string) ?? 'USER';
+        if (typeof token.name === 'string') session.user.name = token.name;
+        if (token.picture !== undefined) session.user.image = (token.picture as string) ?? null;
       }
       return session;
     },

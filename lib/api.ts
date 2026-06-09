@@ -166,6 +166,20 @@ export const userApi = {
   getProfile: () =>
     apiFetch<any>('/api/users/profile'),
 
+  // Update name / phone / profile image. Sent as multipart/form-data so the
+  // optional image file can ride along — uses raw fetch so the browser sets
+  // the multipart boundary (apiFetch would force a JSON content-type).
+  updateProfile: async (formData: FormData) => {
+    const res = await fetch('/api/users/profile', {
+      method: 'PATCH',
+      credentials: 'same-origin',
+      body: formData,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Failed to update profile');
+    return data;
+  },
+
   getAddresses: () =>
     apiFetch<any>('/api/users/addresses'),
 
@@ -174,6 +188,14 @@ export const userApi = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+};
+
+// ============================================
+// Review APIs (Requires Auth — session cookie)
+// ============================================
+export const reviewApi = {
+  // Every review the signed-in user has written, with product info.
+  mine: () => apiFetch<any>('/api/reviews/my'),
 };
 
 // ============================================
