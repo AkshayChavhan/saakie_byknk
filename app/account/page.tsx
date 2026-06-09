@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useSession, signOut } from 'next-auth/react'
@@ -12,11 +12,15 @@ import {
   ChevronRight,
   ShieldCheck,
   ShoppingBag,
+  Pencil,
+  Camera,
+  Star,
+  Loader2,
 } from 'lucide-react'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { formatPrice, formatDate, cn } from '@/lib/utils'
-import { orderApi } from '@/lib/api'
+import { orderApi, userApi, reviewApi } from '@/lib/api'
 
 interface OrderItemSummary {
   id: string
@@ -38,7 +42,23 @@ interface OrderSummary {
   items: OrderItemSummary[]
 }
 
-// Tailwind classes per order status, so each badge reads at a glance.
+interface MyReview {
+  id: string
+  rating: number
+  title: string | null
+  comment: string | null
+  status: string
+  createdAt: string
+  product: { id: string; name: string; slug: string; image: string } | null
+}
+
+interface Profile {
+  name: string | null
+  email: string | null
+  phone: string | null
+  imageUrl: string | null
+}
+
 const STATUS_STYLES: Record<string, string> = {
   PENDING: 'bg-amber-100 text-amber-700',
   CONFIRMED: 'bg-blue-100 text-blue-700',
@@ -49,6 +69,9 @@ const STATUS_STYLES: Record<string, string> = {
   CANCELLED: 'bg-red-100 text-red-700',
   RETURNED: 'bg-gray-200 text-gray-700',
   REFUNDED: 'bg-gray-200 text-gray-700',
+  // review statuses
+  APPROVED: 'bg-green-100 text-green-700',
+  REJECTED: 'bg-red-100 text-red-700',
 }
 
 function statusLabel(status: string) {
@@ -56,34 +79,79 @@ function statusLabel(status: string) {
 }
 
 export default function AccountPage() {
-  const { data: session, status } = useSession()
+  const { data: session, status, update } = useSession()
   const isLoaded = status !== 'loading'
   const isSignedIn = status === 'authenticated'
   const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN'
 
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [orders, setOrders] = useState<OrderSummary[]>([])
+  const [reviews, setReviews] = useState<MyReview[]>([])
   const [loading, setLoading] = useState(true)
 
-  const fetchOrders = useCallback(async () => {
+  // Edit-profile state
+  const [editing, setEditing] = useState(false)
+  const [form, setForm] = useState({ name: '', phone: '' })
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [file, setFile] = useState<File | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const loadAll = useCallback(async () => {
     try {
-      const data = await orderApi.list()
-      setOrders(Array.isArray(data) ? data : [])
+      const [prof, ords, revs] = await Promise.all([
+        userApi.getProfile().catch(() => null),
+        orderApi.list().catch(() => []),
+        reviewApi.mine().catch(() => []),
+      ])
+      if (prof) {
+        setProfile(prof)
+        setForm({ name: prof.name || '', phone: prof.phone || '' })
+      }
+      setOrders(Array.isArray(ords) ? ords : [])
+      setReviews(Array.isArray(revs) ? revs : [])
     } catch (error) {
-      console.error('Error fetching orders:', error)
+      console.error('Error loading account:', error)
     } finally {
       setLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    if (isSignedIn) {
-      fetchOrders()
-    } else if (isLoaded) {
-      setLoading(false)
-    }
-  }, [isLoaded, isSignedIn, fetchOrders])
+    if (isSignedIn) loadAll()
+    else if (isLoaded) setLoading(false)
+  }, [isLoaded, isSignedIn, loadAll])
 
-  // Signed out: middleware normally redirects to /sign-in, but guard the UI too.
+  const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]
+    if (!f) return
+    setFile(f)
+    setPreviewUrl(URL.createObjectURL(f))
+  }
+
+  const saveProfile = async () => {
+    setSaving(true)
+    setEditError(null)
+    try {
+      const fd = new FormData()
+      fd.append('name', form.name)
+      fd.append('phone', form.phone)
+      if (file) fd.append('image', file)
+      const updated: Profile = await userApi.updateProfile(fd)
+      setProfile(updated)
+      // Reflect name/image in the active session immediately (no re-login).
+      await update({ name: updated.name, image: updated.imageUrl })
+      setEditing(false)
+      setFile(null)
+      setPreviewUrl(null)
+    } catch (e) {
+      setEditError(e instanceof Error ? e.message : 'Could not save profile')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   if (isLoaded && !isSignedIn) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -99,8 +167,9 @@ export default function AccountPage() {
     )
   }
 
-  const name = session?.user?.name || 'My Account'
-  const email = session?.user?.email || ''
+  const displayName = profile?.name || session?.user?.name || 'My Account'
+  const email = profile?.email || session?.user?.email || ''
+  const avatar = previewUrl || profile?.imageUrl || session?.user?.image || null
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -108,22 +177,108 @@ export default function AccountPage() {
       <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-2xl font-semibold text-gray-900 mb-6">My Account</h1>
 
-        {/* Profile card — Sign Out lives here, alongside the user details. */}
-        <div className="card p-5 mb-6 flex items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gray-900 text-white">
-            <User size={26} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-base font-medium text-gray-900 truncate">{name}</p>
-            {email && <p className="text-sm text-gray-500 truncate">{email}</p>}
-          </div>
-          <button
-            onClick={() => signOut({ callbackUrl: '/' })}
-            className="shrink-0 flex items-center gap-2 rounded-full border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
-          >
-            <LogOut size={16} />
-            <span className="hidden sm:inline">Sign Out</span>
-          </button>
+        {/* Profile card */}
+        <div className="card p-5 mb-6">
+          {!editing ? (
+            <div className="flex items-center gap-4">
+              <Avatar src={avatar} name={displayName} />
+              <div className="min-w-0 flex-1">
+                <p className="text-base font-medium text-gray-900 truncate">{displayName}</p>
+                {email && <p className="text-sm text-gray-500 truncate">{email}</p>}
+                {profile?.phone && <p className="text-sm text-gray-500 truncate">{profile.phone}</p>}
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                <button
+                  onClick={() => setEditing(true)}
+                  className="flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 transition-colors"
+                >
+                  <Pencil size={15} />
+                  <span className="hidden sm:inline">Edit</span>
+                </button>
+                <button
+                  onClick={() => signOut({ callbackUrl: '/' })}
+                  className="flex items-center gap-2 rounded-full border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <LogOut size={15} />
+                  <span className="hidden sm:inline">Sign Out</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              {editError && (
+                <div className="mb-3 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+                  {editError}
+                </div>
+              )}
+              <div className="flex items-start gap-4">
+                {/* Avatar with upload overlay */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="relative shrink-0 rounded-full"
+                  aria-label="Change profile photo"
+                >
+                  <Avatar src={avatar} name={displayName} />
+                  <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 text-white opacity-0 hover:opacity-100 transition-opacity">
+                    <Camera size={18} />
+                  </span>
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={onPickFile}
+                />
+
+                <div className="flex-1 space-y-3">
+                  <div>
+                    <label className="label">Name</label>
+                    <input
+                      className="input"
+                      value={form.name}
+                      onChange={(e) => setForm({ ...form, name: e.target.value })}
+                      placeholder="Your name"
+                    />
+                  </div>
+                  <div>
+                    <label className="label">Phone</label>
+                    <input
+                      className="input"
+                      value={form.phone}
+                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                      placeholder="10-digit phone"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400">Tap the photo to change your profile picture (JPG/PNG/WebP, ≤5MB).</p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex gap-2">
+                <button
+                  onClick={saveProfile}
+                  disabled={saving}
+                  className="btn-primary disabled:opacity-60 flex items-center gap-2"
+                >
+                  {saving && <Loader2 size={15} className="animate-spin" />}
+                  Save changes
+                </button>
+                <button
+                  onClick={() => {
+                    setEditing(false)
+                    setFile(null)
+                    setPreviewUrl(null)
+                    setEditError(null)
+                    setForm({ name: profile?.name || '', phone: profile?.phone || '' })
+                  }}
+                  className="btn-secondary"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Quick links */}
@@ -154,19 +309,19 @@ export default function AccountPage() {
         </div>
 
         {loading ? (
-          <div className="space-y-3">
-            {[0, 1, 2].map((i) => (
+          <div className="space-y-3 mb-8">
+            {[0, 1].map((i) => (
               <div key={i} className="card p-5 animate-pulse h-24" />
             ))}
           </div>
         ) : orders.length === 0 ? (
-          <div className="card p-8 text-center">
+          <div className="card p-8 text-center mb-8">
             <Package className="h-10 w-10 text-gray-300 mx-auto" />
             <p className="mt-3 text-sm text-gray-600">You haven&apos;t placed any orders yet.</p>
             <Link href="/products" className="btn-primary mt-5 inline-block">Start Shopping</Link>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 mb-8">
             {orders.map((order) => {
               const firstImage = order.items?.[0]?.product?.images?.[0]?.url
               return (
@@ -185,7 +340,6 @@ export default function AccountPage() {
                       {statusLabel(order.status)}
                     </span>
                   </div>
-
                   <div className="mt-3 flex items-center gap-3">
                     {firstImage && (
                       <Image
@@ -207,8 +361,105 @@ export default function AccountPage() {
             })}
           </div>
         )}
+
+        {/* My Reviews */}
+        <div className="flex items-center gap-2 mb-4">
+          <Star className="h-5 w-5 text-gray-700" />
+          <h2 className="text-lg font-semibold text-gray-900">My Reviews</h2>
+        </div>
+
+        {loading ? (
+          <div className="space-y-3">
+            {[0, 1].map((i) => (
+              <div key={i} className="card p-5 animate-pulse h-20" />
+            ))}
+          </div>
+        ) : reviews.length === 0 ? (
+          <div className="card p-8 text-center">
+            <Star className="h-10 w-10 text-gray-300 mx-auto" />
+            <p className="mt-3 text-sm text-gray-600">You haven&apos;t written any reviews yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {reviews.map((rev) => (
+              <div key={rev.id} className="card p-4 sm:p-5">
+                <div className="flex items-start gap-3">
+                  {rev.product?.image && (
+                    <Image
+                      src={rev.product.image}
+                      alt={rev.product.name}
+                      width={48}
+                      height={48}
+                      className="h-12 w-12 rounded-md object-cover bg-gray-100 shrink-0"
+                    />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    {rev.product ? (
+                      <Link href={`/products/${rev.product.slug}`} className="text-sm font-medium text-gray-900 hover:underline truncate block">
+                        {rev.product.name}
+                      </Link>
+                    ) : (
+                      <p className="text-sm font-medium text-gray-500">Product unavailable</p>
+                    )}
+                    <div className="flex items-center gap-2 mt-1">
+                      <Stars value={rev.rating} />
+                      <span className="text-xs text-gray-400">{formatDate(rev.createdAt)}</span>
+                      <span
+                        className={cn(
+                          'rounded-full px-2 py-0.5 text-[11px] font-medium',
+                          STATUS_STYLES[rev.status] || 'bg-gray-100 text-gray-700'
+                        )}
+                      >
+                        {statusLabel(rev.status)}
+                      </span>
+                    </div>
+                    {rev.title && <p className="mt-2 text-sm font-medium text-gray-900">{rev.title}</p>}
+                    {rev.comment && <p className="text-sm text-gray-600">{rev.comment}</p>}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </main>
       <Footer />
     </div>
+  )
+}
+
+function Avatar({ src, name }: { src: string | null; name: string }) {
+  if (src) {
+    // Local object-URL previews (blob:) can't go through the Next image
+    // optimizer — render those unoptimized; remote URLs use the optimizer.
+    const isLocalPreview = src.startsWith('blob:') || src.startsWith('data:')
+    return (
+      <Image
+        src={src}
+        alt={name}
+        width={56}
+        height={56}
+        unoptimized={isLocalPreview}
+        className="h-14 w-14 rounded-full object-cover bg-gray-100"
+      />
+    )
+  }
+  return (
+    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gray-900 text-white">
+      <User size={26} />
+    </div>
+  )
+}
+
+function Stars({ value }: { value: number }) {
+  return (
+    <span className="flex items-center">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <Star
+          key={n}
+          size={14}
+          className={n <= value ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}
+        />
+      ))}
+    </span>
   )
 }
