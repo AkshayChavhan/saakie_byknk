@@ -14,6 +14,7 @@ export async function GET(request: Request) {
     const minPrice = searchParams.get('minPrice') ?? '0';
     const maxPrice = searchParams.get('maxPrice') ?? '999999';
     const inStock = searchParams.get('inStock');
+    const colors = searchParams.get('colors');
     const page = searchParams.get('page') ?? '1';
     const limit = searchParams.get('limit') ?? '12';
 
@@ -37,6 +38,19 @@ export async function GET(request: Request) {
     }
 
     if (inStock === 'true') where.stock = { gt: 0 };
+
+    // Filter by color: the client sends a comma-separated list of hex codes
+    // (e.g. ?colors=#FF0000,#00FF00). Match products that have at least one of
+    // the requested colors.
+    if (colors?.trim()) {
+      const hexes = colors
+        .split(',')
+        .map((c) => c.trim())
+        .filter(Boolean);
+      if (hexes.length) {
+        where.colors = { some: { hexCode: { in: hexes } } };
+      }
+    }
 
     // Free-text search across product name, description, and tags.
     if (search?.trim()) {
@@ -80,6 +94,7 @@ export async function GET(request: Request) {
         stock: true,
         createdAt: true,
         images: { select: { url: true }, take: 1 },
+        colors: { select: { hexCode: true } },
         category: { select: { name: true, slug: true } },
         _count: { select: { reviews: true, orderItems: true } },
       },
@@ -97,7 +112,7 @@ export async function GET(request: Request) {
       rating: product._count.reviews > 0 ? 4.5 : 0,
       reviews: product._count.reviews,
       image: product.images[0]?.url || '/images/placeholder-product.svg',
-      colors: ['#000000'],
+      colors: Array.from(new Set(product.colors.map((c) => c.hexCode))),
       category: product.category,
       stock: product.stock,
       isNew:

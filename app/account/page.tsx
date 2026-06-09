@@ -20,6 +20,7 @@ import {
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { formatPrice, formatDate, cn } from '@/lib/utils'
+import { ORDER_STATUS_STYLES as STATUS_STYLES, statusLabel } from '@/lib/orders'
 import { orderApi, userApi, reviewApi } from '@/lib/api'
 
 interface OrderItemSummary {
@@ -59,24 +60,6 @@ interface Profile {
   imageUrl: string | null
 }
 
-const STATUS_STYLES: Record<string, string> = {
-  PENDING: 'bg-amber-100 text-amber-700',
-  CONFIRMED: 'bg-blue-100 text-blue-700',
-  PROCESSING: 'bg-blue-100 text-blue-700',
-  SHIPPED: 'bg-indigo-100 text-indigo-700',
-  OUT_FOR_DELIVERY: 'bg-indigo-100 text-indigo-700',
-  DELIVERED: 'bg-green-100 text-green-700',
-  CANCELLED: 'bg-red-100 text-red-700',
-  RETURNED: 'bg-gray-200 text-gray-700',
-  REFUNDED: 'bg-gray-200 text-gray-700',
-  // review statuses
-  APPROVED: 'bg-green-100 text-green-700',
-  REJECTED: 'bg-red-100 text-red-700',
-}
-
-function statusLabel(status: string) {
-  return status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
-}
 
 export default function AccountPage() {
   const { data: session, status, update } = useSession()
@@ -325,7 +308,11 @@ export default function AccountPage() {
             {orders.map((order) => {
               const firstImage = order.items?.[0]?.product?.images?.[0]?.url
               return (
-                <div key={order.id} className="card p-4 sm:p-5">
+                <Link
+                  key={order.id}
+                  href={`/account/orders/${order.id}`}
+                  className="card block p-4 sm:p-5 hover:shadow-md transition-shadow"
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-gray-900">#{order.orderNumber}</p>
@@ -355,8 +342,9 @@ export default function AccountPage() {
                       {order.items?.length > 1 && ` + ${order.items.length - 1} more`}
                     </p>
                     <p className="text-sm font-semibold text-gray-900">{formatPrice(order.total)}</p>
+                    <ChevronRight size={18} className="shrink-0 text-gray-400" />
                   </div>
-                </div>
+                </Link>
               )
             })}
           </div>

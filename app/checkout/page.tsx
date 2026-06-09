@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { Loader2, MapPin, CreditCard, Truck, CheckCircle2, Plus } from 'lucide-react'
+import { Loader2, MapPin, CreditCard, Truck, Plus } from 'lucide-react'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { formatPrice, cn } from '@/lib/utils'
@@ -61,7 +61,6 @@ export default function CheckoutPage() {
   const [savingAddress, setSavingAddress] = useState(false)
   const [placing, setPlacing] = useState<null | 'cod' | 'razorpay'>(null)
   const [error, setError] = useState<string | null>(null)
-  const [done, setDone] = useState<{ orderNumber: string; method: string } | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -132,10 +131,11 @@ export default function CheckoutPage() {
     setError(null)
     try {
       const data = await createOrder('cod')
-      setDone({ orderNumber: data.order.orderNumber, method: 'Cash on Delivery' })
+      // Persistent confirmation route — survives refresh/back, unlike the old
+      // inline success state.
+      router.replace(`/checkout/confirmation/${data.order.id}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Order failed')
-    } finally {
       setPlacing(null)
     }
   }
@@ -166,10 +166,9 @@ export default function CheckoutPage() {
               const cd = await cRes.json().catch(() => ({}))
               throw new Error(cd.error || 'Payment verification failed')
             }
-            setDone({ orderNumber: data.order.orderNumber, method: 'Online (Razorpay)' })
+            router.replace(`/checkout/confirmation/${data.order.id}`)
           } catch (e) {
             setError(e instanceof Error ? e.message : 'Payment verification failed')
-          } finally {
             setPlacing(null)
           }
         },
@@ -202,24 +201,6 @@ export default function CheckoutPage() {
       <Shell>
         <div className="flex justify-center py-20 text-gray-400">
           <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-      </Shell>
-    )
-  }
-
-  if (done) {
-    return (
-      <Shell>
-        <div className="max-w-md mx-auto text-center py-16">
-          <CheckCircle2 className="h-14 w-14 text-green-500 mx-auto" />
-          <h1 className="mt-4 text-2xl font-semibold text-gray-900">Order placed!</h1>
-          <p className="mt-2 text-gray-600">
-            Order <span className="font-medium">#{done.orderNumber}</span> · {done.method}
-          </p>
-          <div className="mt-6 flex gap-3 justify-center">
-            <Link href="/account" className="btn-primary">View my orders</Link>
-            <Link href="/products" className="btn-secondary">Continue shopping</Link>
-          </div>
         </div>
       </Shell>
     )

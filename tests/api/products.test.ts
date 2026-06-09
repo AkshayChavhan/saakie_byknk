@@ -199,6 +199,41 @@ describe('Products API', () => {
       expect(data.products[0]).toHaveProperty('inStock')
     })
 
+    it('returns the product real color hex codes (deduped), not a hardcoded swatch', async () => {
+      const product = createMockProduct({
+        colors: [
+          { id: 'c1', name: 'Red', hexCode: '#FF0000', productId: 'p1' },
+          { id: 'c2', name: 'Blue', hexCode: '#0000FF', productId: 'p1' },
+          { id: 'c3', name: 'Red (dup)', hexCode: '#FF0000', productId: 'p1' },
+        ],
+      })
+      mockPrisma.product.findMany.mockResolvedValue([product])
+      mockPrisma.product.count.mockResolvedValue(1)
+
+      const { GET } = await import('@/app/api/products/route')
+      const request = new NextRequest('http://localhost:3000/api/products')
+      const data = await (await GET(request)).json()
+
+      expect(data.products[0].colors).toEqual(['#FF0000', '#0000FF'])
+    })
+
+    it('filters by color via a relation where-clause when colors param is present', async () => {
+      mockPrisma.product.findMany.mockResolvedValue([])
+      mockPrisma.product.count.mockResolvedValue(0)
+
+      const { GET } = await import('@/app/api/products/route')
+      const request = new NextRequest('http://localhost:3000/api/products?colors=%23FF0000,%230000FF')
+      await GET(request)
+
+      expect(mockPrisma.product.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            colors: { some: { hexCode: { in: ['#FF0000', '#0000FF'] } } },
+          }),
+        })
+      )
+    })
+
     it('handles database errors', async () => {
       mockPrisma.product.count.mockRejectedValue(new Error('Database error'))
 
