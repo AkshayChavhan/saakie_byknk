@@ -9,6 +9,12 @@ import {
   IndianRupee, Layers, Tag, ShoppingBag, ImageIcon, Copy, Check
 } from 'lucide-react'
 import { fetchApi } from '@/lib/api'
+import {
+  compressImages,
+  formatBytes,
+  totalSize,
+  MAX_TOTAL_UPLOAD_BYTES,
+} from '@/lib/image-compress'
 import { useToast } from '@/components/ui/toast'
 
 interface Product {
@@ -46,6 +52,9 @@ interface ExistingImage {
   url: string
   isPrimary: boolean
 }
+
+// Mirrors the cap enforced by the upload/PATCH routes.
+const MAX_IMAGES = 10
 
 export default function ProductsManagement() {
   const router = useRouter()
@@ -89,6 +98,17 @@ export default function ProductsManagement() {
     images: [] as File[]
   })
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
+
+  // Selected images are compressed in the browser before they ever reach the
+  // API (see lib/image-compress.ts). `imageCompression` drives the progress
+  // hint and keeps the form from submitting mid-encode.
+  const [imageCompression, setImageCompression] = useState<{
+    busy: boolean
+    done: number
+    total: number
+    originalBytes: number
+    compressedBytes: number
+  }>({ busy: false, done: 0, total: 0, originalBytes: 0, compressedBytes: 0 })
 
   // Edit-mode state. When `editingProductId` is set, the modal acts as an
   // edit form; otherwise it creates. `existingImages` are images already on
@@ -225,6 +245,7 @@ export default function ProductsManagement() {
       // Reset any in-progress create state, then pre-fill from the product.
       imagePreviews.forEach(url => URL.revokeObjectURL(url))
       setImagePreviews([])
+      setImageCompression({ busy: false, done: 0, total: 0, originalBytes: 0, compressedBytes: 0 })
       setFormData({
         name: p.name ?? '',
         slug: p.slug ?? '',
@@ -280,21 +301,71 @@ export default function ProductsManagement() {
     })
   }
 
-  const handleImageSelect = (files: FileList | null) => {
-    if (!files) return
+  const handleImageSelect = async (files: FileList | null) => {
+    if (!files || files.length === 0) return
     const fileArray = Array.from(files)
+
+    if (fileArray.length > MAX_IMAGES) {
+      toast.error('Too Many Images', `Please select at most ${MAX_IMAGES} images.`)
+      return
+    }
+
+    const originalBytes = totalSize(fileArray)
+    setImageCompression({
+      busy: true,
+      done: 0,
+      total: fileArray.length,
+      originalBytes,
+      compressedBytes: 0,
+    })
+
+    // Shrink before upload — full-size phone photos blow past the 4.5MB
+    // request-body cap and come back as an edge-level 413.
+    const compressed = await compressImages(fileArray, {}, (done, total) => {
+      setImageCompression(prev => ({ ...prev, done, total }))
+    })
 
     // Clean up old previews
     imagePreviews.forEach(url => URL.revokeObjectURL(url))
 
     // Create new previews
-    const previews = fileArray.map(file => URL.createObjectURL(file))
+    const previews = compressed.map(file => URL.createObjectURL(file))
     setImagePreviews(previews)
-    setFormData({ ...formData, images: fileArray })
+    setFormData(prev => ({ ...prev, images: compressed }))
+    setImageCompression({
+      busy: false,
+      done: compressed.length,
+      total: compressed.length,
+      originalBytes,
+      compressedBytes: totalSize(compressed),
+    })
+  }
+
+  // A body over the platform's 4.5MB cap is rejected at the edge with a
+  // non-JSON 413, so read defensively and translate it into something an
+  // admin can act on.
+  const readErrorMessage = async (response: Response, fallback: string) => {
+    if (response.status === 413) {
+      return 'The upload was too large for the server. Please add fewer images at a time.'
+    }
+    const body = await response.json().catch(() => ({}))
+    return body.error || fallback
   }
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Images are already compressed on select; this only trips on an unusual
+    // batch — many images at once, or files the browser could not re-encode.
+    const imagesBytes = totalSize(formData.images)
+    if (imagesBytes > MAX_TOTAL_UPLOAD_BYTES) {
+      toast.error(
+        'Images Too Large',
+        `The selected images total ${formatBytes(imagesBytes)}, over the ${formatBytes(MAX_TOTAL_UPLOAD_BYTES)} upload limit. Please add fewer images at a time.`
+      )
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -349,8 +420,7 @@ export default function ProductsManagement() {
           resetForm()
           toast.success('Product Updated', `"${updated.name}" has been updated.`)
         } else {
-          const error = await response.json().catch(() => ({}))
-          toast.error('Failed to Update', error.error || 'Something went wrong.')
+          toast.error('Failed to Update', await readErrorMessage(response, 'Something went wrong.'))
         }
         return
       }
@@ -380,8 +450,7 @@ export default function ProductsManagement() {
         resetForm()
         toast.success('Product Created', `"${newProduct.name}" has been created.`)
       } else {
-        const error = await response.json()
-        toast.error('Failed to Create', error.error || 'Something went wrong.')
+        toast.error('Failed to Create', await readErrorMessage(response, 'Something went wrong.'))
       }
     } catch (error) {
       console.error('Error saving product:', error)
@@ -394,6 +463,7 @@ export default function ProductsManagement() {
   const resetForm = () => {
     imagePreviews.forEach(url => URL.revokeObjectURL(url))
     setImagePreviews([])
+    setImageCompression({ busy: false, done: 0, total: 0, originalBytes: 0, compressedBytes: 0 })
     setEditingProductId(null)
     setExistingImages([])
     setRemovedImageIds([])
@@ -1065,16 +1135,35 @@ export default function ProductsManagement() {
                         className="hidden"
                         id="product-images"
                       />
-                      {imagePreviews.length > 0 ? (
+                      {imageCompression.busy ? (
+                        <div className="flex flex-col items-center py-6">
+                          <svg className="animate-spin h-6 w-6 text-red-500 mb-3" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                          <span className="text-sm font-medium text-gray-700">
+                            Optimising images… {imageCompression.done}/{imageCompression.total}
+                          </span>
+                        </div>
+                      ) : imagePreviews.length > 0 ? (
                         <div>
                           <div className="flex flex-wrap gap-3">
                             {imagePreviews.map((url, idx) => (
                               <Image key={idx} src={url} alt={`Preview ${idx + 1}`} width={80} height={80} className="h-20 w-20 object-cover rounded-lg" />
                             ))}
                           </div>
-                          <label htmlFor="product-images" className="mt-3 inline-block text-sm text-red-600 hover:text-red-700 cursor-pointer">
-                            {isEditMode ? 'Change images to add' : 'Change images'}
-                          </label>
+                          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+                            <label htmlFor="product-images" className="text-sm text-red-600 hover:text-red-700 cursor-pointer">
+                              {isEditMode ? 'Change images to add' : 'Change images'}
+                            </label>
+                            {imageCompression.compressedBytes > 0 && (
+                              <span className="text-xs text-gray-500">
+                                Optimised to {formatBytes(imageCompression.compressedBytes)}
+                                {imageCompression.compressedBytes < imageCompression.originalBytes &&
+                                  ` from ${formatBytes(imageCompression.originalBytes)}`}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       ) : (
                         <label htmlFor="product-images" className="cursor-pointer flex flex-col items-center py-6">
@@ -1084,7 +1173,9 @@ export default function ProductsManagement() {
                           <span className="text-sm font-medium text-gray-700">
                             {isEditMode ? 'Tap to add more images' : 'Tap to upload images'}
                           </span>
-                          <span className="text-xs text-gray-500 mt-1">JPEG, PNG, WebP • Max 5MB each</span>
+                          <span className="text-xs text-gray-500 mt-1">
+                            JPEG, PNG, WebP • up to {MAX_IMAGES} • resized automatically
+                          </span>
                         </label>
                       )}
                     </div>
@@ -1344,16 +1435,18 @@ export default function ProductsManagement() {
                   <button
                     type="submit"
                     form="product-form"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || imageCompression.busy}
                     className="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-xl hover:from-red-700 hover:to-red-600 hover:shadow-xl hover:shadow-red-500/30 active:scale-[0.98] transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-red-500/25"
                   >
-                    {isSubmitting ? (
+                    {isSubmitting || imageCompression.busy ? (
                       <>
                         <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                         </svg>
-                        {isEditMode ? 'Saving...' : 'Creating...'}
+                        {imageCompression.busy
+                          ? 'Optimising...'
+                          : isEditMode ? 'Saving...' : 'Creating...'}
                       </>
                     ) : (
                       isEditMode ? 'Save Changes' : 'Create Product'
