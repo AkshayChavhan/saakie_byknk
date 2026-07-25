@@ -6,7 +6,7 @@ import Image from 'next/image'
 import {
   Search, Edit, Trash2, Eye, Plus, Package, AlertTriangle, X, Upload,
   ArrowLeft, Star, ToggleLeft, ToggleRight, ChevronLeft, ChevronRight,
-  IndianRupee, Layers, Tag, ShoppingBag, ImageIcon
+  IndianRupee, Layers, Tag, ShoppingBag, ImageIcon, Copy, Check
 } from 'lucide-react'
 import { fetchApi } from '@/lib/api'
 import { useToast } from '@/components/ui/toast'
@@ -98,7 +98,19 @@ export default function ProductsManagement() {
   const [existingImages, setExistingImages] = useState<ExistingImage[]>([])
   const [removedImageIds, setRemovedImageIds] = useState<string[]>([])
   const [primaryImageId, setPrimaryImageId] = useState<string | null>(null)
+  const [descriptionCopied, setDescriptionCopied] = useState(false)
   const isEditMode = editingProductId !== null
+
+  const handleCopyDescription = async () => {
+    if (!formData.description) return
+    try {
+      await navigator.clipboard.writeText(formData.description)
+      setDescriptionCopied(true)
+      setTimeout(() => setDescriptionCopied(false), 2000)
+    } catch {
+      toast.error('Copy Failed', 'Could not copy the description to clipboard.')
+    }
+  }
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -1106,7 +1118,28 @@ export default function ProductsManagement() {
 
                   {/* Description */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Description *</label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-sm font-medium text-gray-700">Description *</label>
+                      <button
+                        type="button"
+                        onClick={handleCopyDescription}
+                        disabled={!formData.description}
+                        title="Copy description"
+                        className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-red-600 disabled:opacity-40 disabled:hover:text-gray-500 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {descriptionCopied ? (
+                          <>
+                            <Check className="h-3.5 w-3.5 text-green-600" />
+                            <span className="text-green-600">Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3.5 w-3.5" />
+                            <span>Copy</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                     <textarea
                       required
                       rows={3}
