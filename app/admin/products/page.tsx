@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import {
@@ -44,6 +44,9 @@ interface Category {
   id: string
   name: string
   slug: string
+  // Categories are one level deep: `parentId` is null for a top-level
+  // category and set to its parent for a sub-category.
+  parentId?: string | null
 }
 
 // An existing product image as returned by GET /api/admin/products/[id].
@@ -83,6 +86,10 @@ export default function ProductsManagement() {
     compareAtPrice: '',
     stock: '',
     lowStockAlert: '10',
+    // A product still belongs to exactly one category. `parentCategoryId`
+    // only drives the two-step picker; `categoryId` holds what gets saved —
+    // the sub-category when one is chosen, otherwise the parent itself.
+    parentCategoryId: '',
     categoryId: '',
     material: '',
     pattern: '',
@@ -120,6 +127,42 @@ export default function ProductsManagement() {
   const [primaryImageId, setPrimaryImageId] = useState<string | null>(null)
   const [descriptionCopied, setDescriptionCopied] = useState(false)
   const isEditMode = editingProductId !== null
+
+  // Top-level categories drive the first select. If nothing has a parent yet
+  // this is simply every category, so the picker behaves exactly as the flat
+  // one it replaced.
+  const parentCategories = useMemo(
+    () => categories.filter(cat => !cat.parentId),
+    [categories]
+  )
+
+  // Children of the category currently selected in the first step. Derived
+  // from the flat list rather than a nested `children` field so it holds up
+  // whatever shape the API include settles on.
+  const subCategories = useMemo(
+    () => categories.filter(cat => cat.parentId === formData.parentCategoryId),
+    [categories, formData.parentCategoryId]
+  )
+
+  const parentIdByCategoryId = useMemo(
+    () => new Map(categories.map(cat => [cat.id, cat.parentId ?? null])),
+    [categories]
+  )
+
+  // Picking a parent resets the sub-category and provisionally saves the
+  // parent, so the product is always attached to something valid.
+  const handleParentCategoryChange = (parentId: string) => {
+    setFormData(prev => ({ ...prev, parentCategoryId: parentId, categoryId: parentId }))
+  }
+
+  // An empty sub-category means "file it under the parent itself".
+  const handleSubCategoryChange = (subId: string) => {
+    setFormData(prev => ({ ...prev, categoryId: subId || prev.parentCategoryId }))
+  }
+
+  // The sub-select shows nothing while the product sits on the parent.
+  const selectedSubCategoryId =
+    formData.categoryId === formData.parentCategoryId ? '' : formData.categoryId
 
   const handleCopyDescription = async () => {
     if (!formData.description) return
@@ -242,6 +285,15 @@ export default function ProductsManagement() {
       }
       const p = await response.json()
 
+      // The product stores one category id. Walk it back to its parent so the
+      // two-step picker opens on the right pair — `parent` comes from the
+      // product's own category record, falling back to the loaded list.
+      const savedCategoryId: string = p.categoryId ?? p.category?.id ?? ''
+      const savedParentId: string =
+        p.category?.parentId ??
+        categories.find(cat => cat.id === savedCategoryId)?.parentId ??
+        ''
+
       // Reset any in-progress create state, then pre-fill from the product.
       imagePreviews.forEach(url => URL.revokeObjectURL(url))
       setImagePreviews([])
@@ -254,7 +306,8 @@ export default function ProductsManagement() {
         compareAtPrice: p.comparePrice != null ? String(p.comparePrice) : '',
         stock: p.stock != null ? String(p.stock) : '',
         lowStockAlert: p.lowStockAlert != null ? String(p.lowStockAlert) : '10',
-        categoryId: p.categoryId ?? p.category?.id ?? '',
+        parentCategoryId: savedParentId || savedCategoryId,
+        categoryId: savedCategoryId,
         material: p.material ?? '',
         pattern: p.pattern ?? '',
         occasion: Array.isArray(p.occasion) ? p.occasion.join(', ') : (p.occasion ?? ''),
@@ -476,6 +529,7 @@ export default function ProductsManagement() {
       compareAtPrice: '',
       stock: '',
       lowStockAlert: '10',
+      parentCategoryId: '',
       categoryId: '',
       material: '',
       pattern: '',
@@ -532,7 +586,13 @@ export default function ProductsManagement() {
 
   const filteredProducts = (products ?? []).filter(product => {
     const matchesSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = categoryFilter === 'all' || product.category?.id === categoryFilter
+    // A product filed under a sub-category still belongs to its parent, so
+    // filtering by the parent has to include everything beneath it.
+    const productCategoryId = product.category?.id
+    const matchesCategory =
+      categoryFilter === 'all' ||
+      productCategoryId === categoryFilter ||
+      (!!productCategoryId && parentIdByCategoryId.get(productCategoryId) === categoryFilter)
     const matchesStatus = statusFilter === 'all' ||
       (statusFilter === 'active' && product.isActive) ||
       (statusFilter === 'inactive' && !product.isActive) ||
@@ -912,8 +972,17 @@ export default function ProductsManagement() {
                 onChange={(e) => setCategoryFilter(e.target.value)}
               >
                 <option value="all">All Categories</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                {parentCategories.map((parent) => (
+                  <Fragment key={parent.id}>
+                    <option value={parent.id}>{parent.name}</option>
+                    {categories
+                      .filter(cat => cat.parentId === parent.id)
+                      .map((child) => (
+                        <option key={child.id} value={child.id}>
+                          {'  '}↳ {child.name}
+                        </option>
+                      ))}
+                  </Fragment>
                 ))}
               </select>
               <select
@@ -1289,20 +1358,43 @@ export default function ProductsManagement() {
                     </div>
                   </div>
 
-                  {/* Category */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Category *</label>
-                    <select
-                      required
-                      value={formData.categoryId}
-                      onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white"
-                    >
-                      <option value="">Select Category</option>
-                      {categories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                      ))}
-                    </select>
+                  {/* Category — parent first, then an optional sub-category.
+                      Only the resulting `categoryId` is saved. */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Category *</label>
+                      <select
+                        required
+                        value={formData.parentCategoryId}
+                        onChange={(e) => handleParentCategoryChange(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white"
+                      >
+                        <option value="">Select Category</option>
+                        {parentCategories.map((cat) => (
+                          <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Sub-Category</label>
+                      <select
+                        value={selectedSubCategoryId}
+                        onChange={(e) => handleSubCategoryChange(e.target.value)}
+                        disabled={subCategories.length === 0}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
+                      >
+                        <option value="">
+                          {!formData.parentCategoryId
+                            ? 'Select a category first'
+                            : subCategories.length === 0
+                              ? 'No sub-categories'
+                              : 'None — use the category itself'}
+                        </option>
+                        {subCategories.map((cat) => (
+                          <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
 
                   {/* Payment Mode — how this product accepts payment. */}
