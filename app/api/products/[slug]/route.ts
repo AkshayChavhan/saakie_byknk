@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { apiError } from '@/lib/server/errors';
+import { watermarkImageUrl } from '@/lib/image-watermark';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -72,11 +73,19 @@ export async function GET(
       slug: p.slug,
       price: p.price,
       comparePrice: p.comparePrice,
-      image: p.images[0]?.url || '/images/placeholder-product.svg',
+      image: watermarkImageUrl(
+        p.images[0]?.url || '/images/placeholder-product.svg'
+      ),
     }));
 
     return NextResponse.json({
       ...product,
+      // Gallery images are the full-resolution shots, so they are the ones most
+      // worth lifting — watermark every one before it leaves the server.
+      images: product.images.map((image) => ({
+        ...image,
+        url: watermarkImageUrl(image.url),
+      })),
       inStock: product.stock > 0,
       avgRating,
       reviewCount: product._count.reviews,

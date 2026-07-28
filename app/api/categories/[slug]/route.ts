@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { apiError } from '@/lib/server/errors';
+import { watermarkImageUrl } from '@/lib/image-watermark';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -58,6 +59,13 @@ export async function GET(
 
     return NextResponse.json({
       ...category,
+      products: category.products.map((product) => ({
+        ...product,
+        images: product.images.map((image) => ({
+          ...image,
+          url: watermarkImageUrl(image.url),
+        })),
+      })),
       children: category.children.map((child) => ({
         id: child.id,
         name: child.name,
