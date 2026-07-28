@@ -223,33 +223,47 @@ function ProductsContent() {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <Header />
 
-      {/* Hero Banner */}
-      <div className="bg-gradient-to-r from-rose-600 via-pink-600 to-rose-500 text-white">
-        <div className="container mx-auto px-4 py-8 sm:py-12">
+      {/*
+        Hero Banner — deep Banarasi maroon from the brand palette, not the rose
+        accent. It starts near-black so it reads as a continuation of the black
+        header, then warms into maroon. `overflow-hidden` keeps the soft glows
+        from creating horizontal scroll on narrow (iPhone) viewports.
+      */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#3a0f14] via-maroon-800 to-maroon-700 text-white">
+        {/* Zari sheen — echoes the woven-gold treatment on the auth screens */}
+        <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-marigold-400/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-28 -left-20 h-64 w-64 rounded-full bg-maroon-500/25 blur-3xl" />
+
+        <div className="container relative mx-auto px-4 py-7 sm:py-12">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <nav className="flex items-center text-sm text-rose-100 mb-2">
+              <nav className="flex items-center text-sm text-[#fdf0d8]/70 mb-2">
                 <Link href="/" className="flex items-center hover:text-white transition-colors">
                   <Home size={14} className="mr-1" />
                   Home
                 </Link>
-                <ChevronRight size={14} className="mx-2" />
+                <ChevronRight size={14} className="mx-2 text-zari/60" />
                 <span className="text-white font-medium">Products</span>
               </nav>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
+              <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold">
                 Our Collection
               </h1>
-              <p className="text-rose-100 mt-1 text-sm sm:text-base">
+              {/* Gold rule — the same accent that divides the auth panels */}
+              <div className="mt-2 h-px w-16 bg-gradient-to-r from-zari to-transparent sm:w-24" />
+              <p className="text-[#fdf0d8]/75 mt-2 text-sm sm:text-base">
                 Discover exquisite sarees for every occasion
               </p>
             </div>
             <div className="flex items-center gap-2 text-sm">
-              <span className="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
+              <span className="rounded-full bg-white/10 px-3 py-1.5 text-zari-light ring-1 ring-zari/30 backdrop-blur-sm">
                 {pagination.totalCount} Products
               </span>
             </div>
           </div>
         </div>
+
+        {/* Hairline that separates the banner from the page body */}
+        <div className="h-px w-full bg-gradient-to-r from-transparent via-zari/50 to-transparent" />
       </div>
 
       {/* Sticky Filter Bar */}
