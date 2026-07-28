@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { apiError } from '@/lib/server/errors';
+import { getCategoryScopeIds } from '@/lib/server/category-counts';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,7 +31,14 @@ export async function GET(request: Request) {
         where: { slug: category },
         select: { id: true },
       });
-      if (categoryRecord) where.categoryId = categoryRecord.id;
+      // Scope to the whole subtree: a parent category's products almost always
+      // hang off its sub-categories, so an exact categoryId match would render
+      // an empty grid for the very categories whose cards advertise products.
+      // An unrecognised slug matches nothing rather than falling through to
+      // an unfiltered listing of the entire catalogue.
+      where.categoryId = categoryRecord
+        ? { in: await getCategoryScopeIds(categoryRecord.id) }
+        : { in: [] };
     }
 
     if (minPriceNum > 0 || maxPriceNum < 999999) {

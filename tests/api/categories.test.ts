@@ -6,6 +6,9 @@ const mockPrisma = {
   category: {
     findMany: vi.fn(),
   },
+  product: {
+    groupBy: vi.fn(),
+  },
 }
 
 vi.mock('@/lib/prisma', () => ({
@@ -13,9 +16,35 @@ vi.mock('@/lib/prisma', () => ({
   default: mockPrisma,
 }))
 
+/**
+ * The route makes two `category.findMany` calls — the storefront query
+ * (`parentId: null`) and the tree load behind the sub-category rollup. Route
+ * them by their `where` clause so the tests don't depend on call ordering.
+ */
+const mockCategories = (
+  storefront: unknown[],
+  tree: unknown[] = storefront
+) => {
+  mockPrisma.category.findMany.mockImplementation((args: any) =>
+    Promise.resolve(args?.where?.parentId === null ? storefront : tree)
+  )
+}
+
+/** Direct product counts keyed by category id, as `product.groupBy` returns them. */
+const mockProductCounts = (counts: Record<string, number>) => {
+  mockPrisma.product.groupBy.mockResolvedValue(
+    Object.entries(counts).map(([categoryId, n]) => ({
+      categoryId,
+      _count: { _all: n },
+    }))
+  )
+}
+
 describe('Categories API', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockCategories([])
+    mockProductCounts({})
   })
 
   describe('GET /api/categories', () => {
@@ -26,7 +55,7 @@ describe('Categories API', () => {
         slug: `category-${index}`,
         _count: { products: index * 5 },
       }))
-      mockPrisma.category.findMany.mockResolvedValue(categories)
+      mockCategories(categories)
 
       const { GET } = await import('@/app/api/categories/route')
       const response = await GET()
@@ -37,7 +66,7 @@ describe('Categories API', () => {
     })
 
     it('only returns active categories', async () => {
-      mockPrisma.category.findMany.mockResolvedValue([])
+      mockCategories([])
 
       const { GET } = await import('@/app/api/categories/route')
       await GET()
@@ -51,7 +80,7 @@ describe('Categories API', () => {
     })
 
     it('orders categories by name', async () => {
-      mockPrisma.category.findMany.mockResolvedValue([])
+      mockCategories([])
 
       const { GET } = await import('@/app/api/categories/route')
       await GET()
@@ -69,9 +98,9 @@ describe('Categories API', () => {
         name: 'Sarees',
         slug: 'sarees',
         image: 'https://example.com/image.jpg',
-        _count: { products: 10 },
       })
-      mockPrisma.category.findMany.mockResolvedValue([category])
+      mockCategories([category])
+      mockProductCounts({ cat_123: 10 })
 
       const { GET } = await import('@/app/api/categories/route')
       const response = await GET()
@@ -91,7 +120,7 @@ describe('Categories API', () => {
         image: null,
         _count: { products: 5 },
       })
-      mockPrisma.category.findMany.mockResolvedValue([category])
+      mockCategories([category])
 
       const { GET } = await import('@/app/api/categories/route')
       const response = await GET()
@@ -105,7 +134,7 @@ describe('Categories API', () => {
         image: null,
         products: [{ images: [{ url: 'https://example.com/own-product.jpg' }] }],
       })
-      mockPrisma.category.findMany.mockResolvedValue([category])
+      mockCategories([category])
 
       const { GET } = await import('@/app/api/categories/route')
       const response = await GET()
@@ -123,7 +152,7 @@ describe('Categories API', () => {
           { products: [{ images: [{ url: 'https://example.com/child-product.jpg' }] }] },
         ],
       })
-      mockPrisma.category.findMany.mockResolvedValue([category])
+      mockCategories([category])
 
       const { GET } = await import('@/app/api/categories/route')
       const response = await GET()
@@ -138,7 +167,7 @@ describe('Categories API', () => {
         products: [{ images: [{ url: 'https://example.com/own-product.jpg' }] }],
         children: [{ products: [{ images: [{ url: 'https://example.com/child.jpg' }] }] }],
       })
-      mockPrisma.category.findMany.mockResolvedValue([category])
+      mockCategories([category])
 
       const { GET } = await import('@/app/api/categories/route')
       const response = await GET()
@@ -148,10 +177,9 @@ describe('Categories API', () => {
     })
 
     it('includes product count', async () => {
-      const category = createMockCategory({
-        _count: { products: 25 },
-      })
-      mockPrisma.category.findMany.mockResolvedValue([category])
+      const category = createMockCategory({ id: 'cat_123' })
+      mockCategories([category])
+      mockProductCounts({ cat_123: 25 })
 
       const { GET } = await import('@/app/api/categories/route')
       const response = await GET()
@@ -160,8 +188,102 @@ describe('Categories API', () => {
       expect(data[0].count).toBe(25)
     })
 
+    it('counts products held by sub-categories', async () => {
+      // Chiffon: nothing attached directly, 3 under one child and 2 under
+      // another. The card must read 5, not 0.
+      const chiffon = createMockCategory({ id: 'chiffon', name: 'Chiffon' })
+      mockCategories(
+        [chiffon],
+        [
+          { id: 'chiffon', parentId: null },
+          { id: 'handwork', parentId: 'chiffon' },
+          { id: 'gotapatti', parentId: 'chiffon' },
+        ]
+      )
+      mockProductCounts({ handwork: 3, gotapatti: 2 })
+
+      const { GET } = await import('@/app/api/categories/route')
+      const response = await GET()
+      const data = await response.json()
+
+      expect(data[0].count).toBe(5)
+    })
+
+    it('adds a category own products to its sub-category products', async () => {
+      const parent = createMockCategory({ id: 'parent' })
+      mockCategories(
+        [parent],
+        [
+          { id: 'parent', parentId: null },
+          { id: 'child', parentId: 'parent' },
+        ]
+      )
+      mockProductCounts({ parent: 4, child: 6 })
+
+      const { GET } = await import('@/app/api/categories/route')
+      const response = await GET()
+      const data = await response.json()
+
+      expect(data[0].count).toBe(10)
+    })
+
+    it('rolls up products nested more than one level deep', async () => {
+      const parent = createMockCategory({ id: 'parent' })
+      mockCategories(
+        [parent],
+        [
+          { id: 'parent', parentId: null },
+          { id: 'child', parentId: 'parent' },
+          { id: 'grandchild', parentId: 'child' },
+        ]
+      )
+      mockProductCounts({ grandchild: 7 })
+
+      const { GET } = await import('@/app/api/categories/route')
+      const response = await GET()
+      const data = await response.json()
+
+      expect(data[0].count).toBe(7)
+    })
+
+    it('does not hang when the category tree contains a cycle', async () => {
+      const parent = createMockCategory({ id: 'a' })
+      mockCategories(
+        [parent],
+        [
+          { id: 'a', parentId: 'b' },
+          { id: 'b', parentId: 'a' },
+        ]
+      )
+      mockProductCounts({ a: 1, b: 2 })
+
+      const { GET } = await import('@/app/api/categories/route')
+      const response = await GET()
+      const data = await response.json()
+
+      expect(data[0].count).toBe(3)
+    })
+
+    it('reports zero for a category whose sub-categories are all empty', async () => {
+      const parent = createMockCategory({ id: 'parent' })
+      mockCategories(
+        [parent],
+        [
+          { id: 'parent', parentId: null },
+          { id: 'child', parentId: 'parent' },
+        ]
+      )
+      mockProductCounts({})
+
+      const { GET } = await import('@/app/api/categories/route')
+      const response = await GET()
+      const data = await response.json()
+
+      expect(data[0].count).toBe(0)
+    })
+
     it('returns empty array when no categories', async () => {
-      mockPrisma.category.findMany.mockResolvedValue([])
+      mockCategories([])
 
       const { GET } = await import('@/app/api/categories/route')
       const response = await GET()
