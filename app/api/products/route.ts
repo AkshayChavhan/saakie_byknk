@@ -125,7 +125,9 @@ export async function GET(request: Request) {
       name: product.name,
       slug: product.slug,
       price: product.price,
-      comparePrice: product.comparePrice || product.price * 1.3,
+      // Pass through as-is. `null` means "not on sale" and the UI must not
+      // render a discount badge — never substitute a derived reference price.
+      comparePrice: product.comparePrice,
       rating: product._count.reviews > 0 ? 4.5 : 0,
       reviews: product._count.reviews,
       image: product.images[0]?.url || '/images/placeholder-product.svg',

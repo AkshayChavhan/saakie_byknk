@@ -32,7 +32,7 @@ interface Product {
   name: string
   slug: string
   price: number
-  comparePrice: number
+  comparePrice: number | null
   rating: number
   reviews: number
   image: string
@@ -509,7 +509,7 @@ function ProductsContent() {
                                 BESTSELLER
                               </span>
                             )}
-                            {product.comparePrice > product.price && (
+                            {product.comparePrice && product.comparePrice > product.price && (
                               <span className="bg-rose-500 text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-lg">
                                 {discount(product.price, product.comparePrice)}% OFF
                               </span>
@@ -592,7 +592,7 @@ function ProductsContent() {
                             }`}>
                               {formatPrice(product.price)}
                             </span>
-                            {product.comparePrice > product.price && (
+                            {product.comparePrice && product.comparePrice > product.price && (
                               <span className="text-sm text-gray-400 line-through">
                                 {formatPrice(product.comparePrice)}
                               </span>

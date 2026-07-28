@@ -73,7 +73,7 @@ interface RelatedProduct {
   name: string
   slug: string
   price: number
-  comparePrice: number
+  comparePrice: number | null
   image: string
 }
 
@@ -1179,7 +1179,7 @@ export function ProductDetail() {
                     <span className="font-bold text-gray-900">
                       {formatPrice(relatedProduct.price)}
                     </span>
-                    {relatedProduct.comparePrice > relatedProduct.price && (
+                    {relatedProduct.comparePrice && relatedProduct.comparePrice > relatedProduct.price && (
                       <span className="text-sm text-gray-500 line-through">
                         {formatPrice(relatedProduct.comparePrice)}
                       </span>

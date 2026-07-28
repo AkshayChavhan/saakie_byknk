@@ -13,7 +13,7 @@ interface Product {
   slug: string
   name: string
   price: number
-  comparePrice: number
+  comparePrice: number | null
   rating: number
   reviews: number
   image: string
@@ -130,9 +130,11 @@ export function FeaturedProducts() {
                       BESTSELLER
                     </span>
                   )}
-                  <span className="absolute top-2 right-2 z-10 bg-red-500 text-white text-xs px-2 py-1 rounded">
-                    {discount(product.price, product.comparePrice)}% OFF
-                  </span>
+                  {product.comparePrice && product.comparePrice > product.price && (
+                    <span className="absolute top-2 right-2 z-10 bg-red-500 text-white text-xs px-2 py-1 rounded">
+                      {discount(product.price, product.comparePrice)}% OFF
+                    </span>
+                  )}
                   
                   <div className={`absolute inset-0 bg-black/20 transition-opacity ${
                     hoveredProduct === product.id ? 'opacity-100' : 'opacity-0'
@@ -167,9 +169,11 @@ export function FeaturedProducts() {
                     <span className="font-bold text-gray-900">
                       {formatPrice(product.price)}
                     </span>
-                    <span className="text-sm text-gray-500 line-through">
-                      {formatPrice(product.comparePrice)}
-                    </span>
+                    {product.comparePrice && product.comparePrice > product.price && (
+                      <span className="text-sm text-gray-500 line-through">
+                        {formatPrice(product.comparePrice)}
+                      </span>
+                    )}
                   </div>
 
                   {product.colors && product.colors.length > 0 && (

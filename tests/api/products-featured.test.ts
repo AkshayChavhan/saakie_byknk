@@ -145,7 +145,7 @@ describe('Featured Products API', () => {
       expect(data[0].image).toBe('/images/placeholder-product.svg')
     })
 
-    it('uses default compare price when not set', async () => {
+    it('keeps compare price null when not set, so no discount is implied', async () => {
       const productNoComparePrice = createMockProduct({
         price: 1000,
         comparePrice: null,
@@ -158,7 +158,26 @@ describe('Featured Products API', () => {
       const response = await GET()
       const data = await response.json()
 
-      expect(data[0].comparePrice).toBe(1300) // 1000 * 1.3
+      // A product with no admin-set compare price is NOT on sale. Deriving one
+      // from the selling price (e.g. price * 1.3) invents a discount that never
+      // existed — every product would advertise the same fake percentage.
+      expect(data[0].comparePrice).toBeNull()
+    })
+
+    it('passes through a real compare price unchanged', async () => {
+      const discountedProduct = createMockProduct({
+        price: 1000,
+        comparePrice: 1500,
+        reviews: [],
+        _count: { reviews: 0 },
+      })
+      mockPrisma.product.findMany.mockResolvedValue([discountedProduct])
+
+      const { GET } = await import('@/app/api/products/featured/route')
+      const response = await GET()
+      const data = await response.json()
+
+      expect(data[0].comparePrice).toBe(1500)
     })
 
     it('handles database errors', async () => {
