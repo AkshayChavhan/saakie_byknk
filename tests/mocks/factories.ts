@@ -82,6 +82,10 @@ export const createMockCategory = (overrides = {}) => ({
   _count: {
     products: 10,
   },
+  // Relations the public /api/categories select pulls in to derive a fallback
+  // card image. Empty by default => the route falls through to the placeholder.
+  products: [] as Array<{ images: Array<{ url: string }> }>,
+  children: [] as Array<{ products: Array<{ images: Array<{ url: string }> }> }>,
   ...overrides,
 })
 

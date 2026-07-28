@@ -62,6 +62,12 @@ export function FeaturedProducts() {
     return Math.round(((comparePrice - price) / comparePrice) * 100)
   }
 
+  // Nothing is featured — hide the section entirely rather than showing an
+  // empty shelf. Errors still render below so the user can retry.
+  if (!loading && !error && products.length === 0) {
+    return null
+  }
+
   return (
     <section className="py-12 sm:py-16">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -95,10 +101,6 @@ export function FeaturedProducts() {
             >
               Try Again
             </button>
-          </div>
-        ) : products.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500">No featured products available</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">

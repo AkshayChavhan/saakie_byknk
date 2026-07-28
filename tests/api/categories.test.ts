@@ -86,7 +86,7 @@ describe('Categories API', () => {
       })
     })
 
-    it('uses placeholder image when category has no image', async () => {
+    it('uses placeholder image when category has no image and no products', async () => {
       const category = createMockCategory({
         image: null,
         _count: { products: 5 },
@@ -98,6 +98,53 @@ describe('Categories API', () => {
       const data = await response.json()
 
       expect(data[0].image).toBe('/images/placeholder-category.svg')
+    })
+
+    it('falls back to a product image when the category has no image', async () => {
+      const category = createMockCategory({
+        image: null,
+        products: [{ images: [{ url: 'https://example.com/own-product.jpg' }] }],
+      })
+      mockPrisma.category.findMany.mockResolvedValue([category])
+
+      const { GET } = await import('@/app/api/categories/route')
+      const response = await GET()
+      const data = await response.json()
+
+      expect(data[0].image).toBe('https://example.com/own-product.jpg')
+    })
+
+    it('falls back to a sub-category product image when it has none of its own', async () => {
+      const category = createMockCategory({
+        image: null,
+        products: [],
+        children: [
+          { products: [] },
+          { products: [{ images: [{ url: 'https://example.com/child-product.jpg' }] }] },
+        ],
+      })
+      mockPrisma.category.findMany.mockResolvedValue([category])
+
+      const { GET } = await import('@/app/api/categories/route')
+      const response = await GET()
+      const data = await response.json()
+
+      expect(data[0].image).toBe('https://example.com/child-product.jpg')
+    })
+
+    it('prefers the uploaded category image over any product image', async () => {
+      const category = createMockCategory({
+        image: 'https://example.com/uploaded.jpg',
+        products: [{ images: [{ url: 'https://example.com/own-product.jpg' }] }],
+        children: [{ products: [{ images: [{ url: 'https://example.com/child.jpg' }] }] }],
+      })
+      mockPrisma.category.findMany.mockResolvedValue([category])
+
+      const { GET } = await import('@/app/api/categories/route')
+      const response = await GET()
+      const data = await response.json()
+
+      expect(data[0].image).toBe('https://example.com/uploaded.jpg')
     })
 
     it('includes product count', async () => {
