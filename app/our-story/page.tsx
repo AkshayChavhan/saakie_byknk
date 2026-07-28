@@ -34,7 +34,7 @@ const timeline = [
   {
     year: 'Childhood',
     title: 'Where It All Began',
-    description: 'Three sisters gathered around their beloved Nani, listening to enchanting tales called "Sakhie" in their Banjari tradition.',
+    description: 'Three sisters gathered around their beloved Nani, listening to enchanting tales called "Saki" in their Banjari tradition.',
     icon: Heart,
     color: 'rose',
   },
@@ -48,7 +48,7 @@ const timeline = [
   {
     year: '2020',
     title: 'Saakie_byknk Is Born',
-    description: 'From "Sakhie" came "Saakie" — a tribute to Nani, heritage, and the timeless art of storytelling through fashion.',
+    description: 'From "Saki" came "Saakie" — a tribute to Nani, heritage, and the timeless art of storytelling through fashion.',
     icon: Star,
     color: 'pink',
   },
@@ -382,7 +382,7 @@ export default function OurStoryPage() {
           <div className="max-w-4xl mx-auto text-center">
             <Quote className="w-16 h-16 text-rose-300 mx-auto mb-8 animate-bounce-soft" />
             <blockquote className="text-2xl sm:text-3xl md:text-4xl font-light text-gray-800 italic leading-relaxed mb-8 animate-slide-up">
-              &ldquo;Just as every Sakhie told by our Nani carried a piece of her heart, every creation from Saakie carries a piece of ours.&rdquo;
+              &ldquo;Just as every Saki told by our Nani carried a piece of her heart, every creation from Saakie carries a piece of ours.&rdquo;
             </blockquote>
             <p className="text-rose-600 font-semibold text-xl animate-slide-up animation-delay-100">
               — Neha, Krutika & Kalyani
