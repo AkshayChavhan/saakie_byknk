@@ -16,6 +16,7 @@ export async function GET(request: Request) {
     const maxPrice = searchParams.get('maxPrice') ?? '999999';
     const inStock = searchParams.get('inStock');
     const colors = searchParams.get('colors');
+    const sale = searchParams.get('sale');
     const page = searchParams.get('page') ?? '1';
     const limit = searchParams.get('limit') ?? '12';
 
@@ -46,6 +47,14 @@ export async function GET(request: Request) {
     }
 
     if (inStock === 'true') where.stock = { gt: 0 };
+
+    // "On sale" means a genuine markdown — a compare-at price strictly above
+    // what is being charged. A product with no comparePrice, or one that does
+    // not undercut it, is not discounted. Comparing two fields of the same
+    // document needs a field reference rather than a literal.
+    if (sale === 'true') {
+      where.comparePrice = { gt: prisma.product.fields.price };
+    }
 
     // Filter by color: the client sends a comma-separated list of hex codes
     // (e.g. ?colors=#FF0000,#00FF00). Match products that have at least one of

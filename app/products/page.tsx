@@ -80,6 +80,7 @@ function ProductsContent() {
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
+  const [saleOnly, setSaleOnly] = useState(false)
   const [initialized, setInitialized] = useState(false)
 
   // UI states
@@ -114,9 +115,9 @@ function ProductsContent() {
     if (min) setMinPrice(min)
     if (max) setMaxPrice(max)
     if (page) setCurrentPage(parseInt(page))
-    if (sale === 'true') {
-      // Products with comparePrice are on sale - handled in API
-    }
+    // Assigned unconditionally so navigating from Sale back to All Products
+    // clears the filter — the other params intentionally persist.
+    setSaleOnly(sale === 'true')
 
     setInitialized(true)
   }, [searchParams])
@@ -147,6 +148,7 @@ function ProductsContent() {
       if (selectedCategory) params.append('category', selectedCategory)
       if (minPrice) params.append('minPrice', minPrice)
       if (maxPrice) params.append('maxPrice', maxPrice)
+      if (saleOnly) params.append('sale', 'true')
 
       const response = await fetchApi(`/api/products?${params}`)
 
@@ -164,7 +166,7 @@ function ProductsContent() {
     } finally {
       setLoading(false)
     }
-  }, [currentPage, sortBy, searchQuery, selectedCategory, minPrice, maxPrice])
+  }, [currentPage, sortBy, searchQuery, selectedCategory, minPrice, maxPrice, saleOnly])
 
   useEffect(() => {
     fetchCategories()

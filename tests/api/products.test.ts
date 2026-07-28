@@ -8,9 +8,14 @@ const mockPrisma = {
     findMany: vi.fn(),
     findUnique: vi.fn(),
     count: vi.fn(),
+    // Prisma exposes field references here; the sale filter compares
+    // comparePrice against this rather than a literal.
+    fields: { price: { __fieldRef: 'price' } },
   },
   category: {
     findUnique: vi.fn(),
+    // Read by getCategoryScopeIds when scoping a listing to a category subtree.
+    findMany: vi.fn(),
   },
 }
 
@@ -19,9 +24,13 @@ vi.mock('@/lib/prisma', () => ({
   default: mockPrisma,
 }))
 
+/** The `where` clause the route handed to Prisma for the listing query. */
+const whereClause = () => mockPrisma.product.findMany.mock.calls[0][0].where
+
 describe('Products API', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockPrisma.category.findMany.mockResolvedValue([])
   })
 
   describe('GET /api/products', () => {
@@ -63,6 +72,74 @@ describe('Products API', () => {
         where: { slug: 'sarees' },
         select: { id: true },
       })
+      // Scoped to the subtree, not an exact match — a parent category's
+      // products hang off its sub-categories.
+      expect(whereClause()).toMatchObject({ categoryId: { in: ['cat_123'] } })
+    })
+
+    it('includes sub-category products when filtering by category', async () => {
+      mockPrisma.category.findUnique.mockResolvedValue({ id: 'chiffon' })
+      mockPrisma.category.findMany.mockResolvedValue([
+        { id: 'chiffon', parentId: null },
+        { id: 'handwork', parentId: 'chiffon' },
+        { id: 'gotapatti', parentId: 'chiffon' },
+      ])
+      mockPrisma.product.findMany.mockResolvedValue([])
+      mockPrisma.product.count.mockResolvedValue(0)
+
+      const { GET } = await import('@/app/api/products/route')
+      await GET(new NextRequest('http://localhost:3000/api/products?category=chiffon'))
+
+      expect(whereClause().categoryId.in.sort()).toEqual([
+        'chiffon',
+        'gotapatti',
+        'handwork',
+      ])
+    })
+
+    it('matches nothing for an unknown category slug', async () => {
+      mockPrisma.category.findUnique.mockResolvedValue(null)
+      mockPrisma.product.findMany.mockResolvedValue([])
+      mockPrisma.product.count.mockResolvedValue(0)
+
+      const { GET } = await import('@/app/api/products/route')
+      await GET(new NextRequest('http://localhost:3000/api/products?category=bogus'))
+
+      // Must not fall through to an unfiltered listing of the whole catalogue.
+      expect(whereClause()).toMatchObject({ categoryId: { in: [] } })
+    })
+
+    it('filters to discounted products when sale=true', async () => {
+      mockPrisma.product.findMany.mockResolvedValue([])
+      mockPrisma.product.count.mockResolvedValue(0)
+
+      const { GET } = await import('@/app/api/products/route')
+      await GET(new NextRequest('http://localhost:3000/api/products?sale=true'))
+
+      // A real markdown: compare-at price strictly above the price charged.
+      expect(whereClause()).toMatchObject({
+        comparePrice: { gt: mockPrisma.product.fields.price },
+      })
+    })
+
+    it('does not filter by sale when the param is absent', async () => {
+      mockPrisma.product.findMany.mockResolvedValue([])
+      mockPrisma.product.count.mockResolvedValue(0)
+
+      const { GET } = await import('@/app/api/products/route')
+      await GET(new NextRequest('http://localhost:3000/api/products'))
+
+      expect(whereClause()).not.toHaveProperty('comparePrice')
+    })
+
+    it('does not filter by sale when sale is not true', async () => {
+      mockPrisma.product.findMany.mockResolvedValue([])
+      mockPrisma.product.count.mockResolvedValue(0)
+
+      const { GET } = await import('@/app/api/products/route')
+      await GET(new NextRequest('http://localhost:3000/api/products?sale=false'))
+
+      expect(whereClause()).not.toHaveProperty('comparePrice')
     })
 
     it('filters by price range', async () => {

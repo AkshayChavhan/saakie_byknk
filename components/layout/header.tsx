@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Search, Heart, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -16,6 +16,121 @@ const navigation = [
   { name: 'Sale', href: '/products?sale=true' },
   { name: 'Posts', href: '/post' },
 ]
+
+/**
+ * The single nav link to highlight for the current URL, or null for none.
+ *
+ * `usePathname()` drops the query string, so comparing it to `item.href`
+ * directly marks "All Products" (`/products`) active on every /products URL
+ * while the links that differ only by query — "Sale" (`?sale=true`) and
+ * "New Arrivals" (`?sort=newest`) — can never match at all.
+ *
+ * A link qualifies when its path matches and every query param it pins is
+ * present with that value. Where several links share a path, the most specific
+ * one wins, so `?sale=true` highlights Sale rather than All Products, while a
+ * bare `/products` (or one carrying only unrelated params like `?page=2`)
+ * falls back to All Products.
+ */
+function useActiveNavHref() {
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  return useMemo(() => {
+    let active: string | null = null
+    let bestSpecificity = -1
+
+    for (const { href } of navigation) {
+      const [path, query = ''] = href.split('?')
+      if (path !== pathname) continue
+
+      const pinned: Array<[string, string]> = []
+      new URLSearchParams(query).forEach((value, key) => pinned.push([key, value]))
+      if (pinned.some(([key, value]) => searchParams.get(key) !== value)) continue
+
+      if (pinned.length > bestSpecificity) {
+        active = href
+        bestSpecificity = pinned.length
+      }
+    }
+
+    return active
+  }, [pathname, searchParams])
+}
+
+type NavVariant = 'desktop' | 'mobileRow' | 'drawer'
+
+const navLinkClass = (variant: NavVariant, isActive: boolean) => {
+  switch (variant) {
+    case 'desktop':
+      return cn(
+        'text-sm font-medium transition-colors hover:text-gray-300',
+        isActive ? 'text-white font-semibold' : 'text-gray-200'
+      )
+    case 'mobileRow':
+      return cn(
+        'whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-colors',
+        isActive
+          ? 'bg-white/15 text-white'
+          : 'text-gray-300 hover:text-white hover:bg-white/10'
+      )
+    case 'drawer':
+      return cn(
+        'text-base font-medium py-3 px-4 rounded-xl transition-all duration-200',
+        isActive
+          ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30'
+          : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+      )
+  }
+}
+
+interface NavLinksProps {
+  variant: NavVariant
+  activeHref: string | null
+  onNavigate?: () => void
+  isClosing?: boolean
+}
+
+/** Presentational half — no hooks, so it doubles as the Suspense fallback. */
+function NavLinks({ variant, activeHref, onNavigate, isClosing }: NavLinksProps) {
+  return (
+    <>
+      {navigation.map((item, index) => (
+        <Link
+          key={item.name}
+          href={item.href}
+          onClick={onNavigate}
+          className={cn(
+            navLinkClass(variant, activeHref === item.href),
+            variant === 'drawer' &&
+              (isClosing
+                ? `menu-item-exit menu-stagger-exit-${index + 1}`
+                : `menu-item-enter menu-stagger-${index + 1}`)
+          )}
+        >
+          {item.name}
+        </Link>
+      ))}
+    </>
+  )
+}
+
+/**
+ * Reads the query string, so every use must sit under a Suspense boundary —
+ * otherwise `useSearchParams` opts each statically-rendered page that shows the
+ * header into client rendering (see the same pattern in app/layout.tsx).
+ */
+function ActiveNavLinks(props: Omit<NavLinksProps, 'activeHref'>) {
+  return <NavLinks {...props} activeHref={useActiveNavHref()} />
+}
+
+/** Links render immediately; only the highlight waits on the query string. */
+function SuspendedNavLinks(props: Omit<NavLinksProps, 'activeHref'>) {
+  return (
+    <Suspense fallback={<NavLinks {...props} activeHref={null} />}>
+      <ActiveNavLinks {...props} />
+    </Suspense>
+  )
+}
 
 // Animated Hamburger Component
 function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
@@ -131,18 +246,7 @@ export function Header() {
           </div>
 
           <div className="hidden lg:flex items-center space-x-8">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  'text-sm font-medium transition-colors hover:text-gray-300',
-                  pathname === item.href ? 'text-white font-semibold' : 'text-gray-200'
-                )}
-              >
-                {item.name}
-              </Link>
-            ))}
+            <SuspendedNavLinks variant="desktop" />
             {isAdmin && (
               <>
                 <Link
@@ -204,20 +308,7 @@ export function Header() {
             visible — it stays put as the page scrolls. */}
         <div className="lg:hidden -mx-4 sm:-mx-6 border-t border-gray-800">
           <div className="flex items-center gap-1 overflow-x-auto px-4 sm:px-6 py-2 scrollbar-hide">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  'whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-colors',
-                  pathname === item.href
-                    ? 'bg-white/15 text-white'
-                    : 'text-gray-300 hover:text-white hover:bg-white/10'
-                )}
-              >
-                {item.name}
-              </Link>
-            ))}
+            <SuspendedNavLinks variant="mobileRow" />
             {isAdmin && (
               <Link
                 href="/admin"
@@ -306,24 +397,11 @@ export function Header() {
             {/* Navigation Links */}
             <nav className="p-4">
               <div className="flex flex-col space-y-1">
-                {navigation.map((item, index) => (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    onClick={handleCloseMenu}
-                    className={cn(
-                      'text-base font-medium py-3 px-4 rounded-xl transition-all duration-200',
-                      pathname === item.href
-                        ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30'
-                        : 'text-gray-300 hover:bg-gray-800 hover:text-white',
-                      isClosing
-                        ? `menu-item-exit menu-stagger-exit-${index + 1}`
-                        : `menu-item-enter menu-stagger-${index + 1}`
-                    )}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
+                <SuspendedNavLinks
+                  variant="drawer"
+                  onNavigate={handleCloseMenu}
+                  isClosing={isClosing}
+                />
                 {isAdmin && (
                   <Link
                     href="/admin"
