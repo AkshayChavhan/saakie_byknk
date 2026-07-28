@@ -16,6 +16,7 @@ import {
   MAX_TOTAL_UPLOAD_BYTES,
 } from '@/lib/image-compress'
 import { useToast } from '@/components/ui/toast'
+import { HoldToDeleteDialog } from '@/components/admin/hold-to-delete-dialog'
 
 interface Product {
   id: string
@@ -73,6 +74,9 @@ export default function ProductsManagement() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  // The product awaiting a held confirmation, and whether its DELETE is in flight.
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const [showViewModal, setShowViewModal] = useState(false)
   const [isClosingViewModal, setIsClosingViewModal] = useState(false)
   const productsPerPage = 10
@@ -216,22 +220,34 @@ export default function ProductsManagement() {
     }
   }, [imagePreviews])
 
-  const handleDeleteProduct = async (productId: string, productName: string) => {
-    if (confirm('Are you sure you want to delete this product?')) {
-      try {
-        const response = await fetchApi(`/api/admin/products/${productId}`, {
-          method: 'DELETE',
-        })
-        if (response.ok) {
-          setProducts(products.filter(product => product.id !== productId))
-          toast.success('Product Deleted', `"${productName}" has been deleted.`)
-        } else {
-          toast.error('Delete Failed', 'Could not delete product.')
-        }
-      } catch (error) {
-        console.error('Failed to delete product:', error)
-        toast.error('Delete Failed', 'An error occurred.')
+  // Deleting is guarded by a hold-to-confirm dialog rather than a one-click
+  // window.confirm() — see components/admin/hold-to-delete-dialog.tsx.
+  const handleDeleteProduct = (productId: string, productName: string) => {
+    setDeleteTarget({ id: productId, name: productName })
+  }
+
+  const confirmDeleteProduct = async () => {
+    if (!deleteTarget) return
+    const { id, name } = deleteTarget
+
+    setDeleting(true)
+    try {
+      const response = await fetchApi(`/api/admin/products/${id}`, {
+        method: 'DELETE',
+      })
+      if (response.ok) {
+        setProducts(products.filter(product => product.id !== id))
+        toast.success('Product Deleted', `"${name}" has been deleted.`)
+        setDeleteTarget(null)
+      } else {
+        // Keep the dialog open so the admin can retry or back out.
+        toast.error('Delete Failed', 'Could not delete product.')
       }
+    } catch (error) {
+      console.error('Failed to delete product:', error)
+      toast.error('Delete Failed', 'An error occurred.')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -1653,6 +1669,14 @@ export default function ProductsManagement() {
       </div>
 
       {/* Custom Animations */}
+      <HoldToDeleteDialog
+        open={deleteTarget !== null}
+        itemName={deleteTarget?.name ?? ''}
+        busy={deleting}
+        onConfirm={confirmDeleteProduct}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
       <style jsx>{`
         @keyframes slide-up {
           from { transform: translateY(100%); opacity: 0; }
