@@ -71,7 +71,7 @@ export async function GET(
       name: p.name,
       slug: p.slug,
       price: p.price,
-      comparePrice: p.comparePrice ?? p.price,
+      comparePrice: p.comparePrice,
       image: p.images[0]?.url || '/images/placeholder-product.svg',
     }));
 

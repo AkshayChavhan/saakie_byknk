@@ -172,64 +172,74 @@ export function HeroSection() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
           </div>
           
-          <div className="relative z-10 h-full flex items-center">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/*
+            On mobile the content is confined to the bottom half (top-1/2) so it always
+            sits *below* the vertically-centred prev/next arrows and never overlaps them.
+            From `sm` up it goes back to filling the slide and being vertically centred.
+          */}
+          <div className="absolute inset-x-0 bottom-0 top-1/2 sm:top-0 z-10 flex items-end sm:items-center">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-12 sm:pb-0">
               <div className="max-w-2xl text-white">
-                {/* Badge */}
-                {slide.badge && (
-                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold text-white mb-4 ${getBadgeColor(slide.type)}`}>
-                    {getBadgeIcon(slide.type)}
-                    {slide.badge}
-                  </div>
-                )}
-
-                {/* Subtitle with discount */}
-                <div className="flex items-center gap-2 mb-2">
-                  <p className="text-sm sm:text-base uppercase tracking-wider animate-slide-up">
-                    {slide.subtitle}
-                  </p>
-                  {slide.discount && (
-                    <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
-                      -{slide.discount}%
-                    </span>
+                {/* Badge + subtitle share one row on mobile to save vertical space */}
+                <div className="flex flex-wrap items-center gap-2 mb-1 sm:block sm:mb-0">
+                  {slide.badge && (
+                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold text-white sm:mb-4 ${getBadgeColor(slide.type)}`}>
+                      {getBadgeIcon(slide.type)}
+                      {slide.badge}
+                    </div>
                   )}
+
+                  {/* Subtitle with discount */}
+                  <div className="flex items-center gap-2 sm:mb-2">
+                    <p className="text-xs sm:text-base uppercase tracking-wider animate-slide-up">
+                      {slide.subtitle}
+                    </p>
+                    {slide.discount && (
+                      <span className="bg-red-500 text-white px-2 py-0.5 sm:py-1 rounded text-xs font-bold">
+                        -{slide.discount}%
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Title */}
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 animate-slide-up animation-delay-100">
+                <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold mb-1 sm:mb-4 line-clamp-2 animate-slide-up animation-delay-100">
                   {slide.title}
                 </h2>
 
                 {/* Description */}
-                <p className="text-base sm:text-lg lg:text-xl mb-6 animate-slide-up animation-delay-200">
+                <p className="text-sm sm:text-lg lg:text-xl mb-3 sm:mb-6 line-clamp-2 sm:line-clamp-none animate-slide-up animation-delay-200">
                   {slide.description}
                 </p>
 
-                {/* Product Info */}
-                {slide.product && (
-                  <div className="mb-6 animate-slide-up animation-delay-250">
-                    <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 inline-block">
-                      <p className="text-sm text-white/80 mb-1">{slide.product.category}</p>
-                      <p className="font-semibold text-lg">{slide.product.name}</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xl font-bold">₹{slide.product.price.toLocaleString()}</span>
-                        {slide.product.comparePrice && (
-                          <span className="text-sm text-white/60 line-through">
-                            ₹{slide.product.comparePrice.toLocaleString()}
-                          </span>
-                        )}
+                {/* Details + CTA — on mobile: details bottom-left, button bottom-right */}
+                <div className="flex items-end gap-3 sm:block">
+                  {/* Product Info */}
+                  {slide.product && (
+                    <div className="min-w-0 flex-1 sm:flex-none sm:mb-6 animate-slide-up animation-delay-250">
+                      <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 sm:p-4 inline-block max-w-full">
+                        <p className="text-xs sm:text-sm text-white/80 mb-0.5 sm:mb-1">{slide.product.category}</p>
+                        <p className="font-semibold text-sm sm:text-lg line-clamp-1">{slide.product.name}</p>
+                        <div className="flex items-center gap-2 mt-1 sm:mt-2">
+                          <span className="text-base sm:text-xl font-bold">₹{slide.product.price.toLocaleString()}</span>
+                          {slide.product.comparePrice && (
+                            <span className="text-xs sm:text-sm text-white/60 line-through">
+                              ₹{slide.product.comparePrice.toLocaleString()}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* CTA Button */}
-                <Link
-                  href={slide.link}
-                  className="inline-block bg-white text-gray-900 px-6 sm:px-8 py-3 sm:py-4 rounded-md font-semibold hover:bg-gray-100 transition-all duration-300 animate-slide-up animation-delay-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-                >
-                  {slide.cta}
-                </Link>
+                  {/* CTA Button */}
+                  <Link
+                    href={slide.link}
+                    className="shrink-0 ml-auto sm:ml-0 inline-block bg-white text-gray-900 px-5 sm:px-8 py-2.5 sm:py-4 rounded-md text-sm sm:text-base font-semibold hover:bg-gray-100 transition-all duration-300 animate-slide-up animation-delay-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                  >
+                    {slide.cta}
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
@@ -238,18 +248,18 @@ export function HeroSection() {
 
       <button
         onClick={prevSlide}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors"
+        className="absolute left-1 sm:left-4 top-1/2 -translate-y-1/2 z-30 p-1.5 sm:p-2 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors"
         aria-label="Previous slide"
       >
-        <ChevronLeft size={24} />
+        <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
       </button>
 
       <button
         onClick={nextSlide}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors"
+        className="absolute right-1 sm:right-4 top-1/2 -translate-y-1/2 z-30 p-1.5 sm:p-2 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors"
         aria-label="Next slide"
       >
-        <ChevronRight size={24} />
+        <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
       </button>
 
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex space-x-2">

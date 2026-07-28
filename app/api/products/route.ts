@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { apiError } from '@/lib/server/errors';
+import { getCategoryScopeIds } from '@/lib/server/category-counts';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,6 +16,7 @@ export async function GET(request: Request) {
     const maxPrice = searchParams.get('maxPrice') ?? '999999';
     const inStock = searchParams.get('inStock');
     const colors = searchParams.get('colors');
+    const sale = searchParams.get('sale');
     const page = searchParams.get('page') ?? '1';
     const limit = searchParams.get('limit') ?? '12';
 
@@ -30,7 +32,14 @@ export async function GET(request: Request) {
         where: { slug: category },
         select: { id: true },
       });
-      if (categoryRecord) where.categoryId = categoryRecord.id;
+      // Scope to the whole subtree: a parent category's products almost always
+      // hang off its sub-categories, so an exact categoryId match would render
+      // an empty grid for the very categories whose cards advertise products.
+      // An unrecognised slug matches nothing rather than falling through to
+      // an unfiltered listing of the entire catalogue.
+      where.categoryId = categoryRecord
+        ? { in: await getCategoryScopeIds(categoryRecord.id) }
+        : { in: [] };
     }
 
     if (minPriceNum > 0 || maxPriceNum < 999999) {
@@ -38,6 +47,14 @@ export async function GET(request: Request) {
     }
 
     if (inStock === 'true') where.stock = { gt: 0 };
+
+    // "On sale" means a genuine markdown — a compare-at price strictly above
+    // what is being charged. A product with no comparePrice, or one that does
+    // not undercut it, is not discounted. Comparing two fields of the same
+    // document needs a field reference rather than a literal.
+    if (sale === 'true') {
+      where.comparePrice = { gt: prisma.product.fields.price };
+    }
 
     // Filter by color: the client sends a comma-separated list of hex codes
     // (e.g. ?colors=#FF0000,#00FF00). Match products that have at least one of
@@ -108,7 +125,9 @@ export async function GET(request: Request) {
       name: product.name,
       slug: product.slug,
       price: product.price,
-      comparePrice: product.comparePrice || product.price * 1.3,
+      // Pass through as-is. `null` means "not on sale" and the UI must not
+      // render a discount badge — never substitute a derived reference price.
+      comparePrice: product.comparePrice,
       rating: product._count.reviews > 0 ? 4.5 : 0,
       reviews: product._count.reviews,
       image: product.images[0]?.url || '/images/placeholder-product.svg',

@@ -62,8 +62,7 @@ export default function ContactPage() {
                   <Phone className="w-6 h-6 text-rose-600" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Phone</h3>
-                <p className="text-gray-600 text-sm">+91 98765 43210</p>
-                <p className="text-gray-600 text-sm">+91 98765 43211</p>
+                <p className="text-gray-600 text-sm">+91 7219160782</p>
               </div>
 
               <div className="bg-white rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow">
@@ -71,8 +70,7 @@ export default function ContactPage() {
                   <Mail className="w-6 h-6 text-rose-600" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Email</h3>
-                <p className="text-gray-600 text-sm">support@saakie-byknk.com</p>
-                <p className="text-gray-600 text-sm">info@saakie-byknk.com</p>
+                <p className="text-gray-600 text-sm">saakiebyknk@gmail.com</p>
               </div>
 
               <div className="bg-white rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow">
@@ -259,7 +257,7 @@ export default function ContactPage() {
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-rose-600 font-bold">-</span>
-                        WhatsApp support: +91 98765 43210
+                        WhatsApp support: +91 7219160782
                       </li>
                     </ul>
                   </div>

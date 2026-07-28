@@ -13,7 +13,7 @@ interface Product {
   slug: string
   name: string
   price: number
-  comparePrice: number
+  comparePrice: number | null
   rating: number
   reviews: number
   image: string
@@ -62,6 +62,12 @@ export function FeaturedProducts() {
     return Math.round(((comparePrice - price) / comparePrice) * 100)
   }
 
+  // Nothing is featured — hide the section entirely rather than showing an
+  // empty shelf. Errors still render below so the user can retry.
+  if (!loading && !error && products.length === 0) {
+    return null
+  }
+
   return (
     <section className="py-12 sm:py-16">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -96,10 +102,6 @@ export function FeaturedProducts() {
               Try Again
             </button>
           </div>
-        ) : products.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500">No featured products available</p>
-          </div>
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {products.map((product, index) => (
@@ -128,9 +130,11 @@ export function FeaturedProducts() {
                       BESTSELLER
                     </span>
                   )}
-                  <span className="absolute top-2 right-2 z-10 bg-red-500 text-white text-xs px-2 py-1 rounded">
-                    {discount(product.price, product.comparePrice)}% OFF
-                  </span>
+                  {product.comparePrice && product.comparePrice > product.price && (
+                    <span className="absolute top-2 right-2 z-10 bg-red-500 text-white text-xs px-2 py-1 rounded">
+                      {discount(product.price, product.comparePrice)}% OFF
+                    </span>
+                  )}
                   
                   <div className={`absolute inset-0 bg-black/20 transition-opacity ${
                     hoveredProduct === product.id ? 'opacity-100' : 'opacity-0'
@@ -165,9 +169,11 @@ export function FeaturedProducts() {
                     <span className="font-bold text-gray-900">
                       {formatPrice(product.price)}
                     </span>
-                    <span className="text-sm text-gray-500 line-through">
-                      {formatPrice(product.comparePrice)}
-                    </span>
+                    {product.comparePrice && product.comparePrice > product.price && (
+                      <span className="text-sm text-gray-500 line-through">
+                        {formatPrice(product.comparePrice)}
+                      </span>
+                    )}
                   </div>
 
                   {product.colors && product.colors.length > 0 && (

@@ -14,6 +14,38 @@ vi.mock('@/components/cart', () => ({
   CartIcon: () => <div data-testid="cart-icon">Cart</div>,
 }))
 
+// The global setup mock pins the location; override it here so each test can
+// place the header on a specific URL, query string included.
+const location = vi.hoisted(() => ({ pathname: '/', search: '' }))
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+  }),
+  usePathname: () => location.pathname,
+  useSearchParams: () => new URLSearchParams(location.search),
+}))
+
+const at = (pathname: string, search = '') => {
+  location.pathname = pathname
+  location.search = search
+}
+
+/** The class each nav variant uses to mark its active link. */
+const ACTIVE_MARKERS = ['font-semibold', 'bg-white/15', 'bg-rose-600']
+const NAV_LABELS = ['Home', 'New Arrivals', 'All Products', 'Sale', 'Posts']
+
+/** Nav labels currently rendered with active styling, in any variant. */
+const activeNavLabels = () =>
+  NAV_LABELS.filter((label) =>
+    screen
+      .queryAllByText(label)
+      .some((el) => ACTIVE_MARKERS.some((c) => el.className.includes(c)))
+  )
+
 // Helper: build a useSession() return value.
 const signedOut = () => ({ data: null, status: 'unauthenticated' as const })
 const signedIn = (role = 'USER') => ({
@@ -28,6 +60,73 @@ describe('Header component', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockUseSession.mockReturnValue(signedOut())
+    at('/')
+  })
+
+  describe('active nav highlighting', () => {
+    it('highlights Sale — not All Products — on /products?sale=true', () => {
+      at('/products', 'sale=true')
+
+      render(<Header />)
+
+      expect(activeNavLabels()).toEqual(['Sale'])
+    })
+
+    it('highlights New Arrivals on /products?sort=newest', () => {
+      at('/products', 'sort=newest')
+
+      render(<Header />)
+
+      expect(activeNavLabels()).toEqual(['New Arrivals'])
+    })
+
+    it('highlights All Products on a bare /products', () => {
+      at('/products')
+
+      render(<Header />)
+
+      expect(activeNavLabels()).toEqual(['All Products'])
+    })
+
+    it('keeps Sale highlighted alongside unrelated params', () => {
+      at('/products', 'sale=true&page=2')
+
+      render(<Header />)
+
+      expect(activeNavLabels()).toEqual(['Sale'])
+    })
+
+    it('falls back to All Products for a filter the nav does not name', () => {
+      at('/products', 'category=pure-silk')
+
+      render(<Header />)
+
+      expect(activeNavLabels()).toEqual(['All Products'])
+    })
+
+    it('does not highlight Sale when the param is not true', () => {
+      at('/products', 'sale=false')
+
+      render(<Header />)
+
+      expect(activeNavLabels()).toEqual(['All Products'])
+    })
+
+    it('highlights Home on the root path', () => {
+      at('/')
+
+      render(<Header />)
+
+      expect(activeNavLabels()).toEqual(['Home'])
+    })
+
+    it('highlights nothing on an unrelated page', () => {
+      at('/about')
+
+      render(<Header />)
+
+      expect(activeNavLabels()).toEqual([])
+    })
   })
 
   it('renders the logo', () => {

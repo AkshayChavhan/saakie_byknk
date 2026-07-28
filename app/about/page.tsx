@@ -146,8 +146,8 @@ export default function AboutPage() {
               <div className="relative animate-slide-left order-2 md:order-1">
                 <div className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl">
                   <Image
-                    src="https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=800&h=1000&fit=crop"
-                    alt="Traditional Indian Fashion"
+                    src="/images/owners.jpg"
+                    alt="Saakie_byknk owners"
                     fill
                     className="object-cover"
                   />
@@ -161,7 +161,7 @@ export default function AboutPage() {
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900">Crafted with Love</p>
-                      <p className="text-sm text-gray-500">Since 2020</p>
+                      <p className="text-sm text-gray-500">Since 2024</p>
                     </div>
                   </div>
                 </div>

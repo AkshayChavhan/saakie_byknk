@@ -134,17 +134,19 @@ describe('FeaturedProducts component', () => {
     })
   })
 
-  it('shows empty state when no products', async () => {
+  it('hides the whole section when no products are featured', async () => {
     ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve([]),
     })
 
-    render(<FeaturedProducts />)
+    const { container } = render(<FeaturedProducts />)
 
     await waitFor(() => {
-      expect(screen.getByText('No featured products available')).toBeInTheDocument()
+      expect(screen.queryByText('Featured Products')).not.toBeInTheDocument()
     })
+    expect(screen.queryByText(/View All Products/i)).not.toBeInTheDocument()
+    expect(container).toBeEmptyDOMElement()
   })
 
   it('displays NEW badge for new products', async () => {

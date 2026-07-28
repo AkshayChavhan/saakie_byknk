@@ -34,7 +34,7 @@ const timeline = [
   {
     year: 'Childhood',
     title: 'Where It All Began',
-    description: 'Three sisters gathered around their beloved Nani, listening to enchanting tales called "Sakhie" in their Banjari tradition.',
+    description: 'Three sisters gathered around their beloved Nani, listening to enchanting tales called "Saki".',
     icon: Heart,
     color: 'rose',
   },
@@ -48,7 +48,7 @@ const timeline = [
   {
     year: '2020',
     title: 'Saakie_byknk Is Born',
-    description: 'From "Sakhie" came "Saakie" — a tribute to Nani, heritage, and the timeless art of storytelling through fashion.',
+    description: 'From "Saki" came "Saakie" — a tribute to Nani, heritage, and the timeless art of storytelling through fashion.',
     icon: Star,
     color: 'pink',
   },
@@ -83,6 +83,15 @@ const values = [
     gradient: 'from-pink-500 to-rose-500',
     bg: 'bg-gradient-to-br from-pink-50 to-rose-50',
   },
+]
+
+const hashtags = [
+  '#SaakieWomen',
+  '#SisterhoodStories',
+  '#WearYourStory',
+  '#SareeLove',
+  '#SistersForLife',
+  '#EthnicElegance',
 ]
 
 export default function OurStoryPage() {
@@ -173,50 +182,36 @@ export default function OurStoryPage() {
                   The Tale of Three Sisters
                 </span>
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                  A Story Woven with Love
+                  From Childhood Dreams to Woven Dreams
                 </h2>
                 <div className="space-y-6 text-lg text-gray-600 leading-relaxed">
                   <p>
-                    In the warm embrace of our childhood home, three sisters — <strong className="text-rose-600">Neha</strong>, <strong className="text-rose-600">Krutika</strong>, and <strong className="text-rose-600">Kalyani</strong> — would gather around our beloved Nani, eagerly awaiting her enchanting tales.
+                    <strong className="text-rose-600">SAAKIE</strong> is the story of sisterhood — more than just a saree brand, it&rsquo;s a story woven by three sisters who turned their childhood dream into reality.
                   </p>
                   <p>
-                    In our Banjari tradition, these cherished story sessions are called <strong className="text-rose-600">&ldquo;Sakhie&rdquo;</strong> — a word that holds the essence of sisterhood, storytelling, and the bonds that tie generations together.
+                    Born from our shared passion to create something meaningful together, we invite every woman to share her own story through the elegance of her attire.
+                  </p>
+                  <p>
+                    It&rsquo;s time for all sisters to embrace their tales, wear them with pride, and share their legacy.
                   </p>
                 </div>
+
+                <p className="mt-8 text-xl sm:text-2xl font-semibold text-gray-900">
+                  Because Every Attire Tells a Story <span aria-hidden="true">🤍</span>
+                </p>
+
+                <ul className="mt-6 flex flex-wrap gap-2" aria-label="Brand hashtags">
+                  {hashtags.map((tag) => (
+                    <li
+                      key={tag}
+                      className="rounded-full bg-rose-50 px-3 py-1 text-sm font-medium text-rose-600"
+                    >
+                      {tag}
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Name Origin - Highlight Section */}
-      <section className="py-16 md:py-24 bg-gray-900 text-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-rose-500 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-orange-500 rounded-full blur-3xl" />
-        </div>
-
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="animate-scale-in">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-white/10 backdrop-blur-sm rounded-full mb-8">
-                <Sparkles className="w-10 h-10 text-rose-400" />
-              </div>
-            </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-8 animate-slide-up">
-              From{' '}
-              <span className="text-rose-400">&ldquo;Sakhie&rdquo;</span>{' '}
-              was born{' '}
-              <span className="text-orange-400">&ldquo;Saakie&rdquo;</span>
-            </h2>
-            <p className="text-xl md:text-2xl text-gray-300 mb-8 animate-slide-up animation-delay-100">
-              by <span className="text-rose-400 font-semibold">K</span>rutika,{' '}
-              <span className="text-orange-400 font-semibold">N</span>eha &{' '}
-              <span className="text-pink-400 font-semibold">K</span>alyani
-            </p>
-            <p className="text-lg text-gray-400 max-w-2xl mx-auto animate-slide-up animation-delay-200">
-              A tribute to our Nani, our heritage, and the timeless art of storytelling through fashion.
-            </p>
           </div>
         </div>
       </section>
@@ -387,7 +382,7 @@ export default function OurStoryPage() {
           <div className="max-w-4xl mx-auto text-center">
             <Quote className="w-16 h-16 text-rose-300 mx-auto mb-8 animate-bounce-soft" />
             <blockquote className="text-2xl sm:text-3xl md:text-4xl font-light text-gray-800 italic leading-relaxed mb-8 animate-slide-up">
-              &ldquo;Just as every Sakhie told by our Nani carried a piece of her heart, every creation from Saakie carries a piece of ours.&rdquo;
+              &ldquo;Just as every Saki told by our Nani carried a piece of her heart, every creation from Saakie carries a piece of ours.&rdquo;
             </blockquote>
             <p className="text-rose-600 font-semibold text-xl animate-slide-up animation-delay-100">
               — Neha, Krutika & Kalyani
