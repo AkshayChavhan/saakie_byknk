@@ -34,7 +34,7 @@ const timeline = [
   {
     year: 'Childhood',
     title: 'Where It All Began',
-    description: 'Three sisters gathered around their beloved Nani, listening to enchanting tales called "Saki" in their Banjari tradition.',
+    description: 'Three sisters gathered around their beloved Nani, listening to enchanting tales called "Saki".',
     icon: Heart,
     color: 'rose',
   },
