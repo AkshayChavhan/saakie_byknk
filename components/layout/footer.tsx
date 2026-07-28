@@ -57,7 +57,7 @@ export function Footer() {
               </div>
               <div className="flex items-center text-gray-300">
                 <Phone size={18} className="mr-3 flex-shrink-0" />
-                <span>+91 12345 67890</span>
+                <span>+91 7219160782</span>
               </div>
               <div className="flex items-start text-gray-300">
                 <MapPin size={18} className="mr-3 flex-shrink-0 mt-1" />

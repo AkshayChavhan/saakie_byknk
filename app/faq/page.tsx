@@ -284,7 +284,7 @@ export default function FAQPage() {
                 Contact Us
               </Link>
               <a
-                href="mailto:support@saakie-byknk.com"
+                href="mailto:saakiebyknk@gmail.com"
                 className="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-900 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
               >
                 Email Support
