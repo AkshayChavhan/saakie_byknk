@@ -1,4 +1,6 @@
 import withSerwistInit from '@serwist/next'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 // @serwist/next v9 is ESM-only, which is why this config is `.mjs` (ESM) rather
 // than the previous CommonJS `next.config.js`. Serwist compiles the service
@@ -34,6 +36,14 @@ const nextConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   serverExternalPackages: ['@prisma/client'],
+  // Pin the workspace root to this directory. A stray `package-lock.json` in
+  // the home directory above the repo makes Next infer $HOME as the root
+  // ("we detected multiple lockfiles"), which warns on every `next dev` and
+  // points file tracing at the whole home directory. Derived from the file URL
+  // rather than `import.meta.dirname` because that needs Node >= 20.11 while
+  // `engines` only asks for >= 20.0 — there it is silently `undefined` and the
+  // bad inference quietly returns.
+  outputFileTracingRoot: path.dirname(fileURLToPath(import.meta.url)),
   experimental: {
     serverActions: {
       bodySizeLimit: '2mb',
