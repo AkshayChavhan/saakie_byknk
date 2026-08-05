@@ -87,7 +87,9 @@ function groupBySubCategory(
   }
 
   const LAST = Number.MAX_SAFE_INTEGER
-  return [...groups.values()].sort(
+  // `Array.from`, not `[...groups.values()]` — tsconfig targets es5 without
+  // `downlevelIteration`, so spreading a Map iterator is a compile error.
+  return Array.from(groups.values()).sort(
     (a, b) =>
       (order.get(a.slug) ?? LAST) - (order.get(b.slug) ?? LAST) ||
       a.name.localeCompare(b.name)
