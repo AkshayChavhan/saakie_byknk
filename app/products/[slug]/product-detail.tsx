@@ -25,6 +25,7 @@ import { isMethodAllowed, describeModes } from '@/lib/payment'
 import { fetchApi, cartApi, wishlistApi } from '@/lib/api'
 import { useToast } from '@/components/ui/toast'
 import { Header } from '@/components/layout/header'
+import { RatingBadge } from '@/components/ui/rating-badge'
 
 interface ProductImage {
   id: string
@@ -587,23 +588,12 @@ export function ProductDetail() {
               </h1>
               
               <div className="flex items-center space-x-4 mb-4">
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      size={16}
-                      className={`${
-                        i < Math.floor(product.rating)
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-gray-300'
-                      }`}
-                    />
-                  ))}
-                  <span className="ml-2 text-sm text-gray-600">
-                    {product.rating} ({product.reviewCount} reviews)
-                  </span>
-                </div>
-                
+                <RatingBadge
+                  rating={product.rating}
+                  reviews={product.reviewCount}
+                  size="md"
+                />
+
                 {product.salesCount > 0 && (
                   <span className="text-sm text-gray-500">
                     {product.salesCount} sold
@@ -1006,7 +996,7 @@ export function ProductDetail() {
                       <p>{reviewEligibility.message}</p>
                       {reviewEligibility.reason === 'NOT_PURCHASED' && (
                         <Link
-                          href="/account/orders"
+                          href="/account"
                           className="inline-block text-rose-600 hover:text-rose-700 font-medium"
                         >
                           View your orders

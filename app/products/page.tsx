@@ -24,6 +24,7 @@ import {
 import { formatPrice } from '@/lib/utils'
 import { Header } from '@/components/layout/header'
 import { SareeLoader } from '@/components/ui/saree-loader'
+import { RatingBadge } from '@/components/ui/rating-badge'
 import { fetchApi } from '@/lib/api'
 
 interface Product {
@@ -593,20 +594,11 @@ function ProductsContent() {
                           </h3>
 
                           {/* Rating */}
-                          <div className="flex items-center gap-1.5 mb-2">
-                            <div className="flex items-center gap-0.5">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  size={12}
-                                  className={i < Math.floor(product.rating) ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}
-                                />
-                              ))}
-                            </div>
-                            <span className="text-xs text-gray-500">
-                              ({product.reviews})
-                            </span>
-                          </div>
+                          <RatingBadge
+                            rating={product.rating}
+                            reviews={product.reviews}
+                            className="mb-2"
+                          />
 
                           {/* Price */}
                           <div className="flex items-center gap-2 flex-wrap">

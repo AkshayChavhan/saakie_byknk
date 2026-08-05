@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronRight, Filter, X, Grid, List, Folder, ArrowRight, Home } from 'lucide-react'
 import { Header } from '@/components/layout/header'
+import { RatingBadge } from '@/components/ui/rating-badge'
 import { formatPrice } from '@/lib/utils'
 import { fetchApi } from '@/lib/api'
 
@@ -416,13 +417,7 @@ export function CategoryView() {
                         )}
                       </div>
                     </div>
-                    {product.rating > 0 && (
-                      <div className="flex items-center text-sm text-gray-600">
-                        <span className="text-yellow-400">★</span>
-                        <span className="ml-1">{product.rating}</span>
-                        <span className="ml-1">({product.reviews})</span>
-                      </div>
-                    )}
+                    <RatingBadge rating={product.rating} reviews={product.reviews} />
                   </div>
                 ) : (
                   // List View
@@ -456,13 +451,11 @@ export function CategoryView() {
                           </>
                         )}
                       </div>
-                      {product.rating > 0 && (
-                        <div className="flex items-center text-sm text-gray-600 mb-2">
-                          <span className="text-yellow-400">★</span>
-                          <span className="ml-1">{product.rating}</span>
-                          <span className="ml-1">({product.reviews} reviews)</span>
-                        </div>
-                      )}
+                      <RatingBadge
+                        rating={product.rating}
+                        reviews={product.reviews}
+                        className="mb-2"
+                      />
                       <div className="flex items-center space-x-4 text-sm">
                         {product.isNew && (
                           <span className="bg-primary text-white text-xs px-2 py-1 rounded-full">NEW</span>
