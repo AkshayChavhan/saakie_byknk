@@ -4,7 +4,6 @@ import { Building2, Ruler, Heart, Target, Eye, Award, Users, Palette, Sparkles, 
 import Link from 'next/link'
 import Image from 'next/image'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 
 const founders = [
   {
@@ -281,7 +280,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <Footer />
     </div>
   )
 }

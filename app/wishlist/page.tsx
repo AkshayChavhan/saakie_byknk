@@ -6,7 +6,6 @@ import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import { Heart, ShoppingCart, Trash2, ArrowRight, Package } from 'lucide-react'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 import { formatPrice } from '@/lib/utils'
 import { wishlistApi, cartApi } from '@/lib/api'
 import { useToast } from '@/components/ui/toast'
@@ -127,7 +126,6 @@ export default function WishlistPage() {
             </div>
           </div>
         </div>
-        <Footer />
       </div>
     )
   }
@@ -149,7 +147,6 @@ export default function WishlistPage() {
             ))}
           </div>
         </div>
-        <Footer />
       </div>
     )
   }
@@ -179,7 +176,6 @@ export default function WishlistPage() {
             </Link>
           </div>
         </div>
-        <Footer />
       </div>
     )
   }
@@ -326,7 +322,6 @@ export default function WishlistPage() {
         </div>
       </div>
 
-      <Footer />
     </div>
   )
 }

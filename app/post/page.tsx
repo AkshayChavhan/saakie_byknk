@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 import { SareeLoader } from '@/components/ui/saree-loader'
 import {
   Instagram,
@@ -114,7 +113,6 @@ export default function InstagramPostsPage() {
       <div className="min-h-screen bg-gray-50">
         <Header />
         <SetupGuide />
-        <Footer />
       </div>
     )
   }
@@ -127,7 +125,6 @@ export default function InstagramPostsPage() {
         <div className="flex items-center justify-center py-32">
           <SareeLoader size="lg" text="Loading Instagram feed..." />
         </div>
-        <Footer />
       </div>
     )
   }
@@ -151,7 +148,6 @@ export default function InstagramPostsPage() {
             </button>
           </div>
         </div>
-        <Footer />
       </div>
     )
   }
@@ -494,7 +490,6 @@ export default function InstagramPostsPage() {
         </div>
       </section>
 
-      <Footer />
     </div>
   )
 }

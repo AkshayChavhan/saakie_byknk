@@ -23,7 +23,6 @@ import {
 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 import { SareeLoader } from '@/components/ui/saree-loader'
 import { fetchApi } from '@/lib/api'
 
@@ -834,7 +833,6 @@ function ProductsContent() {
         </div>
       )}
 
-      <Footer />
     </div>
   )
 }

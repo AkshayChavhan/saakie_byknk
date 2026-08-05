@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { Construction, ArrowLeft, Home } from 'lucide-react'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 
 interface UnderDevelopmentProps {
   /** Page title, e.g. "Privacy Policy". */
@@ -72,7 +71,6 @@ export function UnderDevelopment({ title, description }: UnderDevelopmentProps) 
         </div>
       </main>
 
-      <Footer />
     </div>
   )
 }

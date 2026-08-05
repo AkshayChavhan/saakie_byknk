@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { Cart } from '@/components/cart'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 
 export const metadata: Metadata = {
   title: 'Shopping Cart | Saakie_byknk',
@@ -21,7 +20,6 @@ export default async function CartPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <Cart />
-      <Footer />
     </div>
   )
 }

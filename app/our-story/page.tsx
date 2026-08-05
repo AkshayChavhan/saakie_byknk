@@ -4,7 +4,6 @@ import { Heart, Sparkles, Users, Star, ArrowRight, Quote } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 
 const founders = [
   {
@@ -427,7 +426,6 @@ export default function OurStoryPage() {
         </div>
       </section>
 
-      <Footer />
     </div>
   )
 }

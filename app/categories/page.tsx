@@ -5,7 +5,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Home, ChevronRight, Grid3X3, LayoutGrid, Folder, ArrowRight, Sparkles } from 'lucide-react'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 import { SareeLoader } from '@/components/ui/saree-loader'
 import { fetchApi } from '@/lib/api'
 
@@ -398,7 +397,6 @@ function CategoriesContent() {
         )}
       </main>
 
-      <Footer />
     </div>
   )
 }

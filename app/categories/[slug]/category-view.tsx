@@ -6,7 +6,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronRight, Filter, X, Grid, List, Folder, ArrowRight, Home } from 'lucide-react'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 import { formatPrice } from '@/lib/utils'
 import { fetchApi } from '@/lib/api'
 
@@ -131,7 +130,6 @@ export function CategoryView() {
             </div>
           </div>
         </div>
-        <Footer />
       </div>
     )
   }
@@ -152,7 +150,6 @@ export function CategoryView() {
             </Link>
           </div>
         </div>
-        <Footer />
       </div>
     )
   }
@@ -496,7 +493,6 @@ export function CategoryView() {
         )}
       </div>
 
-      <Footer />
     </div>
   )
 }

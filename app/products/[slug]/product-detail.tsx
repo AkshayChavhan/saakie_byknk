@@ -25,7 +25,6 @@ import { isMethodAllowed, describeModes } from '@/lib/payment'
 import { fetchApi, cartApi, wishlistApi } from '@/lib/api'
 import { useToast } from '@/components/ui/toast'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 
 interface ProductImage {
   id: string
@@ -440,7 +439,6 @@ export function ProductDetail() {
             </div>
           </div>
         </div>
-        <Footer />
       </div>
     )
   }
@@ -461,7 +459,6 @@ export function ProductDetail() {
             </Link>
           </div>
         </div>
-        <Footer />
       </div>
     )
   }
@@ -1251,7 +1248,6 @@ export function ProductDetail() {
         )}
       </div>
 
-      <Footer />
 
       {/* Mobile Sticky Bottom Bar */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-40">

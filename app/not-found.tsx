@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 
 // Branded 404 shown for unmatched routes (and anywhere notFound() is called).
 // Mirrors the storefront's empty-state pattern: neutral full-height shell,
@@ -34,7 +33,6 @@ export default function NotFound() {
           </div>
         </div>
       </div>
-      <Footer />
     </div>
   )
 }

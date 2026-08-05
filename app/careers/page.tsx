@@ -1,7 +1,6 @@
 'use client'
 
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Briefcase, Heart, Users, Sparkles, Rocket, Coffee, Gift, Clock, MapPin, Mail, ArrowRight, CheckCircle2 } from 'lucide-react'
@@ -439,7 +438,6 @@ export default function CareersPage() {
         </div>
       </section>
 
-      <Footer />
     </div>
   )
 }

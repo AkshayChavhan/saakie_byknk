@@ -3,7 +3,6 @@ import { HeroSection } from '@/components/home/hero-section'
 import { PromotionalBanner } from '@/components/home/promotional-banner'
 import { CategoryGrid } from '@/components/home/category-grid'
 import { FeaturedProducts } from '@/components/home/featured-products'
-import { Footer } from '@/components/layout/footer'
 
 export default function HomePage() {
   return (
@@ -15,7 +14,6 @@ export default function HomePage() {
         <CategoryGrid />
         <FeaturedProducts />
       </main>
-      <Footer />
     </div>
   )
 }

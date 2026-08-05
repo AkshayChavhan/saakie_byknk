@@ -19,7 +19,6 @@ import {
   Trash2,
 } from 'lucide-react'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useToast } from '@/components/ui/toast'
 import { formatPrice, formatDate, cn } from '@/lib/utils'
@@ -241,7 +240,6 @@ export default function AccountPage() {
           <p className="mt-2 text-sm text-gray-500">Sign in to view your account and orders.</p>
           <Link href="/sign-in" className="btn-primary mt-6">Sign In</Link>
         </main>
-        <Footer />
       </div>
     )
   }
@@ -547,7 +545,6 @@ export default function AccountPage() {
           </div>
         )}
       </main>
-      <Footer />
 
       <ConfirmDialog
         open={removeTarget !== null}

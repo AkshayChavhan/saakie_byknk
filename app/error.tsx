@@ -3,7 +3,6 @@
 import { useEffect } from 'react'
 import Link from 'next/link'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 
 /**
  * Route-level error boundary for the storefront. Catches render/data errors in
@@ -53,7 +52,6 @@ export default function Error({
           )}
         </div>
       </div>
-      <Footer />
     </div>
   )
 }
