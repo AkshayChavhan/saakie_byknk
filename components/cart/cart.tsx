@@ -6,6 +6,7 @@ import { ShoppingCart, Trash2 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { CartItem } from './cart-item'
 import { CartSummary } from './cart-summary'
+import { DeliveryAddress } from './delivery-address'
 import { SareeLoader } from '@/components/ui/saree-loader'
 import { useToast } from '@/components/ui/toast'
 import { cartApi } from '@/lib/api'
@@ -170,6 +171,10 @@ export function Cart({ initialCart }: CartProps) {
             </button>
           )}
         </div>
+
+        {/* Where this order is going, above the items — the same question a
+            customer asks before deciding to check out, not after. */}
+        <DeliveryAddress />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">

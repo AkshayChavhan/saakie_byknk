@@ -214,6 +214,14 @@ export const userApi = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+
+  /**
+   * Make an address the default one. Resolves to the full address list,
+   * default first, so the caller re-renders from the server's answer instead
+   * of assuming the write landed.
+   */
+  setDefaultAddress: (addressId: string) =>
+    apiFetch<any>(`/api/users/addresses/${addressId}`, { method: 'PATCH' }),
 };
 
 // ============================================
