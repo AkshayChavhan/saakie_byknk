@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ChevronRight, Filter, X, Grid, List, Folder, ArrowRight, Home } from 'lucide-react'
+import { ChevronRight, Filter, Grid, List, ArrowRight, Home } from 'lucide-react'
 import { Header } from '@/components/layout/header'
 import { RatingBadge } from '@/components/ui/rating-badge'
 import { formatPrice } from '@/lib/utils'
@@ -24,6 +24,9 @@ interface Product {
   isNew: boolean
   isBestseller: boolean
   inStock: boolean
+  /** The product's own category — a sub-category of the one being viewed,
+   *  since /api/products scopes to the whole subtree. Drives the grouping. */
+  category?: { name: string; slug: string } | null
 }
 
 interface SubCategory {
@@ -43,8 +46,170 @@ interface Category {
   children?: SubCategory[]
 }
 
+/** One sub-category heading and the products that sit under it. */
+interface ProductGroup {
+  slug: string
+  name: string
+  products: Product[]
+}
+
 type SortOption = 'newest' | 'price-low' | 'price-high' | 'rating' | 'popular'
 type ViewMode = 'grid' | 'list'
+
+/**
+ * No pagination UI exists on this page, so the API's default of 12 silently
+ * truncated every category with more stock than that. Ask for enough that
+ * "all products in this sub-category" is true rather than nearly true.
+ */
+const PRODUCT_LIMIT = 100
+
+/**
+ * Buckets products under their own category.
+ *
+ * Built from the products themselves rather than from `category.children`, so
+ * it handles a sub-category nested more than one level down and never renders a
+ * heading with nothing beneath it. Groups follow the order the sub-categories
+ * are listed in; anything deeper sorts alphabetically after them.
+ */
+function groupBySubCategory(
+  products: Product[],
+  children: SubCategory[]
+): ProductGroup[] {
+  const order = new Map(children.map((child, index) => [child.slug, index]))
+  const groups = new Map<string, ProductGroup>()
+
+  for (const product of products) {
+    if (!product.category) continue
+    const { slug, name } = product.category
+    const group = groups.get(slug) ?? { slug, name, products: [] }
+    group.products.push(product)
+    groups.set(slug, group)
+  }
+
+  const LAST = Number.MAX_SAFE_INTEGER
+  return [...groups.values()].sort(
+    (a, b) =>
+      (order.get(a.slug) ?? LAST) - (order.get(b.slug) ?? LAST) ||
+      a.name.localeCompare(b.name)
+  )
+}
+
+/**
+ * A single product tile. Extracted so the grouped sub-category sections and the
+ * flat listing below them render identical cards from one definition rather
+ * than a second copy that drifts.
+ */
+function ProductCard({
+  product,
+  viewMode,
+}: {
+  product: Product
+  viewMode: ViewMode
+}) {
+  return (
+    <Link
+      href={`/products/${product.slug}`}
+      className={
+        viewMode === 'grid'
+          ? 'group'
+          : 'group block bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow'
+      }
+    >
+      {viewMode === 'grid' ? (
+        // Grid View
+        <div>
+          <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-3 relative">
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              // grid-cols-2 md:grid-cols-3 lg:grid-cols-4
+              sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+            {product.comparePrice && product.comparePrice > product.price && (
+              <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                {Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)}% OFF
+              </div>
+            )}
+            {product.isNew && (
+              <div className="absolute top-2 right-2 bg-primary text-white text-xs px-2 py-1 rounded-full">
+                NEW
+              </div>
+            )}
+            {!product.inStock && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <span className="text-white font-medium">Out of Stock</span>
+              </div>
+            )}
+          </div>
+          <h3 className="font-medium text-gray-900 line-clamp-2 mb-2">{product.name}</h3>
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <span className="font-bold text-gray-900">{formatPrice(product.price)}</span>
+              {product.comparePrice && product.comparePrice > product.price && (
+                <span className="text-sm text-gray-500 line-through ml-2">
+                  {formatPrice(product.comparePrice)}
+                </span>
+              )}
+            </div>
+          </div>
+          <RatingBadge rating={product.rating} reviews={product.reviews} />
+        </div>
+      ) : (
+        // List View
+        <div className="flex space-x-4">
+          <div className="w-32 h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative">
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              sizes="128px"
+              className="object-cover"
+            />
+            {!product.inStock && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <span className="text-white text-sm font-medium">Out of Stock</span>
+              </div>
+            )}
+          </div>
+          <div className="flex-1">
+            <h3 className="font-medium text-gray-900 mb-2">{product.name}</h3>
+            <div className="flex items-center space-x-4 mb-2">
+              <span className="font-bold text-lg text-gray-900">{formatPrice(product.price)}</span>
+              {product.comparePrice && product.comparePrice > product.price && (
+                <>
+                  <span className="text-gray-500 line-through">
+                    {formatPrice(product.comparePrice)}
+                  </span>
+                  <span className="text-red-500 text-sm">
+                    {Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)}% OFF
+                  </span>
+                </>
+              )}
+            </div>
+            <RatingBadge
+              rating={product.rating}
+              reviews={product.reviews}
+              className="mb-2"
+            />
+            <div className="flex items-center space-x-4 text-sm">
+              {product.isNew && (
+                <span className="bg-primary text-white text-xs px-2 py-1 rounded-full">NEW</span>
+              )}
+              {product.isBestseller && (
+                <span className="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">BESTSELLER</span>
+              )}
+              <span className={`${product.inStock ? 'text-green-600' : 'text-red-600'}`}>
+                {product.inStock ? `${product.stock} in stock` : 'Out of stock'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+    </Link>
+  )
+}
 
 export function CategoryView() {
   const params = useParams()
@@ -59,7 +224,14 @@ export function CategoryView() {
   const [sortBy, setSortBy] = useState<SortOption>('newest')
   const [showFilters, setShowFilters] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
-  const [priceRange, setPriceRange] = useState({ min: 0, max: 10000 })
+  // `null` means "no bound", not zero and not ten thousand. This used to
+  // default to { min: 0, max: 10000 } and send that cap on every request, which
+  // silently hid every saree priced above ₹10,000 — a whole sub-category's
+  // worth — while the Filters badge reported nothing active.
+  const [priceRange, setPriceRange] = useState<{
+    min: number | null
+    max: number | null
+  }>({ min: null, max: null })
   const [selectedColors, setSelectedColors] = useState<string[]>([])
   const [inStockOnly, setInStockOnly] = useState(false)
   
@@ -79,10 +251,14 @@ export function CategoryView() {
       const queryParams = new URLSearchParams({
         category: slug,
         sort: sortBy,
-        minPrice: priceRange.min.toString(),
-        maxPrice: priceRange.max.toString(),
-        inStock: inStockOnly.toString()
+        inStock: inStockOnly.toString(),
+        limit: PRODUCT_LIMIT.toString()
       })
+
+      // Only sent once the shopper actually sets a bound, so the API falls back
+      // to its own open-ended defaults rather than a cap we invented.
+      if (priceRange.min !== null) queryParams.set('minPrice', priceRange.min.toString())
+      if (priceRange.max !== null) queryParams.set('maxPrice', priceRange.max.toString())
 
       if (selectedColors.length > 0) {
         queryParams.append('colors', selectedColors.join(','))
@@ -107,8 +283,12 @@ export function CategoryView() {
     fetchCategoryAndProducts()
   }, [fetchCategoryAndProducts])
 
+  // Derived from the same fetch the listing below uses, so the two can never
+  // disagree and no second request is needed. Filters therefore apply to both.
+  const subCategoryGroups = groupBySubCategory(products, category?.children ?? [])
+
   const clearFilters = () => {
-    setPriceRange({ min: 0, max: 10000 })
+    setPriceRange({ min: null, max: null })
     setSelectedColors([])
     setInStockOnly(false)
   }
@@ -209,56 +389,42 @@ export function CategoryView() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Sub-categories */}
-        {category.children && category.children.length > 0 && (
-          <section className="mb-8" aria-label="Sub-categories">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">
-              Browse within {category.name}
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-              {category.children.map((child) => (
-                <Link
-                  key={child.id}
-                  href={`/categories/${child.slug}`}
-                  className="group block bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100/50 hover:border-primary-200"
-                >
-                  <article className="h-full flex flex-col">
-                    <div className="aspect-[4/5] bg-gray-100 relative overflow-hidden">
-                      {child.image ? (
-                        <Image
-                          src={child.image}
-                          alt=""
-                          fill
-                          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
-                          className="object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50">
-                          <Folder className="h-12 w-12 sm:h-16 sm:w-16 text-primary-200" aria-hidden="true" />
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      <div className="absolute bottom-4 left-4 right-4 transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                        <span className="inline-flex items-center gap-1.5 text-white text-sm font-medium">
-                          Explore Collection
-                          <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" aria-hidden="true" />
-                        </span>
-                      </div>
-                    </div>
-                    <div className="p-4 flex-1 flex flex-col">
-                      <h3 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors duration-200 text-sm sm:text-base">
-                        {child.name}
-                      </h3>
-                      <div className="mt-3 pt-3 border-t border-gray-100">
-                        <span className="text-xs font-medium text-secondary-600 bg-secondary-50 px-2.5 py-1 rounded-full">
-                          {child.count} products
-                        </span>
-                      </div>
-                    </div>
-                  </article>
-                </Link>
-              ))}
-            </div>
+        {/*
+          Products grouped by sub-category. This replaced a grid of
+          sub-category tiles, which sent you from one page of category cards to
+          another before you ever saw a saree. Each heading still links through
+          to its own page, so nothing that was reachable before is lost.
+
+          Always grid-rendered: the list/grid toggle lives in the bar below and
+          governs the flat listing it sits with.
+        */}
+        {category.children && category.children.length > 0 && subCategoryGroups.length > 0 && (
+          <section className="mb-10" aria-label={`Products in ${category.name} by sub-category`}>
+            {subCategoryGroups.map((group) => (
+              <div key={group.slug} className="mb-8 last:mb-0">
+                <div className="mb-4 flex items-baseline justify-between gap-4 border-b border-gray-200 pb-2">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+                    {group.name}
+                    <span className="ml-2 text-sm font-normal text-gray-500">
+                      {group.products.length}{' '}
+                      {group.products.length === 1 ? 'product' : 'products'}
+                    </span>
+                  </h2>
+                  <Link
+                    href={`/categories/${group.slug}`}
+                    className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                  >
+                    View all
+                    <ArrowRight size={14} aria-hidden="true" />
+                  </Link>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {group.products.map((product) => (
+                    <ProductCard key={product.id} product={product} viewMode="grid" />
+                  ))}
+                </div>
+              </div>
+            ))}
           </section>
         )}
 
@@ -272,9 +438,9 @@ export function CategoryView() {
               >
                 <Filter size={20} />
                 <span>Filters</span>
-                {(selectedColors.length > 0 || inStockOnly || priceRange.min > 0 || priceRange.max < 10000) && (
+                {(selectedColors.length > 0 || inStockOnly || priceRange.min !== null || priceRange.max !== null) && (
                   <span className="bg-primary text-white text-xs px-2 py-1 rounded-full">
-                    {selectedColors.length + (inStockOnly ? 1 : 0) + (priceRange.min > 0 || priceRange.max < 10000 ? 1 : 0)}
+                    {selectedColors.length + (inStockOnly ? 1 : 0) + (priceRange.min !== null || priceRange.max !== null ? 1 : 0)}
                   </span>
                 )}
               </button>
@@ -321,15 +487,15 @@ export function CategoryView() {
                     <input
                       type="number"
                       placeholder="Min"
-                      value={priceRange.min}
-                      onChange={(e) => setPriceRange(prev => ({ ...prev, min: parseInt(e.target.value) || 0 }))}
+                      value={priceRange.min ?? ''}
+                      onChange={(e) => setPriceRange(prev => ({ ...prev, min: e.target.value === '' ? null : parseInt(e.target.value) || 0 }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                     />
                     <input
                       type="number"
                       placeholder="Max"
-                      value={priceRange.max}
-                      onChange={(e) => setPriceRange(prev => ({ ...prev, max: parseInt(e.target.value) || 10000 }))}
+                      value={priceRange.max ?? ''}
+                      onChange={(e) => setPriceRange(prev => ({ ...prev, max: e.target.value === '' ? null : parseInt(e.target.value) || 0 }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                     />
                   </div>
@@ -370,107 +536,7 @@ export function CategoryView() {
             : "space-y-4"
           }>
             {products.map((product) => (
-              <Link
-                key={product.id}
-                href={`/products/${product.slug}`}
-                className={viewMode === 'grid' 
-                  ? "group" 
-                  : "group block bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow"
-                }
-              >
-                {viewMode === 'grid' ? (
-                  // Grid View
-                  <div>
-                    <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-3 relative">
-                      <Image
-                        src={product.image}
-                        alt={product.name}
-                        fill
-                        // grid-cols-2 md:grid-cols-3 lg:grid-cols-4
-                        sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      {product.comparePrice && product.comparePrice > product.price && (
-                        <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                          {Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)}% OFF
-                        </div>
-                      )}
-                      {product.isNew && (
-                        <div className="absolute top-2 right-2 bg-primary text-white text-xs px-2 py-1 rounded-full">
-                          NEW
-                        </div>
-                      )}
-                      {!product.inStock && (
-                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                          <span className="text-white font-medium">Out of Stock</span>
-                        </div>
-                      )}
-                    </div>
-                    <h3 className="font-medium text-gray-900 line-clamp-2 mb-2">{product.name}</h3>
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <span className="font-bold text-gray-900">{formatPrice(product.price)}</span>
-                        {product.comparePrice && product.comparePrice > product.price && (
-                          <span className="text-sm text-gray-500 line-through ml-2">
-                            {formatPrice(product.comparePrice)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <RatingBadge rating={product.rating} reviews={product.reviews} />
-                  </div>
-                ) : (
-                  // List View
-                  <div className="flex space-x-4">
-                    <div className="w-32 h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative">
-                      <Image
-                        src={product.image}
-                        alt={product.name}
-                        fill
-                        sizes="128px"
-                        className="object-cover"
-                      />
-                      {!product.inStock && (
-                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                          <span className="text-white text-sm font-medium">Out of Stock</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-medium text-gray-900 mb-2">{product.name}</h3>
-                      <div className="flex items-center space-x-4 mb-2">
-                        <span className="font-bold text-lg text-gray-900">{formatPrice(product.price)}</span>
-                        {product.comparePrice && product.comparePrice > product.price && (
-                          <>
-                            <span className="text-gray-500 line-through">
-                              {formatPrice(product.comparePrice)}
-                            </span>
-                            <span className="text-red-500 text-sm">
-                              {Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)}% OFF
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      <RatingBadge
-                        rating={product.rating}
-                        reviews={product.reviews}
-                        className="mb-2"
-                      />
-                      <div className="flex items-center space-x-4 text-sm">
-                        {product.isNew && (
-                          <span className="bg-primary text-white text-xs px-2 py-1 rounded-full">NEW</span>
-                        )}
-                        {product.isBestseller && (
-                          <span className="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">BESTSELLER</span>
-                        )}
-                        <span className={`${product.inStock ? 'text-green-600' : 'text-red-600'}`}>
-                          {product.inStock ? `${product.stock} in stock` : 'Out of stock'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </Link>
+              <ProductCard key={product.id} product={product} viewMode={viewMode} />
             ))}
           </div>
         ) : (
