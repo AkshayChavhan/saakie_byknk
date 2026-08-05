@@ -4,17 +4,46 @@ import { stripe } from '@/lib/stripe';
 import { razorpay } from '@/lib/razorpay';
 import { requireAuth, verifyAddressOwnership } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
-import { normalizePaymentMethod, isMethodAllowed } from '@/lib/payment';
+import {
+  normalizePaymentMethod,
+  isMethodAllowed,
+  storedPaymentMethod,
+  storeBlockReason,
+} from '@/lib/payment';
+import { getStoreSettings } from '@/lib/server/settings';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+const SUPPORTED_GATEWAYS = ['cod', 'razorpay', 'stripe'];
+
+/**
+ * Reject a gateway we cannot actually charge, before any order row exists.
+ * Without this, anything that wasn't a configured 'stripe'/'razorpay' fell
+ * through to the COD-shaped success response — so `paymentGateway: 'anything'`
+ * (or 'razorpay' with the keys unset) produced an unpaid PENDING order labelled
+ * PREPAID, side-stepping the store-wide COD switch entirely.
+ */
+function gatewayError(gateway: string): NextResponse | null {
+  if (!SUPPORTED_GATEWAYS.includes(gateway)) {
+    return NextResponse.json({ error: 'Unsupported payment method' }, { status: 400 });
+  }
+  if ((gateway === 'razorpay' && !razorpay) || (gateway === 'stripe' && !stripe)) {
+    return NextResponse.json(
+      { error: 'Online payment is unavailable right now. Please try again later.' },
+      { status: 503 }
+    );
+  }
+  return null;
+}
 
 export async function POST(request: Request) {
   try {
     const r = await requireAuth();
     if (r instanceof NextResponse) return r;
 
-    const { paymentGateway, shippingAddressId, billingAddressId } = await request.json();
+    const { paymentGateway, paymentChannel, shippingAddressId, billingAddressId } =
+      await request.json();
 
     if (!shippingAddressId) {
       return NextResponse.json({ error: 'Shipping address is required' }, { status: 400 });
@@ -43,9 +72,22 @@ export async function POST(request: Request) {
       }
     }
 
-    // Enforce per-product payment modes: a COD-only product cannot be paid via a
+    // Reject unknown/unconfigured gateways BEFORE writing an order.
+    const gateway = String(paymentGateway ?? '').trim().toLowerCase();
+    const gatewayIssue = gatewayError(gateway);
+    if (gatewayIssue) return gatewayIssue;
+
+    const chosenMethod = normalizePaymentMethod(gateway);
+
+    // Store-wide switches first — an admin turning COD off must hold even if
+    // every product in the cart still lists COD in its own paymentModes.
+    const blocked = storeBlockReason(chosenMethod, await getStoreSettings());
+    if (blocked) {
+      return NextResponse.json({ error: blocked }, { status: 409 });
+    }
+
+    // Then per-product payment modes: a COD-only product cannot be paid via a
     // prepaid gateway, and vice-versa.
-    const chosenMethod = normalizePaymentMethod(paymentGateway);
     const disallowed = cart.items.find(
       (item) => !isMethodAllowed(chosenMethod, item.product.paymentModes)
     );
@@ -83,7 +125,9 @@ export async function POST(request: Request) {
         total,
         shippingAddressId,
         billingAddressId: billingAddressId || shippingAddressId,
-        paymentMethod: chosenMethod,
+        // Records the concrete instrument ("UPI", "CARD", …) for the admin view;
+        // normalizePaymentMethod() still reads every value back as COD/PREPAID.
+        paymentMethod: storedPaymentMethod(chosenMethod, paymentChannel),
         status: 'PENDING',
         paymentStatus: 'PENDING',
         items: {
@@ -97,7 +141,7 @@ export async function POST(request: Request) {
       },
     });
 
-    if (paymentGateway === 'stripe' && stripe) {
+    if (gateway === 'stripe' && stripe) {
       const paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(total * 100),
         currency: 'inr',
@@ -119,7 +163,7 @@ export async function POST(request: Request) {
       });
     }
 
-    if (paymentGateway === 'razorpay' && razorpay) {
+    if (gateway === 'razorpay' && razorpay) {
       const razorpayOrder = await razorpay.orders.create({
         amount: Math.round(total * 100),
         currency: 'INR',

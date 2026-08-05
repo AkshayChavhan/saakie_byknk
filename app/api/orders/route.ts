@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth, verifyAddressOwnership } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
-import { normalizePaymentMethod, isMethodAllowed } from '@/lib/payment';
+import { normalizePaymentMethod, isMethodAllowed, storeBlockReason } from '@/lib/payment';
+import { getStoreSettings } from '@/lib/server/settings';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -54,9 +55,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
     }
 
-    // Enforce the payment modes the admin defined per product: every product in
-    // the cart must accept the chosen method, otherwise reject the order.
     const chosenMethod = normalizePaymentMethod(paymentMethod);
+
+    // Store-wide switches first — an admin turning COD off must hold even if
+    // every product in the cart still lists COD in its own paymentModes.
+    const blocked = storeBlockReason(chosenMethod, await getStoreSettings());
+    if (blocked) {
+      return NextResponse.json({ error: blocked }, { status: 409 });
+    }
+
+    // Then the payment modes the admin defined per product: every product in
+    // the cart must accept the chosen method, otherwise reject the order.
     const disallowed = cart.items.find(
       (item) => !isMethodAllowed(chosenMethod, item.product.paymentModes)
     );

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { CheckCircle2, MapPin } from 'lucide-react'
 import { formatPrice, formatDate, cn } from '@/lib/utils'
 import { ORDER_STATUS_STYLES, PAYMENT_STATUS_STYLES, statusLabel } from '@/lib/orders'
+import { describePaymentMethod } from '@/lib/payment'
 
 interface OrderAddress {
   name: string
@@ -220,7 +221,7 @@ export function OrderDetailView({
           </div>
           {order.paymentMethod && (
             <p className="text-xs text-gray-500 pt-1">
-              Payment method: {order.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Prepaid (online)'}
+              Payment method: {describePaymentMethod(order.paymentMethod)}
             </p>
           )}
         </div>

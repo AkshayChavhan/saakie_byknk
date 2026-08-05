@@ -175,6 +175,12 @@ export const userApi = {
       credentials: 'same-origin',
       body: formData,
     });
+    // A body over the platform's 4.5MB cap is rejected at the edge, which
+    // answers with an HTML error page rather than our JSON shape — without
+    // this the caller would only ever see the generic message below.
+    if (res.status === 413) {
+      throw new Error('That photo is too large to upload. Please pick a smaller image.');
+    }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || 'Failed to update profile');
     return data;

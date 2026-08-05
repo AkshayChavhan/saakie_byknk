@@ -130,11 +130,11 @@ export default function SignUpPage() {
 
         {/* When Google OAuth is added later, a `signIn('google')` button goes here. */}
 
-        <p className="pt-1 text-center text-sm text-maroon-700/80">
+        <p className="pt-1 text-center text-sm text-gray-400">
           Already have an account?{' '}
           <Link
             href="/sign-in"
-            className="font-semibold text-maroon-700 underline-offset-2 hover:underline"
+            className="font-semibold text-rose-400 underline-offset-2 transition-colors hover:text-rose-300 hover:underline"
           >
             Sign in
           </Link>

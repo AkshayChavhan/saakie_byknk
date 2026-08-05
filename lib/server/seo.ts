@@ -85,3 +85,48 @@ export const getCategorySeo = cache(async (slug: string): Promise<CategorySeo | 
   });
   return category ?? null;
 });
+
+export interface BlogPostSeo {
+  title: string;
+  slug: string;
+  excerpt: string;
+  category: string;
+  image: string | null;
+  authorName: string | null;
+  // Never null: falls back to createdAt so the JSON-LD always carries a
+  // datePublished, which Google treats as required for BlogPosting.
+  publishedAt: Date;
+  updatedAt: Date;
+}
+
+export const getBlogPostSeo = cache(async (slug: string): Promise<BlogPostSeo | null> => {
+  // Drafts must stay invisible to crawlers, so an unpublished slug is treated
+  // as missing rather than rendered with noindex.
+  const post = await prisma.blogPost.findFirst({
+    where: { slug, isPublished: true },
+    select: {
+      title: true,
+      slug: true,
+      excerpt: true,
+      category: true,
+      image: true,
+      authorName: true,
+      publishedAt: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  if (!post) return null;
+
+  return {
+    title: post.title,
+    slug: post.slug,
+    excerpt: post.excerpt,
+    category: post.category,
+    image: post.image,
+    authorName: post.authorName,
+    publishedAt: post.publishedAt ?? post.createdAt,
+    updatedAt: post.updatedAt,
+  };
+});

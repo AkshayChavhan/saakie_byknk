@@ -1,0 +1,208 @@
+import { describe, it, expect } from 'vitest'
+import { renderMarkdown, markdownToPlainText, estimateReadMinutes } from '@/lib/markdown'
+
+describe('renderMarkdown', () => {
+  describe('escaping', () => {
+    it('renders author-supplied tags as text, not markup', () => {
+      const html = renderMarkdown('<script>alert(1)</script>')
+
+      expect(html).not.toContain('<script>')
+      expect(html).toContain('&lt;script&gt;')
+    })
+
+    it('escapes an img tag smuggled inside emphasis', () => {
+      const html = renderMarkdown('**<img src=x onerror=alert(1)>**')
+
+      expect(html).toContain('<strong>')
+      expect(html).not.toContain('<img src=x')
+      expect(html).toContain('&lt;img')
+    })
+
+    it('drops a javascript: link but keeps its text', () => {
+      const html = renderMarkdown('[click me](javascript:alert(1))')
+
+      expect(html).not.toContain('href="javascript')
+      expect(html).toContain('click me')
+    })
+
+    it('drops a data: image source', () => {
+      const html = renderMarkdown('![x](data:text/html;base64,PHNjcmlwdD4=)')
+
+      expect(html).not.toContain('<img')
+    })
+
+    it('rejects a scheme split by a control character', () => {
+      const html = renderMarkdown('[x](java\u0000script:alert(1))')
+
+      expect(html).not.toContain('<a href')
+    })
+
+    it('cannot impersonate a parked construct with a private-use character', () => {
+      // The renderer parks rendered links behind \uE000<n>\uE001 while it runs the
+      // emphasis pass; author text must not be able to forge one of those.
+      const html = renderMarkdown('\uE0000\uE001 [real](/x)')
+
+      expect(html).not.toContain('\uE000')
+      // The forged token is stripped, and the genuine link still renders once.
+      expect(html.match(/<a href/g)).toHaveLength(1)
+    })
+
+    it('cannot break out of an href attribute with a quote', () => {
+      const html = renderMarkdown('[x](/a"onmouseover="alert(1))')
+
+      // The quote survives only as an entity, so the attribute stays intact.
+      expect(html).not.toContain('onmouseover="alert(1)"')
+      expect(html).toContain('&quot;')
+    })
+  })
+
+  describe('blocks', () => {
+    it('wraps loose text in a paragraph', () => {
+      expect(renderMarkdown('Hello there')).toContain('<p class="my-4 leading-relaxed text-gray-700">Hello there</p>')
+    })
+
+    it('splits paragraphs on a blank line', () => {
+      const html = renderMarkdown('First para\n\nSecond para')
+
+      expect(html.match(/<p /g)).toHaveLength(2)
+    })
+
+    it('joins consecutive lines inside one paragraph with a break', () => {
+      const html = renderMarkdown('line one\nline two')
+
+      expect(html.match(/<p /g)).toHaveLength(1)
+      expect(html).toContain('line one<br />line two')
+    })
+
+    it('renders h2 through h4', () => {
+      const html = renderMarkdown('## Two\n\n### Three\n\n#### Four')
+
+      expect(html).toContain('<h2 ')
+      expect(html).toContain('<h3 ')
+      expect(html).toContain('<h4 ')
+    })
+
+    it('leaves a single # as ordinary text', () => {
+      // h1 belongs to the page title, not the body.
+      const html = renderMarkdown('# Not a heading')
+
+      expect(html).not.toContain('<h1')
+      expect(html).toContain('# Not a heading')
+    })
+
+    it('renders an unordered list', () => {
+      const html = renderMarkdown('- Nivi\n- Seedha Pallu')
+
+      expect(html).toContain('<ul')
+      expect(html.match(/<li>/g)).toHaveLength(2)
+    })
+
+    it('renders an ordered list', () => {
+      const html = renderMarkdown('1. First\n2. Second')
+
+      expect(html).toContain('<ol')
+      expect(html.match(/<li>/g)).toHaveLength(2)
+    })
+
+    it('starts a new list when the marker type changes', () => {
+      const html = renderMarkdown('- bullet\n1. number')
+
+      expect(html).toContain('<ul')
+      expect(html).toContain('<ol')
+    })
+
+    it('folds consecutive quote lines into one blockquote', () => {
+      const html = renderMarkdown('> the pallu\n> tells the story')
+
+      expect(html.match(/<blockquote/g)).toHaveLength(1)
+      expect(html).toContain('the pallu tells the story')
+    })
+
+    it('renders a horizontal rule', () => {
+      expect(renderMarkdown('---')).toContain('<hr')
+    })
+
+    it('returns an empty string for blank source', () => {
+      expect(renderMarkdown('   \n  ')).toBe('')
+    })
+  })
+
+  describe('inline', () => {
+    it('renders bold and italic', () => {
+      const html = renderMarkdown('**bold** and *italic*')
+
+      expect(html).toContain('<strong>bold</strong>')
+      expect(html).toContain('<em>italic</em>')
+    })
+
+    it('leaves ** inside a code span alone', () => {
+      const html = renderMarkdown('`**not bold**`')
+
+      expect(html).toContain('<code')
+      expect(html).not.toContain('<strong>')
+    })
+
+    it('keeps an internal link on the same tab', () => {
+      const html = renderMarkdown('[Shop silk](/categories/pure-silk)')
+
+      expect(html).toContain('href="/categories/pure-silk"')
+      expect(html).not.toContain('target="_blank"')
+    })
+
+    it('opens an external link in a new tab with a safe rel', () => {
+      const html = renderMarkdown('[Wikipedia](https://example.com/saree)')
+
+      expect(html).toContain('target="_blank"')
+      expect(html).toContain('rel="noopener noreferrer"')
+    })
+
+    it('renders an image with lazy loading', () => {
+      const html = renderMarkdown('![A silk saree](https://res.cloudinary.com/x/saree.jpg)')
+
+      expect(html).toContain('<img src="https://res.cloudinary.com/x/saree.jpg"')
+      expect(html).toContain('alt="A silk saree"')
+      expect(html).toContain('loading="lazy"')
+    })
+
+    it('keeps a hyphenated internal path intact', () => {
+      // Guards the URL check against rejecting ordinary slugs.
+      const html = renderMarkdown('[Mul cotton](/categories/120-count-mul-cotton)')
+
+      expect(html).toContain('href="/categories/120-count-mul-cotton"')
+    })
+  })
+})
+
+describe('markdownToPlainText', () => {
+  it('strips headings, markers and link syntax', () => {
+    const text = markdownToPlainText('## Title\n\nSome **bold** text with a [link](/x).\n\n- one\n- two')
+
+    expect(text).toBe('Title Some bold text with a link. one two')
+  })
+
+  it('keeps image alt text', () => {
+    expect(markdownToPlainText('![A silk saree](https://x/y.jpg)')).toBe('A silk saree')
+  })
+
+  it('returns an empty string for blank source', () => {
+    expect(markdownToPlainText('')).toBe('')
+  })
+})
+
+describe('estimateReadMinutes', () => {
+  it('never reports less than a minute', () => {
+    expect(estimateReadMinutes('Three short words')).toBe(1)
+    expect(estimateReadMinutes('')).toBe(1)
+  })
+
+  it('scales with word count at 200 words per minute', () => {
+    expect(estimateReadMinutes(Array(800).fill('saree').join(' '))).toBe(4)
+  })
+
+  it('ignores markup when counting', () => {
+    const plain = Array(400).fill('saree').join(' ')
+    const marked = `## Heading\n\n${Array(400).fill('**saree**').join(' ')}`
+
+    expect(estimateReadMinutes(marked)).toBe(estimateReadMinutes(plain))
+  })
+})

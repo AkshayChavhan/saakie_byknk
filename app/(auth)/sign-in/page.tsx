@@ -75,7 +75,7 @@ function SignInForm() {
         <div className="mt-2 text-right">
           <Link
             href="/sign-in"
-            className="text-xs font-medium text-marigold-700 transition-colors hover:text-maroon-700"
+            className="text-xs font-medium text-rose-400 transition-colors hover:text-rose-300"
           >
             Forgot password?
           </Link>
@@ -88,11 +88,11 @@ function SignInForm() {
 
       {/* When Google OAuth is added later, a `signIn('google')` button goes here. */}
 
-      <p className="pt-1 text-center text-sm text-maroon-700/80">
+      <p className="pt-1 text-center text-sm text-gray-400">
         New to Saakie?{' '}
         <Link
           href="/sign-up"
-          className="font-semibold text-maroon-700 underline-offset-2 hover:underline"
+          className="font-semibold text-rose-400 underline-offset-2 transition-colors hover:text-rose-300 hover:underline"
         >
           Create an account
         </Link>
@@ -111,7 +111,7 @@ export default function SignInPage() {
     >
       <Suspense
         fallback={
-          <div className="rounded-xl border border-maroon-100 bg-white/60 p-8 text-center text-sm text-maroon-500">
+          <div className="rounded-xl border border-gray-800 bg-gray-800/40 p-8 text-center text-sm text-gray-400">
             Loading…
           </div>
         }

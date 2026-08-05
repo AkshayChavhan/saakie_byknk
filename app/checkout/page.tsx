@@ -1,15 +1,16 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { Loader2, MapPin, CreditCard, Truck, Plus } from 'lucide-react'
+import { Loader2, MapPin, CreditCard, Plus, ShieldCheck } from 'lucide-react'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
+import { PaymentMethods } from '@/components/checkout/payment-methods'
 import { formatPrice, cn } from '@/lib/utils'
 import { cartApi, userApi, fetchApi } from '@/lib/api'
-import { isMethodAllowed } from '@/lib/payment'
+import { availableChannels, isMethodAllowed, isValidUpiId, type PaymentChannel } from '@/lib/payment'
 import { openRazorpayCheckout, type RazorpaySuccess } from '@/lib/razorpay-client'
 
 interface CartItem {
@@ -59,12 +60,25 @@ export default function CheckoutPage() {
   const [showAddressForm, setShowAddressForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [savingAddress, setSavingAddress] = useState(false)
-  const [placing, setPlacing] = useState<null | 'cod' | 'razorpay'>(null)
+  const [placing, setPlacing] = useState(false)
+  const [channel, setChannel] = useState<PaymentChannel | null>(null)
+  const [upiId, setUpiId] = useState('')
+  /** Store-wide COD switch from /api/store-settings; assume on until told otherwise. */
+  const [codEnabled, setCodEnabled] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     try {
-      const [cart, addrs] = await Promise.all([cartApi.get(), userApi.getAddresses()])
+      const [cart, addrs, store] = await Promise.all([
+        cartApi.get(),
+        userApi.getAddresses(),
+        // Advisory only — the order API re-checks. If it fails we leave COD on
+        // and let the server be the one to refuse.
+        fetchApi('/api/store-settings')
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null),
+      ])
+      if (typeof store?.codEnabled === 'boolean') setCodEnabled(store.codEnabled)
       const cartItems: CartItem[] = cart?.items ?? []
       setItems(cartItems)
       const list: Address[] = Array.isArray(addrs) ? addrs : []
@@ -92,6 +106,22 @@ export default function CheckoutPage() {
   const allowCod = items.length > 0 && items.every((i) => isMethodAllowed('COD', i.product.paymentModes))
   const allowOnline =
     items.length > 0 && items.every((i) => isMethodAllowed('PREPAID', i.product.paymentModes))
+  const onlineConfigured = Boolean(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID)
+
+  const channels = useMemo(
+    () => availableChannels({ allowCod, allowOnline, onlineConfigured, codEnabled }),
+    [allowCod, allowOnline, onlineConfigured, codEnabled]
+  )
+
+  // Preselect the first offered channel (UPI whenever prepaid is on), and drop a
+  // selection that stops being offered — e.g. after the cart changes.
+  useEffect(() => {
+    setChannel((current) =>
+      current && channels.some((c) => c.id === current) ? current : channels[0]?.id ?? null
+    )
+  }, [channels])
+
+  const selectedAddress = addresses.find((a) => a.id === selectedAddressId)
 
   const saveAddress = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -110,11 +140,15 @@ export default function CheckoutPage() {
     }
   }
 
-  const createOrder = async (gateway: 'cod' | 'razorpay') => {
+  const createOrder = async (gateway: 'cod' | 'razorpay', paymentChannel: PaymentChannel) => {
     const res = await fetchApi('/api/payments/create-intent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ paymentGateway: gateway, shippingAddressId: selectedAddressId }),
+      body: JSON.stringify({
+        paymentGateway: gateway,
+        paymentChannel,
+        shippingAddressId: selectedAddressId,
+      }),
     })
     const data = await res.json().catch(() => ({}))
     if (!res.ok) throw new Error(data.error || 'Could not create order')
@@ -125,36 +159,45 @@ export default function CheckoutPage() {
     }
   }
 
-  const placeCod = async () => {
+  /**
+   * Single entry point for the CTA. COD books the order straight away; every
+   * other channel books a PENDING order and hands off to the Razorpay modal,
+   * pinned to the block the shopper picked.
+   */
+  const placeOrder = async () => {
+    if (!channel) return setError('Please choose a payment method')
     if (!selectedAddressId) return setError('Please select or add a shipping address')
-    setPlacing('cod')
-    setError(null)
-    try {
-      const data = await createOrder('cod')
-      // Persistent confirmation route — survives refresh/back, unlike the old
-      // inline success state.
-      router.replace(`/checkout/confirmation/${data.order.id}`)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Order failed')
-      setPlacing(null)
-    }
-  }
 
-  const payOnline = async () => {
-    if (!selectedAddressId) return setError('Please select or add a shipping address')
-    const key = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
-    if (!key) return setError('Online payment is not configured. Please use Cash on Delivery.')
-    setPlacing('razorpay')
     setError(null)
+    setPlacing(true)
+
     try {
-      const data = await createOrder('razorpay')
+      if (channel === 'cod') {
+        const data = await createOrder('cod', channel)
+        // Persistent confirmation route — survives refresh/back, unlike the old
+        // inline success state.
+        router.replace(`/checkout/confirmation/${data.order.id}`)
+        return
+      }
+
+      const key = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
+      if (!key) throw new Error('Online payment is not configured. Please use Cash on Delivery.')
+
+      const data = await createOrder('razorpay', channel)
       if (!data.razorpayOrderId) throw new Error('Online payment is unavailable right now.')
+
       const opened = await openRazorpayCheckout({
         key,
         razorpayOrderId: data.razorpayOrderId,
         amount: data.order.total,
         description: `Order ${data.order.orderNumber}`,
-        prefill: { name: session?.user?.name || '', email: session?.user?.email || '' },
+        channel,
+        prefill: {
+          name: session?.user?.name || '',
+          email: session?.user?.email || '',
+          contact: selectedAddress?.phone || '',
+          vpa: channel === 'upi' && isValidUpiId(upiId) ? upiId.trim() : undefined,
+        },
         onSuccess: async (resp: RazorpaySuccess) => {
           try {
             const cRes = await fetchApi('/api/payments/confirm', {
@@ -169,18 +212,18 @@ export default function CheckoutPage() {
             router.replace(`/checkout/confirmation/${data.order.id}`)
           } catch (e) {
             setError(e instanceof Error ? e.message : 'Payment verification failed')
-            setPlacing(null)
+            setPlacing(false)
           }
         },
-        onDismiss: () => setPlacing(null),
+        // The modal stays open after a decline so the shopper can retry; surface
+        // the reason and let ondismiss clear the busy state if they give up.
+        onFailure: (message) => setError(message),
+        onDismiss: () => setPlacing(false),
       })
-      if (!opened) {
-        setError('Could not open the payment window. Please try again.')
-        setPlacing(null)
-      }
+      if (!opened) throw new Error('Could not open the payment window. Please try again.')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Payment failed')
-      setPlacing(null)
+      setPlacing(false)
     }
   }
 
@@ -297,34 +340,48 @@ export default function CheckoutPage() {
               <CreditCard className="h-5 w-5 text-gray-700" />
               <h2 className="font-semibold text-gray-900">Payment</h2>
             </div>
-            {!allowCod && !allowOnline && (
-              <p className="text-sm text-amber-700">No payment method is available for the items in your cart.</p>
-            )}
-            <div className="space-y-3">
-              <button
-                onClick={payOnline}
-                disabled={!allowOnline || placing !== null || !selectedAddressId}
-                className="w-full flex items-center justify-center gap-2 rounded-full bg-gray-900 text-white py-3 text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
-              >
-                {placing === 'razorpay' ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard size={18} />}
-                Pay Online {formatPrice(total)}
-              </button>
-              {!allowOnline && items.length > 0 && (
-                <p className="text-xs text-gray-500 -mt-1">Online payment isn&apos;t available for one or more items.</p>
-              )}
+            {channels.length === 0 ? (
+              <p className="text-sm text-amber-700">
+                No payment method is available for the items in your cart. Please remove the
+                unavailable items or contact us to complete this order.
+              </p>
+            ) : (
+              <>
+                <PaymentMethods
+                  selected={channel}
+                  onSelect={setChannel}
+                  allowCod={allowCod}
+                  allowOnline={allowOnline}
+                  onlineConfigured={onlineConfigured}
+                  codEnabled={codEnabled}
+                  upiId={upiId}
+                  onUpiIdChange={setUpiId}
+                  busy={placing}
+                />
 
-              <button
-                onClick={placeCod}
-                disabled={!allowCod || placing !== null || !selectedAddressId}
-                className="w-full flex items-center justify-center gap-2 rounded-full border border-gray-300 py-3 text-sm font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-50 transition-colors"
-              >
-                {placing === 'cod' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Truck size={18} />}
-                Cash on Delivery
-              </button>
-              {!allowCod && items.length > 0 && (
-                <p className="text-xs text-gray-500 -mt-1">Cash on Delivery isn&apos;t available for one or more items.</p>
-              )}
-            </div>
+                <button
+                  onClick={placeOrder}
+                  disabled={!channel || placing || !selectedAddressId}
+                  className="mt-4 w-full flex items-center justify-center gap-2 rounded-full bg-gray-900 text-white py-3 text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                >
+                  {placing && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {channel === 'cod'
+                    ? `Place order · ${formatPrice(total)}`
+                    : `Pay ${formatPrice(total)}`}
+                </button>
+
+                {!selectedAddressId && (
+                  <p className="mt-2 text-xs text-amber-700">
+                    Select or add a shipping address to continue.
+                  </p>
+                )}
+
+                <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-gray-500">
+                  <ShieldCheck size={14} className="text-gray-400" />
+                  Secure payments · card details never touch our servers
+                </p>
+              </>
+            )}
           </section>
         </div>
 
@@ -343,6 +400,12 @@ export default function CheckoutPage() {
             <div className="flex justify-between text-gray-600"><span>Subtotal</span><span>{formatPrice(subtotal)}</span></div>
             <div className="flex justify-between text-gray-600"><span>Shipping</span><span>{shipping === 0 ? 'Free' : formatPrice(shipping)}</span></div>
             <div className="flex justify-between font-semibold text-gray-900 text-base pt-1"><span>Total</span><span>{formatPrice(total)}</span></div>
+            {channel && (
+              <div className="flex justify-between text-gray-500 pt-1 border-t border-gray-100 mt-2">
+                <span>Paying via</span>
+                <span>{channels.find((c) => c.id === channel)?.label}</span>
+              </div>
+            )}
           </div>
         </aside>
       </div>
