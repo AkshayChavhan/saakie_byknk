@@ -12,7 +12,6 @@ import {
   Plus, 
   Minus,
   Share2,
-  ArrowLeft,
   Truck,
   Shield,
   RotateCcw,
@@ -25,6 +24,8 @@ import { formatPrice } from '@/lib/utils'
 import { isMethodAllowed, describeModes } from '@/lib/payment'
 import { fetchApi, cartApi, wishlistApi } from '@/lib/api'
 import { useToast } from '@/components/ui/toast'
+import { Header } from '@/components/layout/header'
+import { RatingBadge } from '@/components/ui/rating-badge'
 
 interface ProductImage {
   id: string
@@ -425,6 +426,7 @@ export function ProductDetail() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
+        <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="animate-pulse">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -444,16 +446,19 @@ export function ProductDetail() {
 
   if (error || !product) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h1>
-          <p className="text-gray-600 mb-6">The product you&apos;re looking for doesn&apos;t exist.</p>
-          <Link 
-            href="/products"
-            className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90"
-          >
-            Browse Products
-          </Link>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h1>
+            <p className="text-gray-600 mb-6">The product you&apos;re looking for doesn&apos;t exist.</p>
+            <Link
+              href="/products"
+              className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90"
+            >
+              Browse Products
+            </Link>
+          </div>
         </div>
       </div>
     )
@@ -461,40 +466,17 @@ export function ProductDetail() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Mobile Header */}
-      <div className="lg:hidden bg-white shadow-sm sticky top-0 z-40">
-        <div className="flex items-center justify-between px-4 py-3">
-          <Link href="/products" className="p-2 -ml-2">
-            <ArrowLeft size={24} />
-          </Link>
-          <h1 className="font-medium text-gray-900 truncate mx-4">
-            {product.name}
-          </h1>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={handleToggleWishlist}
-              aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-              className="p-2 active:scale-90 transition-transform"
-            >
-              <Heart
-                size={24}
-                className={`transition-colors ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
-              />
-            </button>
-            <button
-              onClick={handleShare}
-              aria-label="Share this product"
-              className="p-2"
-            >
-              <Share2 size={24} className="text-gray-600" />
-            </button>
-          </div>
-        </div>
-      </div>
+      <Header />
 
       <div className="container mx-auto px-4 py-4 lg:py-8">
-        {/* Desktop Breadcrumb */}
-        <div className="hidden lg:flex items-center space-x-2 text-sm text-gray-600 mb-6">
+        {/*
+          Breadcrumb — shown at every breakpoint. It replaces the old lg:hidden
+          fake header bar (back / wishlist / share), which duplicated controls
+          that already exist below and would have been buried under the real
+          sticky header. This is now mobile's route back, and it goes one better
+          by linking the product's category too.
+        */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-600 mb-4 lg:mb-6">
           <Link href="/" className="hover:text-primary">Home</Link>
           <ChevronRight size={16} />
           <Link href="/products" className="hover:text-primary">Products</Link>
@@ -516,6 +498,8 @@ export function ProductDetail() {
                   src={product.images[selectedImageIndex]?.url || '/images/placeholder-product.svg'}
                   alt={product.images[selectedImageIndex]?.alt || product.name}
                   fill
+                  // Half the row on lg (grid-cols-1 lg:grid-cols-2), full below.
+                  sizes="(min-width: 1024px) 50vw, 100vw"
                   className="object-cover"
                   priority
                 />
@@ -585,6 +569,8 @@ export function ProductDetail() {
                       src={image.url}
                       alt={image.alt || product.name}
                       fill
+                      // w-16 h-16 lg:w-20 lg:h-20
+                      sizes="(min-width: 1024px) 80px, 64px"
                       className="object-cover"
                     />
                   </button>
@@ -602,23 +588,12 @@ export function ProductDetail() {
               </h1>
               
               <div className="flex items-center space-x-4 mb-4">
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      size={16}
-                      className={`${
-                        i < Math.floor(product.rating)
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-gray-300'
-                      }`}
-                    />
-                  ))}
-                  <span className="ml-2 text-sm text-gray-600">
-                    {product.rating} ({product.reviewCount} reviews)
-                  </span>
-                </div>
-                
+                <RatingBadge
+                  rating={product.rating}
+                  reviews={product.reviewCount}
+                  size="md"
+                />
+
                 {product.salesCount > 0 && (
                   <span className="text-sm text-gray-500">
                     {product.salesCount} sold
@@ -859,15 +834,19 @@ export function ProductDetail() {
         {/* Product Details Tabs */}
         <div className="mt-12">
           <div className="border-b border-gray-200">
-            <nav className="flex space-x-8">
+            <nav className="flex space-x-8" role="tablist">
               {['description', 'details', 'reviews'].map((tab) => (
                 <button
                   key={tab}
+                  role="tab"
+                  id={`tab-${tab}`}
+                  aria-controls="product-tab-panel"
+                  aria-selected={activeTab === tab}
                   onClick={() => setActiveTab(tab as any)}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
+                  className={`py-4 px-1 border-b-2 font-medium text-sm capitalize transition-colors duration-200 ${
                     activeTab === tab
                       ? 'border-primary text-primary'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
                   {tab} {tab === 'reviews' && `(${product.reviewCount})`}
@@ -876,7 +855,16 @@ export function ProductDetail() {
             </nav>
           </div>
 
-          <div className="py-8">
+          {/* Keyed on the active tab so the panel replays its entrance every
+              time you switch, rather than the new content appearing instantly
+              in place of the old. */}
+          <div
+            key={activeTab}
+            id="product-tab-panel"
+            role="tabpanel"
+            aria-labelledby={`tab-${activeTab}`}
+            className="animate-panel-in py-8"
+          >
             {activeTab === 'description' && (
               <div className="prose max-w-none">
                 <p className="text-gray-700 leading-relaxed mb-6 whitespace-pre-line">
@@ -1008,7 +996,7 @@ export function ProductDetail() {
                       <p>{reviewEligibility.message}</p>
                       {reviewEligibility.reason === 'NOT_PURCHASED' && (
                         <Link
-                          href="/account/orders"
+                          href="/account"
                           className="inline-block text-rose-600 hover:text-rose-700 font-medium"
                         >
                           View your orders
@@ -1250,6 +1238,7 @@ export function ProductDetail() {
         )}
       </div>
 
+
       {/* Mobile Sticky Bottom Bar */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-40">
         <div className="flex space-x-2">
@@ -1313,8 +1302,9 @@ export function ProductDetail() {
       {/* The old single-product COD/QR modal was removed — "Buy Now" now adds to
           cart and routes to the unified /checkout (COD + online Razorpay). */}
 
-      {/* Bottom padding for mobile sticky bar */}
-      <div className="lg:hidden h-20"></div>
+      {/* Bottom padding so the fixed mobile bar never covers real content.
+          Tinted to the footer's colour because it now sits beneath it. */}
+      <div className="lg:hidden h-20 bg-gray-900"></div>
     </div>
   )
 }

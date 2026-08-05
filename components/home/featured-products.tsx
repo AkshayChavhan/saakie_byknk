@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Heart, ShoppingCart, Star } from 'lucide-react'
+import { Heart, ShoppingCart } from 'lucide-react'
+import { RatingBadge } from '@/components/ui/rating-badge'
 import { formatPrice } from '@/lib/utils'
 import { SareeLoader } from '@/components/ui/saree-loader'
 import { fetchApi } from '@/lib/api'
@@ -118,6 +119,8 @@ export function FeaturedProducts() {
                     src={product.image}
                     alt={product.name}
                     fill
+                    // grid-cols-2 lg:grid-cols-4
+                    sizes="(min-width: 1024px) 25vw, 50vw"
                     className="object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
                   />
                   {product.isNew && (
@@ -156,14 +159,7 @@ export function FeaturedProducts() {
                     {product.name}
                   </h3>
                   
-                  <div className="flex items-center space-x-2">
-                    <div className="flex items-center">
-                      <Star size={14} className="fill-yellow-400 text-yellow-400" />
-                      <span className="text-xs text-gray-600 ml-1">
-                        {product.rating} ({product.reviews})
-                      </span>
-                    </div>
-                  </div>
+                  <RatingBadge rating={product.rating} reviews={product.reviews} />
 
                   <div className="flex items-center space-x-2">
                     <span className="font-bold text-gray-900">

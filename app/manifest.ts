@@ -3,7 +3,7 @@ import type { MetadataRoute } from 'next'
 // Web App Manifest, served by Next.js at /manifest.webmanifest. Makes the
 // storefront installable to the home screen / desktop with an app-like,
 // full-screen (standalone) experience. The dark theme/background match the
-// brand logo tile (see scripts/generate-icons.mjs) so the splash screen and OS
+// brand logo tile (see scripts/generate-icons.py) so the splash screen and OS
 // task-switcher chrome stay on-brand.
 export default function manifest(): MetadataRoute.Manifest {
   return {

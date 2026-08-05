@@ -50,6 +50,10 @@ export async function POST(request: Request) {
               status: 'CONFIRMED',
               paymentStatus: 'PAID',
               paymentId: paymentIntent.id,
+              // Capture can land after the customer gave up and cleared the
+              // order away. Money changed hands, so put it back on their list
+              // rather than leaving a paid order they cannot see.
+              customerHiddenAt: null,
             },
           });
 

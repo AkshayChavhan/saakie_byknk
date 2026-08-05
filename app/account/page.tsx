@@ -16,13 +16,22 @@ import {
   Camera,
   Star,
   Loader2,
+  Trash2,
 } from 'lucide-react'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { useToast } from '@/components/ui/toast'
 import { formatPrice, formatDate, cn } from '@/lib/utils'
-import { ORDER_STATUS_STYLES as STATUS_STYLES, statusLabel } from '@/lib/orders'
+import {
+  ORDER_STATUS_STYLES as STATUS_STYLES,
+  statusLabel,
+  getOrderRemoval,
+} from '@/lib/orders'
 import { orderApi, userApi, reviewApi } from '@/lib/api'
 import { compressImage, formatBytes } from '@/lib/image-compress'
+
+/** How long the row spends fading out before it is dropped from the list. */
+const ORDER_EXIT_MS = 220
 
 interface OrderItemSummary {
   id: string
@@ -68,10 +77,18 @@ export default function AccountPage() {
   const isSignedIn = status === 'authenticated'
   const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN'
 
+  const toast = useToast()
+
   const [profile, setProfile] = useState<Profile | null>(null)
   const [orders, setOrders] = useState<OrderSummary[]>([])
   const [reviews, setReviews] = useState<MyReview[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Removing an order: the one awaiting confirmation, the request in flight,
+  // and the row currently playing its fade-out.
+  const [removeTarget, setRemoveTarget] = useState<OrderSummary | null>(null)
+  const [removing, setRemoving] = useState(false)
+  const [exitingId, setExitingId] = useState<string | null>(null)
 
   // Edit-profile state
   const [editing, setEditing] = useState(false)
@@ -114,6 +131,55 @@ export default function AccountPage() {
     if (isSignedIn) loadAll()
     else if (isLoaded) setLoading(false)
   }, [isLoaded, isSignedIn, loadAll])
+
+  // Held so an in-flight fade-out can be abandoned if the page goes away.
+  const exitTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(
+    () => () => {
+      if (exitTimer.current) clearTimeout(exitTimer.current)
+    },
+    []
+  )
+
+  const confirmRemoveOrder = async () => {
+    if (!removeTarget) return
+    const { id, orderNumber } = removeTarget
+
+    setRemoving(true)
+    try {
+      const result = await orderApi.remove(id)
+
+      // Dismiss the dialog first, then let the row fade on its own — a row
+      // disappearing while the dialog is still over it reads as a glitch.
+      setRemoveTarget(null)
+      setExitingId(id)
+      exitTimer.current = setTimeout(() => {
+        setOrders((prev) => prev.filter((order) => order.id !== id))
+        setExitingId(null)
+        exitTimer.current = null
+      }, ORDER_EXIT_MS)
+
+      toast.success(
+        result.cancelled ? 'Order cancelled' : 'Order removed',
+        result.cancelled
+          ? `#${orderNumber} has been cancelled and taken off your list.`
+          : `#${orderNumber} is no longer on your list.`
+      )
+    } catch (error) {
+      // The server has the last word: the order may have been paid or
+      // dispatched since this page loaded, in which case it explains why it
+      // said no. Reload so the row shows its real status rather than the stale
+      // one that made the button appear.
+      setRemoveTarget(null)
+      toast.error(
+        "Couldn't remove that order",
+        error instanceof Error ? error.message : 'Please try again.'
+      )
+      loadAll()
+    } finally {
+      setRemoving(false)
+    }
+  }
 
   const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
@@ -174,7 +240,6 @@ export default function AccountPage() {
           <p className="mt-2 text-sm text-gray-500">Sign in to view your account and orders.</p>
           <Link href="/sign-in" className="btn-primary mt-6">Sign In</Link>
         </main>
-        <Footer />
       </div>
     )
   }
@@ -186,7 +251,7 @@ export default function AccountPage() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
-      <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 container mx-auto px-6 sm:px-8 py-8">
         <h1 className="text-2xl font-semibold text-gray-900 mb-6">My Account</h1>
 
         {/* Profile card */}
@@ -346,25 +411,56 @@ export default function AccountPage() {
           <div className="space-y-3 mb-8">
             {orders.map((order) => {
               const firstImage = order.items?.[0]?.product?.images?.[0]?.url
+              // Same rule the API enforces, so the button is only ever offered
+              // for an order the server will actually let go.
+              const { canRemove } = getOrderRemoval(order)
+              const isExiting = exitingId === order.id
               return (
-                <Link
+                <div
                   key={order.id}
-                  href={`/account/orders/${order.id}`}
-                  className="card block p-4 sm:p-5 hover:shadow-md transition-shadow"
+                  className={cn(
+                    'card relative p-4 sm:p-5 transition-all duration-200 ease-out motion-reduce:transition-none',
+                    isExiting
+                      ? 'pointer-events-none -translate-x-3 scale-[0.98] opacity-0'
+                      : 'opacity-100 hover:shadow-md'
+                  )}
                 >
+                  {/* The whole card opens the order. It is laid over the
+                      content rather than wrapped around it so the remove
+                      button can be a real <button> — nesting one inside a link
+                      is invalid and breaks keyboard activation. */}
+                  <Link
+                    href={`/account/orders/${order.id}`}
+                    className="absolute inset-0 z-10 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2"
+                  >
+                    <span className="sr-only">View order {order.orderNumber}</span>
+                  </Link>
+
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-gray-900">#{order.orderNumber}</p>
                       <p className="text-xs text-gray-500 mt-0.5">{formatDate(order.createdAt)}</p>
                     </div>
-                    <span
-                      className={cn(
-                        'shrink-0 rounded-full px-3 py-1 text-xs font-medium',
-                        STATUS_STYLES[order.status] || 'bg-gray-100 text-gray-700'
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <span
+                        className={cn(
+                          'rounded-full px-3 py-1 text-xs font-medium',
+                          STATUS_STYLES[order.status] || 'bg-gray-100 text-gray-700'
+                        )}
+                      >
+                        {statusLabel(order.status)}
+                      </span>
+                      {canRemove && (
+                        <button
+                          type="button"
+                          onClick={() => setRemoveTarget(order)}
+                          aria-label={`Remove order ${order.orderNumber} from your list`}
+                          className="relative z-20 rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       )}
-                    >
-                      {statusLabel(order.status)}
-                    </span>
+                    </div>
                   </div>
                   <div className="mt-3 flex items-center gap-3">
                     {firstImage && (
@@ -383,7 +479,7 @@ export default function AccountPage() {
                     <p className="text-sm font-semibold text-gray-900">{formatPrice(order.total)}</p>
                     <ChevronRight size={18} className="shrink-0 text-gray-400" />
                   </div>
-                </Link>
+                </div>
               )
             })}
           </div>
@@ -449,7 +545,26 @@ export default function AccountPage() {
           </div>
         )}
       </main>
-      <Footer />
+
+      <ConfirmDialog
+        open={removeTarget !== null}
+        title={
+          removeTarget
+            ? `Remove order #${removeTarget.orderNumber} from your list?`
+            : ''
+        }
+        description={
+          removeTarget && getOrderRemoval(removeTarget).cancelFirst
+            ? 'This cancels the order and takes it off your list. You have not been charged, so there is nothing to refund.'
+            : 'This takes the order off your list. Nothing else about it changes.'
+        }
+        confirmLabel="Yes, remove"
+        cancelLabel="Keep it"
+        busyLabel="Removing…"
+        busy={removing}
+        onConfirm={confirmRemoveOrder}
+        onCancel={() => setRemoveTarget(null)}
+      />
     </div>
   )
 }

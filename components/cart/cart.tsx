@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { ShoppingCart } from 'lucide-react'
+import { ShoppingCart, Trash2 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { CartItem } from './cart-item'
 import { CartSummary } from './cart-summary'
+import { DeliveryAddress } from './delivery-address'
 import { SareeLoader } from '@/components/ui/saree-loader'
 import { useToast } from '@/components/ui/toast'
 import { cartApi } from '@/lib/api'
@@ -150,21 +151,30 @@ export function Cart({ initialCart }: CartProps) {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between gap-3 mb-8">
           <h1 className="text-2xl font-bold text-gray-900">
             Shopping Cart ({cart.itemCount} {cart.itemCount === 1 ? 'item' : 'items'})
           </h1>
 
           {cart.items.length > 0 && (
+            // Outlined pill rather than bare text: this empties the whole cart,
+            // so it needs to read as a control you are about to press. Matches
+            // the Sign Out button on the account page.
             <button
               onClick={clearCart}
               disabled={isUpdating}
-              className="text-sm text-gray-500 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex shrink-0 items-center gap-2 rounded-full border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 hover:border-red-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Clear Cart
+              <Trash2 size={15} aria-hidden="true" />
+              <span className="hidden sm:inline">Clear Cart</span>
+              <span className="sr-only sm:hidden">Clear Cart</span>
             </button>
           )}
         </div>
+
+        {/* Where this order is going, above the items — the same question a
+            customer asks before deciding to check out, not after. */}
+        <DeliveryAddress />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">

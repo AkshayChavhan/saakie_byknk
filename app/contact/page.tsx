@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { Mail, Phone, MapPin, Clock, Send, MessageCircle } from 'lucide-react'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -267,7 +266,6 @@ export default function ContactPage() {
           </div>
         </section>
       </div>
-      <Footer />
     </>
   )
 }

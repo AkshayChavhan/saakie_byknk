@@ -213,9 +213,24 @@ describe('FeaturedProducts component', () => {
 
     render(<FeaturedProducts />)
 
+    // RatingBadge splits the chip into aria-hidden pieces — score, star,
+    // divider, count — and puts the whole sentence on the wrapper's
+    // aria-label. Assert the accessible name rather than the visual fragments,
+    // so restyling the chip does not break the test but dropping the rating
+    // does.
     await waitFor(() => {
-      expect(screen.getByText('4.5 (20)')).toBeInTheDocument()
+      expect(
+        screen.getByLabelText('Rated 4.5 out of 5 from 20 reviews')
+      ).toBeInTheDocument()
     })
+
+    expect(
+      screen.getByLabelText('Rated 4.2 out of 5 from 15 reviews')
+    ).toBeInTheDocument()
+
+    // The score and count are still on screen for sighted users.
+    expect(screen.getByText('4.5')).toBeInTheDocument()
+    expect(screen.getByText('20')).toBeInTheDocument()
   })
 
   it('displays color swatches', async () => {

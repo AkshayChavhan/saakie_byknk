@@ -9,7 +9,6 @@ import { fetchApi } from '@/lib/api'
 import { renderMarkdown } from '@/lib/markdown'
 import { formatDate } from '@/lib/utils'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 
 interface RelatedPost {
   id: string
@@ -84,7 +83,6 @@ export function BlogPostView() {
             </div>
           </div>
         </div>
-        <Footer />
       </div>
     )
   }
@@ -113,7 +111,6 @@ export function BlogPostView() {
             </Link>
           </div>
         </div>
-        <Footer />
       </div>
     )
   }
@@ -251,7 +248,6 @@ export function BlogPostView() {
         </section>
       )}
 
-      <Footer />
     </div>
   )
 }

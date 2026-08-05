@@ -6,7 +6,6 @@ import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import { Heart, ShoppingCart, Trash2, ArrowRight, Package } from 'lucide-react'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 import { formatPrice } from '@/lib/utils'
 import { wishlistApi, cartApi } from '@/lib/api'
 import { useToast } from '@/components/ui/toast'
@@ -127,7 +126,6 @@ export default function WishlistPage() {
             </div>
           </div>
         </div>
-        <Footer />
       </div>
     )
   }
@@ -149,7 +147,6 @@ export default function WishlistPage() {
             ))}
           </div>
         </div>
-        <Footer />
       </div>
     )
   }
@@ -179,7 +176,6 @@ export default function WishlistPage() {
             </Link>
           </div>
         </div>
-        <Footer />
       </div>
     )
   }
@@ -230,6 +226,8 @@ export default function WishlistPage() {
                         src={primaryImage.url}
                         alt={primaryImage.alt || product.name}
                         fill
+                        // grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4
+                        sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                         className="object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
@@ -324,7 +322,6 @@ export default function WishlistPage() {
         </div>
       </div>
 
-      <Footer />
     </div>
   )
 }

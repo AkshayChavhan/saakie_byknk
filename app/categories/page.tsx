@@ -5,7 +5,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Home, ChevronRight, Grid3X3, LayoutGrid, Folder, ArrowRight, Sparkles } from 'lucide-react'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 import { SareeLoader } from '@/components/ui/saree-loader'
 import { fetchApi } from '@/lib/api'
 
@@ -15,7 +14,10 @@ interface Category {
   slug: string
   description: string | null
   image: string | null
-  productCount: number
+  // GET /api/categories calls this `count`, and it already rolls up every
+  // sub-category. Naming it `productCount` here silently read `undefined` on
+  // every card, so `|| 0` printed "0 products" catalogue-wide.
+  count: number
   isActive: boolean
 }
 
@@ -278,7 +280,7 @@ function CategoriesContent() {
                       }`}
                       style={{ animationDelay: `${index * 50}ms` }}
                       role="listitem"
-                      aria-label={`${category.name} - ${category.productCount || 0} products`}
+                      aria-label={`${category.name} - ${category.count ?? 0} products`}
                     >
                       {viewMode === 'grid' ? (
                         // Grid View
@@ -319,7 +321,7 @@ function CategoriesContent() {
                             )}
                             <div className="mt-3 pt-3 border-t border-gray-100">
                               <span className="text-xs font-medium text-secondary-600 bg-secondary-50 px-2.5 py-1 rounded-full">
-                                {category.productCount || 0} products
+                                {category.count ?? 0} products
                               </span>
                             </div>
                           </div>
@@ -353,7 +355,7 @@ function CategoriesContent() {
                             )}
                             <div className="mt-2 flex items-center gap-3">
                               <span className="text-xs font-medium text-secondary-600 bg-secondary-50 px-2.5 py-1 rounded-full">
-                                {category.productCount || 0} products
+                                {category.count ?? 0} products
                               </span>
                             </div>
                           </div>
@@ -395,7 +397,6 @@ function CategoriesContent() {
         )}
       </main>
 
-      <Footer />
     </div>
   )
 }

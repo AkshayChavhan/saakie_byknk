@@ -14,7 +14,9 @@ export async function GET() {
     if (r instanceof NextResponse) return r;
 
     const orders = await prisma.order.findMany({
-      where: { userId: r.id },
+      // Orders the customer has cleared away are hidden from them but still
+      // exist for admin and reporting — see DELETE /api/orders/[id].
+      where: { userId: r.id, customerHiddenAt: null },
       include: {
         items: {
           include: {

@@ -35,6 +35,10 @@ export function HoldToDeleteDialog({
   const [holding, setHolding] = useState(false)
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const cancelRef = useRef<HTMLButtonElement>(null)
+  // Drives the entrance: the dialog mounts in its "from" state and flips on
+  // the next frame, so the browser has something to animate from. Matches
+  // components/ui/confirm-dialog.tsx.
+  const [shown, setShown] = useState(false)
 
   const releaseHold = useCallback(() => {
     if (holdTimer.current) {
@@ -61,6 +65,15 @@ export function HoldToDeleteDialog({
   useEffect(() => {
     if (!open) releaseHold()
   }, [open, releaseHold])
+
+  useEffect(() => {
+    if (!open) {
+      setShown(false)
+      return
+    }
+    const frame = requestAnimationFrame(() => setShown(true))
+    return () => cancelAnimationFrame(frame)
+  }, [open])
 
   useEffect(() => releaseHold, [releaseHold])
 
@@ -90,12 +103,21 @@ export function HoldToDeleteDialog({
       aria-describedby="hold-delete-description"
     >
       <div
-        className="absolute inset-0 bg-black/60"
+        className={cn(
+          'absolute inset-0 bg-black/60 transition-opacity duration-200 motion-reduce:transition-none',
+          shown ? 'opacity-100' : 'opacity-0'
+        )}
         onClick={busy ? undefined : onCancel}
         aria-hidden="true"
       />
 
-      <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+      <div
+        className={cn(
+          'relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl',
+          'transition-all duration-200 ease-out motion-reduce:transition-none',
+          shown ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-2 scale-95 opacity-0'
+        )}
+      >
         <div className="flex items-start gap-4">
           <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-red-100">
             <AlertTriangle className="h-6 w-6 text-red-600" aria-hidden="true" />

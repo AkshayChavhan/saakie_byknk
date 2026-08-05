@@ -104,7 +104,33 @@
   .animate-scale-in {
     animation: scaleIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  
+
+  /* Content arriving in place — a tab panel, a switched view, a filtered
+     result set. Deliberately much shorter than the entrance animations above:
+     those play once on page load, this one plays every time someone taps a
+     tab, and anything longer than ~250ms starts to feel like lag. Pair it with
+     a changing React `key` so the animation replays on each switch. */
+  .animate-panel-in {
+    animation: panelIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* A modal backdrop appearing. Pure opacity — a backdrop is `inset-0`, so any
+     transform would briefly expose the page edge behind it. */
+  .animate-overlay-in {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  @keyframes panelIn {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   .animation-delay-100 {
     animation-delay: 100ms;
   }
@@ -917,6 +943,11 @@ html {
     transition: none;
   }
   .ripple[data-rippling='true']::after {
+    animation: none;
+  }
+  /* Panels and overlays still appear, they just stop moving. */
+  .animate-panel-in,
+  .animate-overlay-in {
     animation: none;
   }
 }

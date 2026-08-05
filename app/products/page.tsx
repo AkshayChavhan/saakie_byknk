@@ -23,8 +23,8 @@ import {
 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 import { SareeLoader } from '@/components/ui/saree-loader'
+import { RatingBadge } from '@/components/ui/rating-badge'
 import { fetchApi } from '@/lib/api'
 
 interface Product {
@@ -505,6 +505,16 @@ function ProductsContent() {
                             src={product.image}
                             alt={product.name}
                             fill
+                            // Mirrors the grid above it. Without this, `fill`
+                            // assumes 100vw and every thumbnail downloads at
+                            // full viewport width — five times oversized in
+                            // the xl grid. List view uses the fixed widths the
+                            // container declares.
+                            sizes={
+                              viewMode === 'grid'
+                                ? '(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw'
+                                : '(min-width: 640px) 192px, 144px'
+                            }
                             className="object-cover group-hover:scale-110 transition-transform duration-500"
                           />
 
@@ -584,20 +594,11 @@ function ProductsContent() {
                           </h3>
 
                           {/* Rating */}
-                          <div className="flex items-center gap-1.5 mb-2">
-                            <div className="flex items-center gap-0.5">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  size={12}
-                                  className={i < Math.floor(product.rating) ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}
-                                />
-                              ))}
-                            </div>
-                            <span className="text-xs text-gray-500">
-                              ({product.reviews})
-                            </span>
-                          </div>
+                          <RatingBadge
+                            rating={product.rating}
+                            reviews={product.reviews}
+                            className="mb-2"
+                          />
 
                           {/* Price */}
                           <div className="flex items-center gap-2 flex-wrap">
@@ -824,7 +825,6 @@ function ProductsContent() {
         </div>
       )}
 
-      <Footer />
     </div>
   )
 }

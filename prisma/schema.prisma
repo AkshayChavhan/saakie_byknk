@@ -234,6 +234,12 @@ model Order {
   trackingNumber  String?
   estimatedDelivery DateTime?
   deliveredAt     DateTime?
+  // Stamped when the customer removes the order from their own "My Orders"
+  // list. The row is never deleted — admin, revenue stats and the audit trail
+  // still see it in full; only the customer's view filters it out. A payment
+  // that lands afterwards clears this, so an order someone actually paid for
+  // can never stay hidden from them.
+  customerHiddenAt DateTime?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 

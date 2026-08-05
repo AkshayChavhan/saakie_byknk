@@ -4,7 +4,6 @@ import { Heart, Sparkles, Users, Star, ArrowRight, Quote } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 
 const founders = [
   {
@@ -163,6 +162,7 @@ export default function OurStoryPage() {
                     src="https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=800&h=1000&fit=crop"
                     alt="Traditional Indian Fashion"
                     fill
+                    sizes="(min-width: 1024px) 50vw, 100vw"
                     className="object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
@@ -319,6 +319,7 @@ export default function OurStoryPage() {
                         src={founder.image}
                         alt={`${founder.name} - ${founder.role}`}
                         fill
+                        sizes="(min-width: 640px) 160px, 128px"
                         className="object-cover"
                       />
                     </div>
@@ -425,7 +426,6 @@ export default function OurStoryPage() {
         </div>
       </section>
 
-      <Footer />
     </div>
   )
 }

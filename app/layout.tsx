@@ -6,6 +6,8 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 import { Providers } from '@/components/providers'
 import { NavigationProgress } from '@/components/ui/navigation-progress'
+import { Footer } from '@/components/layout/footer'
+import { SiteFooter } from '@/components/layout/site-footer'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
@@ -76,7 +78,14 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <NavigationProgress />
         </Suspense>
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          {/* One footer for the whole app, shown only on the routes
+              SiteFooter lists. Pages no longer render their own. */}
+          <SiteFooter>
+            <Footer />
+          </SiteFooter>
+        </Providers>
         {/* Vercel Analytics (page views) + Speed Insights (Web Vitals).
             No-ops outside Vercel; no keys or cookie banner required. */}
         <Analytics />

@@ -1,7 +1,6 @@
 'use client'
 
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Briefcase, Heart, Users, Sparkles, Rocket, Coffee, Gift, Clock, MapPin, Mail, ArrowRight, CheckCircle2 } from 'lucide-react'
@@ -68,6 +67,7 @@ export default function CareersPage() {
             src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920&h=1080&fit=crop"
             alt="Team collaboration"
             fill
+            sizes="100vw"
             className="object-cover"
             priority
           />
@@ -356,6 +356,7 @@ export default function CareersPage() {
                       src="https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=400&h=500&fit=crop"
                       alt="Fashion design"
                       fill
+                      sizes="(min-width: 1024px) 25vw, 50vw"
                       className="object-cover"
                     />
                   </div>
@@ -364,6 +365,7 @@ export default function CareersPage() {
                       src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&h=400&fit=crop"
                       alt="Team collaboration"
                       fill
+                      sizes="(min-width: 1024px) 25vw, 50vw"
                       className="object-cover"
                     />
                   </div>
@@ -374,6 +376,7 @@ export default function CareersPage() {
                       src="https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=400&h=400&fit=crop"
                       alt="Creative work"
                       fill
+                      sizes="(min-width: 1024px) 25vw, 50vw"
                       className="object-cover"
                     />
                   </div>
@@ -382,6 +385,7 @@ export default function CareersPage() {
                       src="https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400&h=500&fit=crop"
                       alt="Fashion showcase"
                       fill
+                      sizes="(min-width: 1024px) 25vw, 50vw"
                       className="object-cover"
                     />
                   </div>
@@ -434,7 +438,6 @@ export default function CareersPage() {
         </div>
       </section>
 
-      <Footer />
     </div>
   )
 }

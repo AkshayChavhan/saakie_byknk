@@ -4,7 +4,6 @@ import { Building2, Ruler, Heart, Target, Eye, Award, Users, Palette, Sparkles, 
 import Link from 'next/link'
 import Image from 'next/image'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 
 const founders = [
   {
@@ -142,6 +141,7 @@ export default function AboutPage() {
                     src="/images/owners.jpg"
                     alt="Saakie_byknk owners"
                     fill
+                    sizes="(min-width: 768px) 50vw, 100vw"
                     className="object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
@@ -280,7 +280,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <Footer />
     </div>
   )
 }

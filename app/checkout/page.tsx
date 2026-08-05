@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Loader2, MapPin, CreditCard, Plus, ShieldCheck } from 'lucide-react'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 import { PaymentMethods } from '@/components/checkout/payment-methods'
 import { formatPrice, cn } from '@/lib/utils'
 import { cartApi, userApi, fetchApi } from '@/lib/api'
@@ -418,7 +417,6 @@ function Shell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
       <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</main>
-      <Footer />
     </div>
   )
 }

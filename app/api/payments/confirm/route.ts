@@ -81,6 +81,9 @@ export async function POST(request: Request) {
         status: 'CONFIRMED',
         paymentStatus: 'PAID',
         paymentId: razorpayPaymentId,
+        // Same reasoning as the webhook: a paid order must never stay hidden
+        // from the customer who paid for it.
+        customerHiddenAt: null,
       },
     });
 

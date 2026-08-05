@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { User, Package } from 'lucide-react'
 import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 import { SareeLoader } from '@/components/ui/saree-loader'
 import { OrderDetailView, type OrderDetail } from '@/components/orders/order-detail-view'
 import { orderApi } from '@/lib/api'
@@ -50,7 +49,6 @@ export default function OrderDetailPage() {
           <p className="mt-2 text-sm text-gray-500">Sign in to view your order.</p>
           <Link href="/sign-in" className="btn-primary mt-6">Sign In</Link>
         </main>
-        <Footer />
       </div>
     )
   }
@@ -76,7 +74,6 @@ export default function OrderDetailPage() {
           <OrderDetailView order={order} />
         )}
       </main>
-      <Footer />
     </div>
   )
 }
