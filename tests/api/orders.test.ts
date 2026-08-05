@@ -409,9 +409,11 @@ describe('Orders API', () => {
       const { GET } = await import('@/app/api/orders/route')
       await GET()
 
+      // Orders the customer cleared away are filtered out here rather than
+      // deleted — see DELETE /api/orders/[id] and tests/api/orders-remove.
       expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { userId: 'user_123' },
+          where: { userId: 'user_123', customerHiddenAt: null },
           orderBy: { createdAt: 'desc' },
         })
       )

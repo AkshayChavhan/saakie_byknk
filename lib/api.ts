@@ -39,7 +39,16 @@ async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'An error occurred' }));
-    throw new Error(error.error?.message || error.message || 'API request failed');
+    // Two error shapes are in play: the auth helpers nest under
+    // `error.error.message`, while most route bodies return a bare
+    // `{ error: 'message' }`. Read both, or the plain-string case gets
+    // swallowed and every failure reads "API request failed".
+    throw new Error(
+      error.error?.message ||
+        (typeof error.error === 'string' ? error.error : null) ||
+        error.message ||
+        'API request failed'
+    );
   }
 
   return response.json();
@@ -146,6 +155,17 @@ export const orderApi = {
 
   getById: (orderId: string) =>
     apiFetch<any>(`/api/orders/${orderId}`),
+
+  /**
+   * Take an order off the customer's list, cancelling it first if it is still
+   * live. Throws with the server's explanation when the order is too far along
+   * to cancel (already paid, dispatched or delivered).
+   */
+  remove: (orderId: string) =>
+    apiFetch<{ success: boolean; cancelled: boolean; reason: string }>(
+      `/api/orders/${orderId}`,
+      { method: 'DELETE' }
+    ),
 };
 
 // ============================================
