@@ -68,6 +68,14 @@ interface Review {
   }
 }
 
+// Answer from /api/reviews/eligibility — whether the signed-in user may review
+// this product, and the reason to show them when they may not.
+interface ReviewEligibility {
+  canReview: boolean
+  reason: 'OK' | 'ALREADY_REVIEWED' | 'NOT_PURCHASED' | 'PRODUCT_NOT_FOUND'
+  message: string
+}
+
 interface RelatedProduct {
   id: string
   name: string
@@ -157,6 +165,9 @@ export function ProductDetail() {
   const [reviewComment, setReviewComment] = useState('')
   const [reviewSubmitting, setReviewSubmitting] = useState(false)
   const [reviewMessage, setReviewMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  // Only customers who have paid for the product may review it. The server
+  // enforces this; we ask it up front so the form is shown only when usable.
+  const [reviewEligibility, setReviewEligibility] = useState<ReviewEligibility | null>(null)
 
   const fetchProduct = useCallback(async () => {
     try {
@@ -255,6 +266,31 @@ export function ProductDetail() {
     }
   }
 
+  // Ask whether this user may review, once signed in and the product is known.
+  useEffect(() => {
+    const productId = product?.id
+    if (authStatus !== 'authenticated' || !productId) {
+      setReviewEligibility(null)
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      try {
+        const response = await fetchApi(
+          `/api/reviews/eligibility?productId=${encodeURIComponent(productId)}`
+        )
+        if (!response.ok) return
+        const data: ReviewEligibility = await response.json()
+        if (!cancelled) setReviewEligibility(data)
+      } catch (err) {
+        console.error('Failed to check review eligibility:', err)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [authStatus, product?.id])
+
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!product) return
@@ -284,8 +320,17 @@ export function ProductDetail() {
         setReviewRating(0)
         setReviewTitle('')
         setReviewComment('')
+        // One review per product — retire the form.
+        setReviewEligibility({
+          canReview: false,
+          reason: 'ALREADY_REVIEWED',
+          message: 'You have already reviewed this product',
+        })
       } else {
         setReviewMessage({ type: 'error', text: data.error || 'Could not submit your review.' })
+        if (data.reason && data.reason !== 'OK') {
+          setReviewEligibility({ canReview: false, reason: data.reason, message: data.error })
+        }
       }
     } catch {
       setReviewMessage({ type: 'error', text: 'Something went wrong. Please try again.' })
@@ -937,6 +982,17 @@ export function ProductDetail() {
                 {/* Write a Review */}
                 <div className="bg-gray-50 rounded-xl p-5 sm:p-6">
                   <h3 className="font-semibold text-gray-900 mb-3">Write a Review</h3>
+                  {reviewMessage && (
+                    <div
+                      className={`text-sm rounded-lg px-3 py-2 mb-4 ${
+                        reviewMessage.type === 'success'
+                          ? 'bg-green-50 text-green-700 border border-green-200'
+                          : 'bg-red-50 text-red-700 border border-red-200'
+                      }`}
+                    >
+                      {reviewMessage.text}
+                    </div>
+                  )}
                   {authStatus !== 'authenticated' ? (
                     <p className="text-sm text-gray-600">
                       Please{' '}
@@ -945,20 +1001,22 @@ export function ProductDetail() {
                       </Link>{' '}
                       to write a review.
                     </p>
+                  ) : !reviewEligibility ? (
+                    <p className="text-sm text-gray-500">Checking whether you can review this product…</p>
+                  ) : !reviewEligibility.canReview ? (
+                    <div className="text-sm text-gray-600 space-y-2">
+                      <p>{reviewEligibility.message}</p>
+                      {reviewEligibility.reason === 'NOT_PURCHASED' && (
+                        <Link
+                          href="/account/orders"
+                          className="inline-block text-rose-600 hover:text-rose-700 font-medium"
+                        >
+                          View your orders
+                        </Link>
+                      )}
+                    </div>
                   ) : (
                     <form onSubmit={handleReviewSubmit} className="space-y-4">
-                      {reviewMessage && (
-                        <div
-                          className={`text-sm rounded-lg px-3 py-2 ${
-                            reviewMessage.type === 'success'
-                              ? 'bg-green-50 text-green-700 border border-green-200'
-                              : 'bg-red-50 text-red-700 border border-red-200'
-                          }`}
-                        >
-                          {reviewMessage.text}
-                        </div>
-                      )}
-
                       {/* Star rating */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">

@@ -2,17 +2,29 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import {
+  getReviewEligibility,
+  type ReviewEligibilityReason,
+} from '@/lib/server/reviews';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+/** HTTP status for each way a submission can be rejected. */
+const INELIGIBLE_STATUS: Record<ReviewEligibilityReason, number> = {
+  OK: 200,
+  PRODUCT_NOT_FOUND: 404,
+  ALREADY_REVIEWED: 409,
+  NOT_PURCHASED: 403,
+};
+
 /**
  * Submit a product review.
  *
- * Any signed-in user may submit. New reviews are created PENDING and only
- * appear publicly once an admin approves them. A review is flagged
- * `isVerified` when the user has an order containing the product. One review
- * per user per product.
+ * Only customers who have paid for the product may review it (see
+ * `getReviewEligibility`), and only once per product. New reviews are created
+ * PENDING and appear publicly once an admin approves them. Every accepted
+ * review is a verified purchase by construction.
  */
 export async function POST(request: Request) {
   try {
@@ -43,31 +55,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const product = await prisma.product.findUnique({
-      where: { id: productId },
-      select: { id: true },
-    });
-    if (!product) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
-    }
-
-    // One review per user per product.
-    const existing = await prisma.review.findFirst({
-      where: { userId: r.id, productId },
-      select: { id: true },
-    });
-    if (existing) {
+    // Product must exist, must have been paid for, and not already reviewed.
+    const eligibility = await getReviewEligibility(r.id, productId);
+    if (!eligibility.canReview) {
       return NextResponse.json(
-        { error: 'You have already reviewed this product' },
-        { status: 409 }
+        { error: eligibility.message, reason: eligibility.reason },
+        { status: INELIGIBLE_STATUS[eligibility.reason] }
       );
     }
-
-    // Verified purchase: the user has an order item for this product.
-    const purchased = await prisma.orderItem.findFirst({
-      where: { productId, order: { userId: r.id } },
-      select: { id: true },
-    });
 
     const review = await prisma.review.create({
       data: {
@@ -76,7 +71,8 @@ export async function POST(request: Request) {
         rating,
         title,
         comment,
-        isVerified: !!purchased,
+        // Guaranteed: only paid purchasers reach this point.
+        isVerified: true,
         status: 'PENDING',
       },
     });
