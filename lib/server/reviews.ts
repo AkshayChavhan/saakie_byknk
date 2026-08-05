@@ -5,17 +5,18 @@ import prisma from '@/lib/prisma';
 /**
  * Review eligibility — only customers who have paid for a product may review it.
  *
- * An order counts as paid when either:
- *  - `paymentStatus` is PAID (gateway capture, or an admin marked it paid), or
- *  - it is a Cash-on-Delivery order that reached DELIVERED — cash is collected
- *    at handover, so a COD order stays `paymentStatus: PENDING` even though the
- *    customer has in fact paid.
+ * An order counts as paid solely on `paymentStatus: PAID` — gateway capture, or
+ * an admin marking it paid via PATCH /api/admin/orders/[id]. PENDING / FAILED /
+ * CANCELLED / REFUNDED do not qualify: a refunded order is money returned, not
+ * money paid.
  *
- * FAILED / CANCELLED / REFUNDED payments are excluded: a refunded order is money
- * returned, not money paid.
+ * Note for Cash on Delivery: COD orders are created PENDING and nothing flips
+ * them automatically, not even delivery. A COD customer therefore unlocks
+ * reviewing only once an admin marks their order PAID — deliberate, so that
+ * "reviewed" always means "payment confirmed on our side".
  */
 export const PAID_ORDER_FILTER: Prisma.OrderWhereInput = {
-  OR: [{ paymentStatus: 'PAID' }, { paymentMethod: 'COD', status: 'DELIVERED' }],
+  paymentStatus: 'PAID',
 };
 
 /** Whether the user has a paid order containing this product. */
@@ -46,7 +47,7 @@ const MESSAGES: Record<ReviewEligibilityReason, string> = {
   OK: 'You can review this product.',
   ALREADY_REVIEWED: 'You have already reviewed this product',
   NOT_PURCHASED:
-    'Only customers who have purchased this product can review it. Reviews unlock once your payment is complete.',
+    'Only customers who have purchased this product can review it. Reviews unlock once your payment for it is confirmed.',
   PRODUCT_NOT_FOUND: 'Product not found',
 };
 

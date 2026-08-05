@@ -84,15 +84,12 @@ describe('Reviews API', () => {
       const { POST } = await import('@/app/api/reviews/route')
       await POST(postReview())
 
-      // The purchase lookup must filter to paid orders (or delivered COD),
-      // not merely to any order the user placed.
+      // The purchase lookup must filter to orders whose payment is confirmed —
+      // not merely to any order the user placed. A pending COD order does not
+      // count until an admin marks it PAID.
       const where = mockPrisma.orderItem.findFirst.mock.calls[0][0].where
       expect(where.productId).toBe('prod_123')
-      expect(where.order.userId).toBe('user_123')
-      expect(where.order.OR).toEqual([
-        { paymentStatus: 'PAID' },
-        { paymentMethod: 'COD', status: 'DELIVERED' },
-      ])
+      expect(where.order).toEqual({ userId: 'user_123', paymentStatus: 'PAID' })
     })
 
     it('creates a pending, verified review for a paying customer', async () => {
