@@ -17,6 +17,12 @@ const mockPrisma = {
     // Read by getCategoryScopeIds when scoping a listing to a category subtree.
     findMany: vi.fn(),
   },
+  review: {
+    // The listing averages approved reviews per product in one grouped query
+    // rather than a round trip each, so the card and the product page it links
+    // to can never disagree about a rating.
+    groupBy: vi.fn(),
+  },
 }
 
 vi.mock('@/lib/prisma', () => ({
@@ -31,6 +37,9 @@ describe('Products API', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockPrisma.category.findMany.mockResolvedValue([])
+    // No approved reviews unless a test says otherwise. groupBy emits no row
+    // for a product with none, so an empty array means "nothing rated yet".
+    mockPrisma.review.groupBy.mockResolvedValue([])
   })
 
   describe('GET /api/products', () => {
@@ -321,6 +330,104 @@ describe('Products API', () => {
       expect(response.status).toBe(500)
       const data = await response.json()
       expect(data.success).toBe(false)
+    })
+
+    describe('ratings', () => {
+      const listProducts = async () => {
+        const { GET } = await import('@/app/api/products/route')
+        const request = new NextRequest('http://localhost:3000/api/products')
+        return (await GET(request)).json()
+      }
+
+      const oneProduct = (id = 'product_123') => {
+        mockPrisma.product.findMany.mockResolvedValue([
+          createMockProduct({ id }),
+        ])
+        mockPrisma.product.count.mockResolvedValue(1)
+      }
+
+      it('reports the real average, not a fixed placeholder', async () => {
+        // 3.7 deliberately: this route used to answer a hardcoded 4.5 for any
+        // product with at least one review, so a test built around 4.5 would
+        // have passed against the bug it is meant to catch.
+        oneProduct()
+        mockPrisma.review.groupBy.mockResolvedValue([
+          { productId: 'product_123', _avg: { rating: 3.7 } },
+        ])
+
+        const data = await listProducts()
+
+        expect(data.products[0].rating).toBe(3.7)
+      })
+
+      it('rounds to the one decimal the UI renders', async () => {
+        // Three 4s and a 5 average to 4.25, which would otherwise reach the
+        // card as 4.25 and render inconsistently against the product page.
+        oneProduct()
+        mockPrisma.review.groupBy.mockResolvedValue([
+          { productId: 'product_123', _avg: { rating: 4.25 } },
+        ])
+
+        const data = await listProducts()
+
+        expect(data.products[0].rating).toBe(4.3)
+      })
+
+      it('averages approved reviews only', async () => {
+        // A pending review is invisible on the product page, so letting it
+        // move the number here would make the two surfaces disagree.
+        oneProduct()
+
+        await listProducts()
+
+        expect(mockPrisma.review.groupBy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            by: ['productId'],
+            where: expect.objectContaining({ status: 'APPROVED' }),
+            _avg: { rating: true },
+          })
+        )
+      })
+
+      it('asks only about the products on this page', async () => {
+        oneProduct('product_abc')
+
+        await listProducts()
+
+        const { where } = mockPrisma.review.groupBy.mock.calls[0][0]
+        expect(where.productId).toEqual({ in: ['product_abc'] })
+      })
+
+      it('reports 0 for a product with no approved reviews', async () => {
+        // groupBy emits no row at all in that case — a missing entry means
+        // unrated, not unknown.
+        oneProduct()
+        mockPrisma.review.groupBy.mockResolvedValue([])
+
+        const data = await listProducts()
+
+        expect(data.products[0].rating).toBe(0)
+      })
+
+      it('skips the query entirely when the page is empty', async () => {
+        mockPrisma.product.findMany.mockResolvedValue([])
+        mockPrisma.product.count.mockResolvedValue(0)
+
+        await listProducts()
+
+        expect(mockPrisma.review.groupBy).not.toHaveBeenCalled()
+      })
+
+      it('counts approved reviews only', async () => {
+        oneProduct()
+
+        await listProducts()
+
+        const { select } = mockPrisma.product.findMany.mock.calls[0][0]
+        expect(select._count.select.reviews).toEqual({
+          where: { status: 'APPROVED' },
+        })
+      })
     })
   })
 })

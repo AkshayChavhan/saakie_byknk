@@ -114,12 +114,40 @@ export async function GET(request: Request) {
         images: { select: { url: true }, take: 1 },
         colors: { select: { hexCode: true } },
         category: { select: { name: true, slug: true } },
-        _count: { select: { reviews: true, orderItems: true } },
+        // Approved only — the schema notes that unapproved reviews are never
+        // shown publicly, and the detail endpoint already counts this way.
+        _count: {
+          select: {
+            reviews: { where: { status: 'APPROVED' } },
+            orderItems: true,
+          },
+        },
       },
       skip: (pageNum - 1) * limitNum,
       take: limitNum,
       orderBy,
     });
+
+    // Real average rating per product, over approved reviews only. One grouped
+    // query for the whole page rather than a round trip per product, and it
+    // mirrors app/api/products/[slug]/route.ts so a card and the product page
+    // it links to can never show different numbers.
+    const avgRatingByProduct = new Map<string, number>();
+    if (products.length > 0) {
+      const grouped = await prisma.review.groupBy({
+        by: ['productId'],
+        where: {
+          productId: { in: products.map((p) => p.id) },
+          status: 'APPROVED',
+        },
+        _avg: { rating: true },
+      });
+      for (const row of grouped) {
+        if (row._avg.rating !== null) {
+          avgRatingByProduct.set(row.productId, row._avg.rating);
+        }
+      }
+    }
 
     const formattedProducts = products.map((product) => ({
       id: product.id,
@@ -129,7 +157,9 @@ export async function GET(request: Request) {
       // Pass through as-is. `null` means "not on sale" and the UI must not
       // render a discount badge — never substitute a derived reference price.
       comparePrice: product.comparePrice,
-      rating: product._count.reviews > 0 ? 4.5 : 0,
+      // Rounded to one decimal, which is the precision the UI renders.
+      rating:
+        Math.round((avgRatingByProduct.get(product.id) ?? 0) * 10) / 10,
       reviews: product._count.reviews,
       image: watermarkImageUrl(
         product.images[0]?.url || '/images/placeholder-product.svg'
