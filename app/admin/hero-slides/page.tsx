@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { fetchApi } from '@/lib/api'
 import { useToast } from '@/components/ui/toast'
+import { compressImage, formatBytes } from '@/lib/image-compress'
 
 interface Slide {
   id: string
@@ -47,8 +48,15 @@ export default function HeroSlidesManagement() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [existingImage, setExistingImage] = useState<string | null>(null)
+  // Null until a file has been picked; `busy` covers the re-encode itself.
+  const [imageCompression, setImageCompression] = useState<{
+    busy: boolean
+    originalBytes: number
+    compressedBytes: number
+  } | null>(null)
 
   const isEditMode = editingId !== null
+  const compressing = imageCompression?.busy === true
 
   const fetchSlides = useCallback(async () => {
     try {
@@ -79,6 +87,7 @@ export default function HeroSlidesManagement() {
     setImagePreview(null)
     setSelectedImage(null)
     setExistingImage(null)
+    setImageCompression(null)
     setEditingId(null)
     setFormData(emptyForm)
   }
@@ -92,6 +101,7 @@ export default function HeroSlidesManagement() {
     if (imagePreview) URL.revokeObjectURL(imagePreview)
     setImagePreview(null)
     setSelectedImage(null)
+    setImageCompression(null)
     setFormData({
       title: slide.title ?? '',
       subtitle: slide.subtitle ?? '',
@@ -115,14 +125,46 @@ export default function HeroSlidesManagement() {
     }, 250)
   }
 
-  const handleImageSelect = (file: File | null) => {
+  const handleImageSelect = async (file: File | null) => {
     if (imagePreview) URL.revokeObjectURL(imagePreview)
-    setSelectedImage(file)
-    setImagePreview(file ? URL.createObjectURL(file) : null)
+    setImagePreview(null)
+
+    if (!file) {
+      setSelectedImage(null)
+      setImageCompression(null)
+      return
+    }
+
+    setImageCompression({ busy: true, originalBytes: file.size, compressedBytes: 0 })
+
+    // Vercel caps a serverless request body at 4.5MB and a raw phone photo is
+    // 4-8MB on its own, so the multipart POST would be rejected at the edge
+    // with a 413 before the route handler ever runs. Re-encode in the browser
+    // first, and preview the file we are actually going to upload.
+    const compressed = await compressImage(file)
+
+    setSelectedImage(compressed)
+    setImagePreview(URL.createObjectURL(compressed))
+    setImageCompression({
+      busy: false,
+      originalBytes: file.size,
+      compressedBytes: compressed.size,
+    })
+  }
+
+  // An oversized body is rejected at the edge with a non-JSON 413, so read
+  // defensively and translate it into something an admin can act on.
+  const readErrorMessage = async (response: Response, fallback: string) => {
+    if (response.status === 413) {
+      return 'The upload was too large for the server. Please pick a smaller image.'
+    }
+    const body = await response.json().catch(() => ({}))
+    return body.error || fallback
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (compressing) return
 
     // A new slide must have an image (HeroSlide.image is required).
     if (!isEditMode && !selectedImage) {
@@ -155,8 +197,7 @@ export default function HeroSlidesManagement() {
           `"${saved.title}" has been ${isEditMode ? 'updated' : 'created'}.`
         )
       } else {
-        const error = await response.json().catch(() => ({}))
-        toast.error('Save Failed', error.error || 'Something went wrong.')
+        toast.error('Save Failed', await readErrorMessage(response, 'Something went wrong.'))
       }
     } catch (error) {
       console.error('Failed to save slide:', error)
@@ -366,7 +407,15 @@ export default function HeroSlidesManagement() {
                         className="hidden"
                         id="slide-image"
                       />
-                      {imagePreview || existingImage ? (
+                      {compressing ? (
+                        <div className="flex flex-col items-center py-6">
+                          <svg className="animate-spin h-6 w-6 text-red-500 mb-3" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                          <span className="text-sm font-medium text-gray-700">Optimising image…</span>
+                        </div>
+                      ) : imagePreview || existingImage ? (
                         <div>
                           <Image
                             src={imagePreview || existingImage || ''}
@@ -375,9 +424,18 @@ export default function HeroSlidesManagement() {
                             height={120}
                             className="h-28 w-auto object-cover rounded-lg"
                           />
-                          <label htmlFor="slide-image" className="mt-2 inline-block text-sm text-red-600 hover:text-red-700 cursor-pointer">
-                            Change image
-                          </label>
+                          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                            <label htmlFor="slide-image" className="text-sm text-red-600 hover:text-red-700 cursor-pointer">
+                              Change image
+                            </label>
+                            {imageCompression && imageCompression.compressedBytes > 0 && (
+                              <span className="text-xs text-gray-500">
+                                Optimised to {formatBytes(imageCompression.compressedBytes)}
+                                {imageCompression.compressedBytes < imageCompression.originalBytes &&
+                                  ` from ${formatBytes(imageCompression.originalBytes)}`}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       ) : (
                         <label htmlFor="slide-image" className="cursor-pointer flex flex-col items-center py-5">
@@ -495,7 +553,7 @@ export default function HeroSlidesManagement() {
                   <button
                     type="submit"
                     form="slide-form"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || compressing}
                     className="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-xl hover:from-red-700 hover:to-red-600 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {isSubmitting ? (
@@ -506,6 +564,8 @@ export default function HeroSlidesManagement() {
                         </svg>
                         {isEditMode ? 'Saving...' : 'Creating...'}
                       </>
+                    ) : compressing ? (
+                      'Optimising image…'
                     ) : (
                       isEditMode ? 'Save Changes' : 'Create Slide'
                     )}

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { fetchApi } from '@/lib/api'
 import { useToast } from '@/components/ui/toast'
+import { compressImage, formatBytes } from '@/lib/image-compress'
 
 interface Category {
   id: string
@@ -72,6 +73,14 @@ export default function CategoriesManagement() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
+  // Null until a file has been picked; `busy` covers the re-encode itself.
+  const [imageCompression, setImageCompression] = useState<{
+    busy: boolean
+    originalBytes: number
+    compressedBytes: number
+  } | null>(null)
+
+  const compressing = imageCompression?.busy === true
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -102,8 +111,19 @@ export default function CategoriesManagement() {
     }
   }, [imagePreview])
 
+  // An oversized body is rejected at the edge with a non-JSON 413, so read
+  // defensively and translate it into something an admin can act on.
+  const readErrorMessage = async (response: Response, fallback: string) => {
+    if (response.status === 413) {
+      return 'The upload was too large for the server. Please pick a smaller category image.'
+    }
+    const body = await response.json().catch(() => ({}))
+    return body.error || fallback
+  }
+
   const handleSubmitCategory = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (compressing) return
     setIsSubmitting(true)
 
     try {
@@ -175,8 +195,10 @@ export default function CategoriesManagement() {
         setIsModalOpen(false)
         resetForm()
       } else {
-        const error = await response.json()
-        toast.error(isEditing ? 'Failed to Update Category' : 'Failed to Create Category', error.error || 'Something went wrong. Please try again.')
+        toast.error(
+          isEditing ? 'Failed to Update Category' : 'Failed to Create Category',
+          await readErrorMessage(response, 'Something went wrong. Please try again.')
+        )
       }
     } catch (error) {
       console.error('Failed to save category:', error)
@@ -196,6 +218,7 @@ export default function CategoriesManagement() {
       isActive: true
     })
     setSelectedImage(null)
+    setImageCompression(null)
     setEditingCategory(null)
     if (imagePreview) {
       URL.revokeObjectURL(imagePreview)
@@ -219,12 +242,33 @@ export default function CategoriesManagement() {
     setIsModalOpen(true)
   }
 
-  const handleImageSelect = (file: File | null) => {
+  const handleImageSelect = async (file: File | null) => {
     if (imagePreview) {
       URL.revokeObjectURL(imagePreview)
     }
-    setSelectedImage(file)
-    setImagePreview(file ? URL.createObjectURL(file) : null)
+    setImagePreview(null)
+
+    if (!file) {
+      setSelectedImage(null)
+      setImageCompression(null)
+      return
+    }
+
+    setImageCompression({ busy: true, originalBytes: file.size, compressedBytes: 0 })
+
+    // Vercel caps a serverless request body at 4.5MB and a raw phone photo is
+    // 4-8MB on its own, so the multipart POST to the upload route would be
+    // rejected at the edge with a 413 before the handler ever runs. Re-encode
+    // in the browser first, and preview the file we are actually going to send.
+    const compressed = await compressImage(file)
+
+    setSelectedImage(compressed)
+    setImagePreview(URL.createObjectURL(compressed))
+    setImageCompression({
+      busy: false,
+      originalBytes: file.size,
+      compressedBytes: compressed.size,
+    })
   }
 
   const handleUpdateCategory = async (categoryId: string, updates: Partial<Category>) => {
@@ -1111,7 +1155,15 @@ export default function CategoriesManagement() {
                         id="category-image-upload"
                       />
 
-                      {imagePreview ? (
+                      {compressing ? (
+                        <div className="flex flex-col items-center py-4">
+                          <svg className="animate-spin h-6 w-6 text-red-500 mb-3" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                          <span className="text-sm font-medium text-gray-700">Optimising image…</span>
+                        </div>
+                      ) : imagePreview ? (
                         <div className="flex items-center gap-4">
                           <Image
                             src={imagePreview}
@@ -1124,9 +1176,15 @@ export default function CategoriesManagement() {
                             <p className="text-sm font-medium text-gray-900 truncate">
                               {selectedImage?.name}
                             </p>
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              {selectedImage && (selectedImage.size / 1024 / 1024).toFixed(2)} MB
-                            </p>
+                            {imageCompression && imageCompression.compressedBytes > 0 ? (
+                              <p className="text-xs text-gray-500 mt-0.5">
+                                Optimised to {formatBytes(imageCompression.compressedBytes)}
+                                {imageCompression.compressedBytes < imageCompression.originalBytes &&
+                                  ` from ${formatBytes(imageCompression.originalBytes)}`}
+                              </p>
+                            ) : selectedImage ? (
+                              <p className="text-xs text-gray-500 mt-0.5">{formatBytes(selectedImage.size)}</p>
+                            ) : null}
                             <button
                               type="button"
                               onClick={() => handleImageSelect(null)}
@@ -1192,7 +1250,7 @@ export default function CategoriesManagement() {
                   <button
                     type="submit"
                     form="category-form"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || compressing}
                     className="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-xl hover:from-red-700 hover:to-red-600 hover:shadow-xl hover:shadow-red-500/30 active:scale-[0.98] transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-red-500/25"
                   >
                     {isSubmitting ? (
@@ -1203,6 +1261,8 @@ export default function CategoriesManagement() {
                         </svg>
                         {editingCategory ? 'Updating...' : 'Creating...'}
                       </>
+                    ) : compressing ? (
+                      'Optimising image…'
                     ) : (
                       editingCategory
                         ? editingCategory.parentId ? 'Update Sub-Category' : 'Update Category'

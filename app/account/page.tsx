@@ -22,6 +22,7 @@ import { Footer } from '@/components/layout/footer'
 import { formatPrice, formatDate, cn } from '@/lib/utils'
 import { ORDER_STATUS_STYLES as STATUS_STYLES, statusLabel } from '@/lib/orders'
 import { orderApi, userApi, reviewApi } from '@/lib/api'
+import { compressImage, formatBytes } from '@/lib/image-compress'
 
 interface OrderItemSummary {
   id: string
@@ -80,6 +81,14 @@ export default function AccountPage() {
   const [saving, setSaving] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  // Null until a photo has been picked; `busy` covers the re-encode itself.
+  const [imageCompression, setImageCompression] = useState<{
+    busy: boolean
+    originalBytes: number
+    compressedBytes: number
+  } | null>(null)
+
+  const compressing = imageCompression?.busy === true
 
   const loadAll = useCallback(async () => {
     try {
@@ -106,14 +115,33 @@ export default function AccountPage() {
     else if (isLoaded) setLoading(false)
   }, [isLoaded, isSignedIn, loadAll])
 
-  const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
     if (!f) return
-    setFile(f)
-    setPreviewUrl(URL.createObjectURL(f))
+
+    // The photo can be re-picked as many times as the user likes, so release
+    // the previous preview before a new one replaces it.
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(null)
+    setImageCompression({ busy: true, originalBytes: f.size, compressedBytes: 0 })
+
+    // Vercel caps a serverless request body at 4.5MB and a raw phone photo is
+    // 4-8MB on its own, so the multipart PATCH would be rejected at the edge
+    // with a 413 before the route handler ever runs. Re-encode in the browser
+    // first, and preview the file we are actually going to upload.
+    const compressed = await compressImage(f)
+
+    setFile(compressed)
+    setPreviewUrl(URL.createObjectURL(compressed))
+    setImageCompression({
+      busy: false,
+      originalBytes: f.size,
+      compressedBytes: compressed.size,
+    })
   }
 
   const saveProfile = async () => {
+    if (compressing) return
     setSaving(true)
     setEditError(null)
     try {
@@ -128,6 +156,7 @@ export default function AccountPage() {
       setEditing(false)
       setFile(null)
       setPreviewUrl(null)
+      setImageCompression(null)
     } catch (e) {
       setEditError(e instanceof Error ? e.message : 'Could not save profile')
     } finally {
@@ -235,23 +264,33 @@ export default function AccountPage() {
                     />
                   </div>
                   <p className="text-xs text-gray-400">Tap the photo to change your profile picture (JPG/PNG/WebP, ≤5MB).</p>
+                  {compressing ? (
+                    <p className="text-xs text-gray-500">Optimising image…</p>
+                  ) : imageCompression && imageCompression.compressedBytes > 0 ? (
+                    <p className="text-xs text-gray-500">
+                      Optimised to {formatBytes(imageCompression.compressedBytes)}
+                      {imageCompression.compressedBytes < imageCompression.originalBytes &&
+                        ` from ${formatBytes(imageCompression.originalBytes)}`}
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
               <div className="mt-4 flex gap-2">
                 <button
                   onClick={saveProfile}
-                  disabled={saving}
+                  disabled={saving || compressing}
                   className="btn-primary disabled:opacity-60 flex items-center gap-2"
                 >
-                  {saving && <Loader2 size={15} className="animate-spin" />}
-                  Save changes
+                  {(saving || compressing) && <Loader2 size={15} className="animate-spin" />}
+                  {compressing ? 'Optimising image…' : 'Save changes'}
                 </button>
                 <button
                   onClick={() => {
                     setEditing(false)
                     setFile(null)
                     setPreviewUrl(null)
+                    setImageCompression(null)
                     setEditError(null)
                     setForm({ name: profile?.name || '', phone: profile?.phone || '' })
                   }}
