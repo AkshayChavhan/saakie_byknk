@@ -159,24 +159,6 @@ export default function AboutPage() {
                   </div>
                 </div>
               </div>
-
-              {/* Text side */}
-              <div className="order-1 md:order-2 animate-slide-right">
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                  Built on Strong Foundations
-                </h2>
-                <p className="text-lg text-gray-600 leading-relaxed mb-6">
-                  Saakie_byknk is the brainchild of three sisters who brought together their professional expertise and lifelong passion for fashion.
-                </p>
-                <p className="text-lg text-gray-600 leading-relaxed mb-8">
-                  With backgrounds in architecture and civil engineering, we approach fashion the way we approach our craft — with precision, creativity, and an eye for detail that transforms ordinary into extraordinary.
-                </p>
-                <div className="bg-gradient-to-r from-rose-100 to-orange-100 rounded-2xl p-6 md:p-8">
-                  <p className="text-lg md:text-xl text-gray-800 italic text-center">
-                    &ldquo;We design fashion like we design buildings — with a strong foundation, beautiful aesthetics, and structures that stand the test of time.&rdquo;
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
         </div>
