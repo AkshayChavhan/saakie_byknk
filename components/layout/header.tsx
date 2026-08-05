@@ -218,11 +218,23 @@ function CategoriesNavItem({
     return (
       <div className={cn('flex flex-col', staggerClass)} data-category-menu>
         {trigger}
-        {isOpen && (
-          <div className="mt-1 mb-1">
-            <CategoryMenuList categories={categories} variant="drawer" onNavigate={onNavigate} />
+        {/* Expands by transitioning the grid row track from 0fr to 1fr — the
+            one way to animate to a content-driven height without measuring it.
+            The list stays mounted so collapsing glides shut the same way it
+            opened; `inert` keeps the hidden links out of the tab order. */}
+        <div
+          className={cn(
+            'grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none',
+            isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+          )}
+          inert={!isOpen}
+        >
+          <div className="overflow-hidden">
+            <div className="mt-1 mb-1">
+              <CategoryMenuList categories={categories} variant="drawer" onNavigate={onNavigate} />
+            </div>
           </div>
-        )}
+        </div>
       </div>
     )
   }
@@ -615,17 +627,20 @@ export function Header() {
             aria-hidden="true"
           />
 
-          {/* Slide-in Menu Panel */}
+          {/* Slide-in Menu Panel — a flex column so the logo bar and the
+              copyright stay put while only the link list scrolls. Scrolling the
+              panel itself would drag the `absolute` footer up over the links,
+              which is what happens the moment Categories is expanded. */}
           <div
             ref={menuRef}
             className={cn(
-              "lg:hidden fixed top-0 left-0 z-50 h-full w-[280px] sm:w-[320px] bg-gray-900 shadow-2xl overflow-y-auto",
+              "lg:hidden fixed top-0 left-0 z-50 flex h-full w-[280px] sm:w-[320px] flex-col bg-gray-900 shadow-2xl",
               isClosing ? "sidebar-slide-out" : "sidebar-slide-in"
             )}
           >
             {/* Menu Header — black bar so the logo's dark background blends in
                 seamlessly, matching the main top header. */}
-            <div className="flex items-center justify-between gap-3 p-4 bg-black border-b border-gray-800">
+            <div className="flex shrink-0 items-center justify-between gap-3 p-4 bg-black border-b border-gray-800">
               {/* Logo grows to fill the row; the close button keeps its size. */}
               <Link
                 href="/"
@@ -652,8 +667,9 @@ export function Header() {
               </button>
             </div>
 
-            {/* Navigation Links */}
-            <nav className="p-4">
+            {/* Navigation Links — the only scrolling region, so an expanded
+                Categories list runs long without displacing anything else. */}
+            <nav className="flex-1 overflow-y-auto p-4">
               <div className="flex flex-col space-y-1">
                 <SuspendedNavLinks
                   variant="drawer"
@@ -719,7 +735,7 @@ export function Header() {
             </nav>
 
             {/* Footer */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800 bg-gray-900">
+            <div className="shrink-0 p-4 border-t border-gray-800 bg-gray-900">
               <p className="text-xs text-gray-500 text-center">
                 © 2024 Saakie_byknk. All rights reserved.
               </p>
