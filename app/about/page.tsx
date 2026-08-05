@@ -45,13 +45,6 @@ const approaches = [
     bg: 'bg-rose-50',
   },
   {
-    icon: Ruler,
-    title: 'Engineering Precision',
-    description: 'Every stitch, seam, and finish is executed with meticulous attention to detail, built to last.',
-    gradient: 'from-orange-500 to-amber-500',
-    bg: 'bg-orange-50',
-  },
-  {
     icon: Heart,
     title: 'Passion-Driven Design',
     description: 'Every collection is born from genuine love for the craft, inspired by our cultural heritage and modern trends.',
