@@ -64,7 +64,11 @@ export function CartItem({ item, onUpdateQuantity, onRemoveItem, isUpdating }: C
   const isDisabled = isUpdating || isLocalUpdating
 
   return (
-    <div className="flex items-center gap-4 py-6 border-b">
+    // The wrapping card in cart.tsx has no padding of its own, so each row
+    // carries its own gutter — without it the thumbnail sits flush against the
+    // card's left edge and the line total against its right. `last:border-b-0`
+    // stops the final row drawing a divider on top of the card's own border.
+    <div className="flex items-center gap-4 px-4 sm:px-6 py-6 border-b last:border-b-0">
       <div className="flex-shrink-0">
         <Link href={`/products/${item.product.slug}`}>
           <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-gray-100">
