@@ -91,9 +91,9 @@ const openCategories = () => {
 
 // Helper: build a useSession() return value.
 const signedOut = () => ({ data: null, status: 'unauthenticated' as const })
-const signedIn = (role = 'USER') => ({
+const signedIn = (role = 'USER', image: string | null = null) => ({
   data: {
-    user: { id: 'user_123', email: 'test@example.com', name: 'Test User', role },
+    user: { id: 'user_123', email: 'test@example.com', name: 'Test User', role, image },
     expires: '2099-01-01',
   },
   status: 'authenticated' as const,
@@ -375,5 +375,42 @@ describe('Header component', () => {
 
     const saleLinks = screen.getAllByRole('link', { name: 'Sale' })
     expect(saleLinks[0]).toHaveAttribute('href', '/products?sale=true')
+  })
+
+  describe('account avatar', () => {
+    const PHOTO = 'https://res.cloudinary.com/demo/image/upload/profiles/me.jpg'
+    const accountLink = () => screen.getAllByRole('link', { name: 'Account' })[0]
+
+    it('shows the profile photo when the session carries one', () => {
+      mockUseSession.mockReturnValue(signedIn('USER', PHOTO))
+      renderHeader()
+
+      const image = accountLink().querySelector('img')
+      expect(image).not.toBeNull()
+      expect(image).toHaveAttribute('src', PHOTO)
+    })
+
+    it('falls back to the generic icon when there is no photo', () => {
+      mockUseSession.mockReturnValue(signedIn('USER', null))
+      renderHeader()
+
+      expect(accountLink().querySelector('img')).toBeNull()
+    })
+
+    it('leaves the avatar decorative so the link is announced once', () => {
+      // The link is already labelled "Account". Giving the image its own alt
+      // text would make a screen reader read the control out twice.
+      mockUseSession.mockReturnValue(signedIn('USER', PHOTO))
+      renderHeader()
+
+      expect(accountLink().querySelector('img')).toHaveAttribute('alt', '')
+    })
+
+    it('still points at the account page either way', () => {
+      mockUseSession.mockReturnValue(signedIn('USER', PHOTO))
+      renderHeader()
+
+      expect(accountLink()).toHaveAttribute('href', '/account')
+    })
   })
 })

@@ -361,6 +361,10 @@ export function Header() {
   const isSignedIn = status === 'authenticated'
   const role = session?.user?.role
   const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN'
+  // Set by the `session` callback in auth.config.ts from `token.picture`, which
+  // the account page refreshes via `update()` the moment a new photo is saved —
+  // so this follows an upload without a re-login.
+  const avatarUrl = session?.user?.image
   const menuRef = useRef<HTMLDivElement>(null)
 
   // The header mounts per page rather than in the root layout, so this rides
@@ -530,18 +534,39 @@ export function Header() {
 
                 {/* Account goes straight to the account page (profile, orders,
                     sign out). Wishlist has its own heart icon above, so it is
-                    intentionally NOT duplicated here. */}
+                    intentionally NOT duplicated here.
+
+                    Shows the profile photo when there is one — the generic
+                    icon is the fallback, not the only state. Both render at
+                    36px so swapping between them never shifts the row. */}
                 <Link
                   href="/account"
                   aria-label="Account"
                   className={cn(
-                    'p-2 rounded-full transition-colors',
-                    pathname === '/account'
-                      ? 'bg-white text-gray-900'
-                      : 'bg-gray-800 text-white hover:bg-gray-700'
+                    'flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full transition-colors',
+                    avatarUrl
+                      ? cn(
+                          'ring-2',
+                          pathname === '/account'
+                            ? 'ring-white'
+                            : 'ring-gray-700 hover:ring-gray-500'
+                        )
+                      : pathname === '/account'
+                        ? 'bg-white text-gray-900'
+                        : 'bg-gray-800 text-white hover:bg-gray-700'
                   )}
                 >
-                  <User size={20} />
+                  {avatarUrl ? (
+                    <Image
+                      src={avatarUrl}
+                      alt=""
+                      width={36}
+                      height={36}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <User size={20} />
+                  )}
                 </Link>
               </>
             ) : (
