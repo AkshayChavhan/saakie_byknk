@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ChevronRight, Filter, X, Grid, List, Folder, ArrowRight } from 'lucide-react'
+import { ChevronRight, Filter, X, Grid, List, Folder, ArrowRight, Home } from 'lucide-react'
+import { Header } from '@/components/layout/header'
+import { Footer } from '@/components/layout/footer'
 import { formatPrice } from '@/lib/utils'
 import { fetchApi } from '@/lib/api'
 
@@ -114,6 +116,7 @@ export function CategoryView() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
+        <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
@@ -128,52 +131,83 @@ export function CategoryView() {
             </div>
           </div>
         </div>
+        <Footer />
       </div>
     )
   }
 
   if (error || !category) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Category Not Found</h1>
-          <p className="text-gray-600 mb-6">The category you&apos;re looking for doesn&apos;t exist.</p>
-          <Link 
-            href="/products"
-            className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90"
-          >
-            Browse All Products
-          </Link>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Category Not Found</h1>
+            <p className="text-gray-600 mb-6">The category you&apos;re looking for doesn&apos;t exist.</p>
+            <Link
+              href="/products"
+              className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90"
+            >
+              Browse All Products
+            </Link>
+          </div>
         </div>
+        <Footer />
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-6">
-          {/* Breadcrumb */}
-          <div className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
-            <Link href="/" className="hover:text-primary">Home</Link>
-            <ChevronRight size={16} />
-            <Link href="/products" className="hover:text-primary">Products</Link>
-            <ChevronRight size={16} />
-            <span className="text-gray-900">{category.name}</span>
-          </div>
-          
-          {/* Category Title */}
-          <div className="flex items-center justify-between">
+      <Header />
+
+      {/*
+        Hero Banner — the same Banarasi maroon treatment as /products, so a
+        category reads as part of the collection rather than a plainer page.
+        Kept in sync with app/products/page.tsx by hand; if the palette there
+        changes, change it here too.
+      */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#3a0f14] via-maroon-800 to-maroon-700 text-white">
+        {/* Zari sheen — echoes the woven-gold treatment on the auth screens */}
+        <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-marigold-400/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-28 -left-20 h-64 w-64 rounded-full bg-maroon-500/25 blur-3xl" />
+
+        <div className="container relative mx-auto px-4 py-7 sm:py-12">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">{category.name}</h1>
+              <nav className="flex items-center text-sm text-[#fdf0d8]/70 mb-2">
+                <Link href="/" className="flex items-center hover:text-white transition-colors">
+                  <Home size={14} className="mr-1" />
+                  Home
+                </Link>
+                <ChevronRight size={14} className="mx-2 text-zari/60" />
+                <Link href="/products" className="hover:text-white transition-colors">
+                  Products
+                </Link>
+                <ChevronRight size={14} className="mx-2 text-zari/60" />
+                <span className="text-white font-medium">{category.name}</span>
+              </nav>
+              <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold">
+                {category.name}
+              </h1>
+              {/* Gold rule — the same accent that divides the auth panels */}
+              <div className="mt-2 h-px w-16 bg-gradient-to-r from-zari to-transparent sm:w-24" />
               {category.description && (
-                <p className="text-gray-600 mt-2">{category.description}</p>
+                <p className="text-[#fdf0d8]/75 mt-2 text-sm sm:text-base">
+                  {category.description}
+                </p>
               )}
-              <p className="text-sm text-gray-500 mt-1">{category.productCount} products</p>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="rounded-full bg-white/10 px-3 py-1.5 text-zari-light ring-1 ring-zari/30 backdrop-blur-sm">
+                {category.productCount} Products
+              </span>
             </div>
           </div>
         </div>
+
+        {/* Hairline that separates the banner from the page body */}
+        <div className="h-px w-full bg-gradient-to-r from-transparent via-zari/50 to-transparent" />
       </div>
 
       <div className="container mx-auto px-4 py-8">
@@ -461,6 +495,8 @@ export function CategoryView() {
           </div>
         )}
       </div>
+
+      <Footer />
     </div>
   )
 }
