@@ -388,3 +388,18 @@ model BlogPost {
 
   @@map("blog_posts")
 }
+
+// Store-wide switches an admin flips from /admin/settings. A singleton: exactly
+// one row, found by `key`. When the row is absent every value falls back to the
+// defaults below, so a fresh database behaves exactly as before.
+model StoreSetting {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  key         String   @unique // always STORE_SETTING_KEY ("store")
+  // Store-wide Cash on Delivery kill switch. Products still opt in individually
+  // via Product.paymentModes — this gates all of them at once.
+  codEnabled  Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+  updatedById String?  @db.ObjectId
+
+  @@map("store_settings")
+}

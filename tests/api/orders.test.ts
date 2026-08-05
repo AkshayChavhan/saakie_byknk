@@ -39,6 +39,12 @@ const mockPrisma = {
       Promise.resolve(where.id.in.length)
     ),
   },
+  // The singleton `store_settings` row read by getStoreSettings() before the
+  // order is built. beforeEach installs a permissive default (COD on) so the
+  // tests that predate the kill switch behave as they always did.
+  storeSetting: {
+    findUnique: vi.fn(),
+  },
 }
 
 vi.mock('@/lib/prisma', () => ({
@@ -71,6 +77,8 @@ function signIn() {
 describe('Orders API', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // COD switched on store-wide unless a test says otherwise.
+    mockPrisma.storeSetting.findUnique.mockResolvedValue({ codEnabled: true })
   })
 
   describe('POST /api/orders', () => {
@@ -235,6 +243,136 @@ describe('Orders API', () => {
 
       expect(response.status).toBe(500)
       expect(data.success).toBe(false)
+    })
+  })
+
+  // The store-wide COD kill switch. This route is the second, independent
+  // order-creation path — no client code posts to it, so it is exactly where a
+  // shopper (or a stale tab) would land a COD order after an admin turned COD
+  // off. The switch has to hold here on its own, without any help from the UI.
+  describe('POST /api/orders — store-wide COD switch', () => {
+    const validOrderData = {
+      shippingAddressId: 'addr_123',
+      billingAddressId: 'addr_123',
+      paymentMethod: 'COD',
+    }
+
+    const post = async (body: Record<string, unknown> = validOrderData) => {
+      const { POST } = await import('@/app/api/orders/route')
+      return POST(
+        new NextRequest('http://localhost:3000/api/orders', {
+          method: 'POST',
+          body: JSON.stringify(body),
+        })
+      )
+    }
+
+    // A successful create still has to return something order-shaped.
+    const expectCreateToSucceed = () =>
+      mockPrisma.order.create.mockResolvedValue({
+        ...createMockOrder(),
+        items: [],
+        shippingAddress: createMockAddress(),
+      })
+
+    /** Flip the store-wide switch off. */
+    const codOff = () => mockPrisma.storeSetting.findUnique.mockResolvedValue({ codEnabled: false })
+
+    it('rejects a COD order with 409 when COD is switched off store-wide', async () => {
+      signIn()
+      codOff()
+      // Every product in the cart still lists COD — the store-wide switch
+      // alone must be enough to stop the order.
+      mockPrisma.cart.findUnique.mockResolvedValue(cartWithItem())
+      expectCreateToSucceed()
+
+      const response = await post()
+      const data = await response.json()
+
+      expect(response.status).toBe(409)
+      // Inline route validation uses the flat shape, not the nested apiError one.
+      expect(typeof data.error).toBe('string')
+      expect(data.error).toContain('Cash on Delivery')
+      expect(data.error).toContain('currently unavailable')
+      expect(mockPrisma.order.create).not.toHaveBeenCalled()
+    })
+
+    it('reads the singleton settings row', async () => {
+      signIn()
+      codOff()
+      mockPrisma.cart.findUnique.mockResolvedValue(cartWithItem())
+
+      await post()
+
+      expect(mockPrisma.storeSetting.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { key: 'store' } })
+      )
+    })
+
+    it('rejects a lowercase "cod" too', async () => {
+      // The route normalizes before gating, so casing is not a way around the
+      // switch — and a hand-rolled POST is where odd casing turns up.
+      signIn()
+      codOff()
+      mockPrisma.cart.findUnique.mockResolvedValue(cartWithItem())
+      expectCreateToSucceed()
+
+      const response = await post({ ...validOrderData, paymentMethod: 'cod' })
+
+      expect(response.status).toBe(409)
+      expect(mockPrisma.order.create).not.toHaveBeenCalled()
+    })
+
+    it('does not block a prepaid order when COD is switched off', async () => {
+      signIn()
+      codOff()
+      mockPrisma.cart.findUnique.mockResolvedValue(cartWithItem())
+      expectCreateToSucceed()
+
+      const response = await post({ ...validOrderData, paymentMethod: 'RAZORPAY' })
+
+      expect(response.status).toBe(201)
+      expect(mockPrisma.order.create).toHaveBeenCalled()
+      expect(mockPrisma.order.create.mock.calls[0][0].data.paymentMethod).toBe('PREPAID')
+    })
+
+    it('allows COD when the settings row has never been written', async () => {
+      // Fail-open: a database that predates this feature must behave exactly as
+      // it did before, gated only by the per-product paymentModes.
+      signIn()
+      mockPrisma.storeSetting.findUnique.mockResolvedValue(null)
+      mockPrisma.cart.findUnique.mockResolvedValue(cartWithItem())
+      expectCreateToSucceed()
+
+      const response = await post()
+
+      expect(response.status).toBe(201)
+      expect(mockPrisma.order.create).toHaveBeenCalled()
+      expect(mockPrisma.order.create.mock.calls[0][0].data.paymentMethod).toBe('COD')
+    })
+
+    it('reports the store-wide reason ahead of the per-product one', async () => {
+      // Both gates would reject this order. The shopper should be told COD is
+      // off store-wide — picking a different product would not help them.
+      signIn()
+      codOff()
+      const product = createMockProduct({
+        id: 'prod_123',
+        name: 'Prepaid-only Saree',
+        paymentModes: ['PREPAID'],
+      })
+      mockPrisma.cart.findUnique.mockResolvedValue(
+        createMockCart({ items: [createMockCartItem({ product })] })
+      )
+      expectCreateToSucceed()
+
+      const response = await post()
+      const data = await response.json()
+
+      expect(response.status).toBe(409)
+      expect(data.error).toContain('currently unavailable')
+      expect(data.error).not.toContain('Prepaid-only Saree')
+      expect(mockPrisma.order.create).not.toHaveBeenCalled()
     })
   })
 
