@@ -25,6 +25,7 @@ import {
   MessageSquare,
   Megaphone,
   Images,
+  BookOpen,
   Store
 } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
@@ -213,6 +214,7 @@ export default function AdminDashboard() {
     { name: 'Manage Reviews', href: '/admin/reviews', icon: MessageSquare },
     { name: 'Hero Slides', href: '/admin/hero-slides', icon: Images },
     { name: 'Promotional Banners', href: '/admin/promotional-banners', icon: Megaphone },
+    { name: 'Manage Blog', href: '/admin/blog', icon: BookOpen },
   ]
 
   // Helper function to format time ago

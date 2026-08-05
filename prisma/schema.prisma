@@ -365,3 +365,26 @@ model PromotionalBanner {
 
   @@map("promotional_banners")
 }
+
+model BlogPost {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  title         String
+  slug          String    @unique
+  excerpt       String // Card blurb + meta description
+  content       String // Markdown source; rendered by lib/markdown.ts
+  category      String // Free text, e.g. "Culture & Heritage"
+  image         String?
+  imagePublicId String? // Cloudinary public ID for deletion
+  authorName    String?
+  readMinutes   Int       @default(1) // Derived from content on save
+  // A draft is invisible to the storefront. `publishedAt` is stamped the first
+  // time a post goes live and then left alone, so re-editing a published post
+  // does not shuffle it back to the top of the list.
+  isPublished   Boolean   @default(false)
+  isFeatured    Boolean   @default(false)
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("blog_posts")
+}

@@ -31,16 +31,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: path === '' ? 1 : 0.7,
   }))
 
-  // Pull active products + categories for per-page entries. Guard against DB
-  // errors so a transient outage degrades to the static sitemap rather than 500.
+  // Pull active products + categories + published posts for per-page entries.
+  // Guard against DB errors so a transient outage degrades to the static
+  // sitemap rather than 500.
   try {
-    const [products, categories] = await Promise.all([
+    const [products, categories, posts] = await Promise.all([
       prisma.product.findMany({
         where: { isActive: true },
         select: { slug: true, updatedAt: true },
       }),
       prisma.category.findMany({
         where: { isActive: true },
+        select: { slug: true, updatedAt: true },
+      }),
+      prisma.blogPost.findMany({
+        where: { isPublished: true },
         select: { slug: true, updatedAt: true },
       }),
     ])
@@ -59,7 +64,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }))
 
-    return [...staticEntries, ...categoryEntries, ...productEntries]
+    const blogEntries: MetadataRoute.Sitemap = posts.map((p) => ({
+      url: `${SITE_URL}/blog/${p.slug}`,
+      lastModified: p.updatedAt,
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    }))
+
+    return [...staticEntries, ...categoryEntries, ...productEntries, ...blogEntries]
   } catch {
     return staticEntries
   }
