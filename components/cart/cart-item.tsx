@@ -77,6 +77,7 @@ export function CartItem({ item, onUpdateQuantity, onRemoveItem, isUpdating }: C
                 src={primaryImage.url}
                 alt={primaryImage.alt || item.product.name}
                 fill
+                sizes="96px"
                 className="object-cover hover:scale-105 transition-transform duration-200"
               />
             ) : (

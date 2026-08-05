@@ -230,6 +230,8 @@ export default function WishlistPage() {
                         src={primaryImage.url}
                         alt={primaryImage.alt || product.name}
                         fill
+                        // grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4
+                        sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                         className="object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (

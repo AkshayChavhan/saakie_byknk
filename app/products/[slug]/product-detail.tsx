@@ -516,6 +516,8 @@ export function ProductDetail() {
                   src={product.images[selectedImageIndex]?.url || '/images/placeholder-product.svg'}
                   alt={product.images[selectedImageIndex]?.alt || product.name}
                   fill
+                  // Half the row on lg (grid-cols-1 lg:grid-cols-2), full below.
+                  sizes="(min-width: 1024px) 50vw, 100vw"
                   className="object-cover"
                   priority
                 />
@@ -585,6 +587,8 @@ export function ProductDetail() {
                       src={image.url}
                       alt={image.alt || product.name}
                       fill
+                      // w-16 h-16 lg:w-20 lg:h-20
+                      sizes="(min-width: 1024px) 80px, 64px"
                       className="object-cover"
                     />
                   </button>

@@ -28,6 +28,7 @@ export function ProductCardMini({ product }: ProductCardMiniProps) {
             src={product.image}
             alt={product.name}
             fill
+            sizes="48px"
             className="object-cover group-hover:scale-105 transition-transform"
           />
         ) : (

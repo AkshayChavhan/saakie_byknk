@@ -118,6 +118,8 @@ export function FeaturedProducts() {
                     src={product.image}
                     alt={product.name}
                     fill
+                    // grid-cols-2 lg:grid-cols-4
+                    sizes="(min-width: 1024px) 25vw, 50vw"
                     className="object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
                   />
                   {product.isNew && (

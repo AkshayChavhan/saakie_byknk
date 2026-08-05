@@ -354,6 +354,8 @@ export function CategoryView() {
                         src={product.image}
                         alt={product.name}
                         fill
+                        // grid-cols-2 md:grid-cols-3 lg:grid-cols-4
+                        sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       {product.comparePrice && product.comparePrice > product.price && (
@@ -399,6 +401,7 @@ export function CategoryView() {
                         src={product.image}
                         alt={product.name}
                         fill
+                        sizes="128px"
                         className="object-cover"
                       />
                       {!product.inStock && (

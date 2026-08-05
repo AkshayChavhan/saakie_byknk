@@ -505,6 +505,16 @@ function ProductsContent() {
                             src={product.image}
                             alt={product.name}
                             fill
+                            // Mirrors the grid above it. Without this, `fill`
+                            // assumes 100vw and every thumbnail downloads at
+                            // full viewport width — five times oversized in
+                            // the xl grid. List view uses the fixed widths the
+                            // container declares.
+                            sizes={
+                              viewMode === 'grid'
+                                ? '(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw'
+                                : '(min-width: 640px) 192px, 144px'
+                            }
                             className="object-cover group-hover:scale-110 transition-transform duration-500"
                           />
 

@@ -156,6 +156,7 @@ export function BlogView() {
             src="https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1920&h=1080&fit=crop"
             alt="Saree Heritage"
             fill
+            sizes="100vw"
             className="object-cover"
             priority
           />
@@ -217,6 +218,8 @@ export function BlogView() {
                       src={featured.image || PLACEHOLDER_IMAGE}
                       alt={featured.title}
                       fill
+                      // Half the row on lg (grid lg:grid-cols-2), full below.
+                      sizes="(min-width: 1024px) 50vw, 100vw"
                       className="object-cover hover:scale-105 transition-transform duration-700"
                     />
                     <div className="absolute top-4 left-4">
@@ -359,6 +362,9 @@ export function BlogView() {
                             src={post.image || PLACEHOLDER_IMAGE}
                             alt={post.title}
                             fill
+                            // Swipe carousel below md (w-[80vw] sm:w-[60vw]),
+                            // then a md:grid-cols-2 lg:grid-cols-4 grid.
+                            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, (min-width: 640px) 60vw, 80vw"
                             className="object-cover group-hover:scale-110 transition-transform duration-500"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />

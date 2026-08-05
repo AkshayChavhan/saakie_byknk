@@ -368,6 +368,8 @@ export default function InstagramPostsPage() {
                   src={selectedPost.media_url}
                   alt={selectedPost.caption?.slice(0, 50) || 'Instagram post'}
                   fill
+                  // md:w-3/5 of the lightbox, full width below
+                  sizes="(min-width: 768px) 60vw, 100vw"
                   className="object-contain"
                 />
               )}
