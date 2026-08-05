@@ -939,7 +939,10 @@ export default function CategoriesManagement() {
           </div>
         </div>
 
-        {/* Categories - Mobile Cards / Desktop Table */}
+        {/* Categories - Mobile Cards / Desktop Table. Keyed on the active tab
+            so the list replays its entrance when you switch between categories
+            and sub-categories, instead of the rows swapping in place. */}
+        <div key={activeTab} className="animate-panel-in">
         {filteredCategories.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm p-8 sm:p-12 text-center border border-gray-100 hover:shadow-md transition-shadow duration-200">
             {activeTab === 'categories' ? (
@@ -1030,6 +1033,7 @@ export default function CategoriesManagement() {
             </div>
           </>
         )}
+        </div>
 
         {/* Add Category Modal - Mobile Optimized */}
         {isModalOpen && (

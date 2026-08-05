@@ -346,11 +346,11 @@ export default function InstagramPostsPage() {
       {/* Post Modal */}
       {selectedPost && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 animate-overlay-in"
           onClick={() => setSelectedPost(null)}
         >
           <div
-            className="bg-white rounded-xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col md:flex-row animate-slide-up"
+            className="bg-white rounded-xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col md:flex-row animate-panel-in"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Media */}

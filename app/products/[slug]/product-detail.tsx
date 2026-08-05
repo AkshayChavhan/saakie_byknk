@@ -859,15 +859,19 @@ export function ProductDetail() {
         {/* Product Details Tabs */}
         <div className="mt-12">
           <div className="border-b border-gray-200">
-            <nav className="flex space-x-8">
+            <nav className="flex space-x-8" role="tablist">
               {['description', 'details', 'reviews'].map((tab) => (
                 <button
                   key={tab}
+                  role="tab"
+                  id={`tab-${tab}`}
+                  aria-controls="product-tab-panel"
+                  aria-selected={activeTab === tab}
                   onClick={() => setActiveTab(tab as any)}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
+                  className={`py-4 px-1 border-b-2 font-medium text-sm capitalize transition-colors duration-200 ${
                     activeTab === tab
                       ? 'border-primary text-primary'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
                   {tab} {tab === 'reviews' && `(${product.reviewCount})`}
@@ -876,7 +880,16 @@ export function ProductDetail() {
             </nav>
           </div>
 
-          <div className="py-8">
+          {/* Keyed on the active tab so the panel replays its entrance every
+              time you switch, rather than the new content appearing instantly
+              in place of the old. */}
+          <div
+            key={activeTab}
+            id="product-tab-panel"
+            role="tabpanel"
+            aria-labelledby={`tab-${activeTab}`}
+            className="animate-panel-in py-8"
+          >
             {activeTab === 'description' && (
               <div className="prose max-w-none">
                 <p className="text-gray-700 leading-relaxed mb-6 whitespace-pre-line">
