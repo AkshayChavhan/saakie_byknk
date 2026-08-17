@@ -1,5 +1,11 @@
 # API Flow Documentation
 
+> **⚠️ HISTORICAL DOCUMENT** — this describes a retired architecture: a
+> separate Express backend with Clerk authentication and Bearer tokens. The
+> current app is a single Next.js 15 project using Auth.js (NextAuth v5)
+> cookie sessions and signup email verification. For the current auth flow see
+> [AUTHENTICATION.md](AUTHENTICATION.md); for current endpoints see the README.
+
 Complete documentation of all API flows, request/response formats, and data flows for the Saree Shop backend.
 
 ## Table of Contents

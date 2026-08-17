@@ -187,6 +187,13 @@ Go to **`/sign-in`** and use any of these. **All share the password
 
 - Login is the standard Credentials flow (`auth.ts` → `bcrypt.compare`); the
   seed stores the bcrypt hash of `demo-password`.
+- **Email-verification caveat:** `authorize()` refuses accounts whose
+  `emailVerified` is unset, and the seed inserts demo users without it — and
+  their `@saakie.test` addresses can never receive a confirmation link. After
+  seeding a fresh DB, stamp them before logging in:
+  `node scripts/backfill-email-verified.mjs --apply` (safe on a demo DB; on a
+  shared DB note it stamps **all** unverified users, including real
+  not-yet-confirmed signups).
 - These users exist **only in the database `.env.local` points at** — run the
   seed against the demo DB, and they won't (and shouldn't) exist on production.
 - They have no pre-created cart/wishlist; those are created on first use.

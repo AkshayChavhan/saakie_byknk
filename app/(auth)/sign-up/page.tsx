@@ -2,9 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { signIn } from 'next-auth/react'
-import { User, Mail, Lock } from 'lucide-react'
+import { User, Mail, Lock, MailCheck } from 'lucide-react'
 import { AuthShell } from '@/components/auth/auth-shell'
 import {
   TextField,
@@ -14,13 +12,19 @@ import {
 } from '@/components/auth/auth-fields'
 
 export default function SignUpPage() {
-  const router = useRouter()
-
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+
+  // Set once registration succeeds — swaps the form for the "check your email"
+  // screen. The account stays unusable until the emailed link is clicked
+  // (authorize() refuses unverified users), so there is no auto sign-in here.
+  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null)
+  const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent'>(
+    'idle'
+  )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,6 +44,8 @@ export default function SignUpPage() {
         body: JSON.stringify({ name, email, password }),
       })
 
+      setIsLoading(false)
+
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         // The API returns errors as either a string (`{ error: '...' }`) or an
@@ -51,31 +57,73 @@ export default function SignUpPage() {
             : data.error?.message ||
               'Could not create your account. Please try again.'
         setError(message)
-        setIsLoading(false)
         return
       }
 
-      // Registration succeeded — sign the new user in.
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      })
-
-      setIsLoading(false)
-
-      if (result?.error) {
-        // Account exists but sign-in failed — send them to sign-in.
-        router.push('/sign-in')
-        return
-      }
-
-      router.push('/')
-      router.refresh()
+      setRegisteredEmail(email.trim().toLowerCase())
     } catch {
       setError('Something went wrong. Please try again.')
       setIsLoading(false)
     }
+  }
+
+  const handleResend = async () => {
+    if (!registeredEmail || resendState === 'sending') return
+    setResendState('sending')
+    try {
+      await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: registeredEmail }),
+      })
+    } finally {
+      setResendState('sent')
+    }
+  }
+
+  if (registeredEmail) {
+    return (
+      <AuthShell
+        eyebrow="One last step"
+        title="Check your email"
+        subtitle="Your account is created — it just needs a quick confirmation."
+        panelQuote="From the loom to your wardrobe — join a legacy of artisans."
+      >
+        <div className="rounded-xl border border-gray-800 bg-gray-800/40 p-8 text-center">
+          <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-rose-950/60 text-rose-400 ring-1 ring-rose-800/70">
+            <MailCheck className="h-6 w-6" aria-hidden="true" />
+          </div>
+          <p className="text-sm leading-relaxed text-gray-300">
+            We sent a confirmation link to{' '}
+            <span className="font-semibold text-white">{registeredEmail}</span>.
+            Click it to activate your account, then sign in.
+          </p>
+          <Link
+            href="/sign-in"
+            className="mt-6 flex w-full items-center justify-center rounded-xl bg-rose-600 py-3.5 text-[15px] font-semibold text-white shadow-lg shadow-rose-600/30 transition-all duration-200 hover:bg-rose-700"
+          >
+            Go to sign in
+          </Link>
+          <p className="mt-5 text-xs text-gray-500">
+            {resendState === 'sent' ? (
+              'A new link is on its way — check your inbox.'
+            ) : (
+              <>
+                Didn&apos;t receive it?{' '}
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resendState === 'sending'}
+                  className="font-semibold text-rose-400 underline-offset-2 transition-colors hover:text-rose-300 hover:underline disabled:opacity-60"
+                >
+                  {resendState === 'sending' ? 'Sending…' : 'Resend email'}
+                </button>
+              </>
+            )}
+          </p>
+        </div>
+      </AuthShell>
+    )
   }
 
   return (

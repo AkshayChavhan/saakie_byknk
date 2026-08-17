@@ -1,5 +1,12 @@
 # Saree Shop Backend - Complete Deployment Guide
 
+> **Note:** this guide targets the earlier GCP App Engine deployment and
+> predates the Clerk → Auth.js migration; Clerk keys appearing in the older
+> command/CI examples below are obsolete. The app now deploys to **Vercel**
+> (see the README), and the current env vars are `AUTH_SECRET`, the `SMTP_*`
+> block, and `EMAIL_FROM` (section 7 below is up to date; email setup:
+> `docs/RESEND.md`).
+
 This document covers the complete setup process for the saree-shop-backend project, from initialization to production deployment on Google Cloud Platform (GCP) App Engine.
 
 ---
@@ -550,17 +557,18 @@ jobs:
 | Variable | Description |
 |----------|-------------|
 | `DATABASE_URL` | MongoDB connection string |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk public key |
-| `CLERK_SECRET_KEY` | Clerk secret key |
-| `NEXT_PUBLIC_APP_URL` | Application URL |
+| `AUTH_SECRET` | Signs/encrypts the Auth.js session JWT (`openssl rand -base64 32`) |
+| `NEXT_PUBLIC_APP_URL` | Application URL — baked into emailed verification links |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | SMTP for signup verification emails (Resend — see `docs/RESEND.md`) |
+| `EMAIL_FROM` | From header; must be on the verified sending domain |
 
-### 7.2 Local Development (`.env`)
+### 7.2 Local Development (`.env.local`)
 
 ```env
 DATABASE_URL="mongodb+srv://user:password@cluster.mongodb.net/saree-shop"
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_xxxxx"
-CLERK_SECRET_KEY="sk_test_xxxxx"
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
+AUTH_SECRET="generate-with-openssl-rand-base64-32"
+NEXT_PUBLIC_APP_URL="http://localhost:3001"
+# SMTP_* may stay unset locally — verification links print to the dev console
 ```
 
 ### 7.3 Option A: Google Secret Manager (Recommended)
@@ -581,9 +589,9 @@ Google Secret Manager provides secure, centralized storage for sensitive data li
 | Secret Name | Value |
 |-------------|-------|
 | `DATABASE_URL` | `mongodb+srv://user:pass@cluster.mongodb.net/saree-shop` |
-| `CLERK_SECRET_KEY` | `sk_live_xxxxx` |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | `pk_live_xxxxx` |
-| `NEXT_PUBLIC_APP_URL` | `https://your-project-id.appspot.com` |
+| `AUTH_SECRET` | output of `openssl rand -base64 32` |
+| `SMTP_PASS` | `re_xxxxx` (Resend API key) |
+| `NEXT_PUBLIC_APP_URL` | `https://saakiebyknk.in` |
 
 For each secret:
 - **Name**: Enter the variable name (e.g., `DATABASE_URL`)
@@ -708,8 +716,8 @@ Add these secrets:
 | `GCP_PROJECT_ID` | Your GCP project ID |
 | `GCP_SA_KEY` | Base64 encoded service account key |
 | `DATABASE_URL` | MongoDB connection string |
-| `CLERK_SECRET_KEY` | Clerk secret key |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk public key |
+| `AUTH_SECRET` | Auth.js JWT secret |
+| `SMTP_PASS` | Resend API key (verification emails) |
 | `NEXT_PUBLIC_APP_URL` | Your app URL |
 
 #### Step 2: Update GitHub Actions Workflow

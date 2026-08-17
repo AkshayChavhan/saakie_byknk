@@ -185,3 +185,15 @@ export function ErrorBanner({ message }: { message: string }) {
     </div>
   )
 }
+
+/** Inline success banner — emerald, for "email verified" style confirmations. */
+export function SuccessBanner({ message }: { message: string }) {
+  return (
+    <div
+      role="status"
+      className="animate-fade-in rounded-xl border border-emerald-800/70 bg-emerald-950/50 px-4 py-3 text-sm text-emerald-200"
+    >
+      {message}
+    </div>
+  )
+}

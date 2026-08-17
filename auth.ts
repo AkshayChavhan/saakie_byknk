@@ -1,8 +1,15 @@
-import NextAuth from 'next-auth';
+import NextAuth, { CredentialsSignin } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { authConfig } from './auth.config';
+
+// Correct password but unconfirmed email. The subclass `code` reaches the
+// client as `SignInResponse.code`, letting the sign-in page offer a resend
+// instead of the generic "invalid email or password".
+class EmailNotVerifiedError extends CredentialsSignin {
+  code = 'email_not_verified';
+}
 
 /**
  * Full Auth.js configuration (Node runtime).
@@ -42,6 +49,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             imageUrl: true,
             role: true,
             password: true,
+            emailVerified: true,
           },
         });
 
@@ -50,6 +58,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const valid = await bcrypt.compare(password, user.password);
         if (!valid) return null;
+
+        // Only after the password checks out — revealing verification status
+        // to a wrong-password attempt would leak that the account exists.
+        // Pre-existing accounts are stamped by scripts/backfill-email-verified.mjs.
+        if (!user.emailVerified) throw new EmailNotVerifiedError();
 
         // Returned object becomes the `user` arg of the `jwt` callback.
         return {

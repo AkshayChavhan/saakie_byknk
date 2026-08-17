@@ -1,11 +1,11 @@
 # Saakie_byknk - Premium Fashion E-commerce Platform
 
-A modern, mobile-first e-commerce platform for fashion retail, built with Next.js 14, TypeScript, Prisma, MongoDB, and Clerk authentication. Features a comprehensive admin dashboard with full CRUD operations and real-time webhook monitoring.
+A modern, mobile-first e-commerce platform for fashion retail, built with Next.js 15, TypeScript, Prisma, MongoDB, and Auth.js (NextAuth v5) credentials authentication with signup email verification. Features a comprehensive admin dashboard with full CRUD operations.
 
 ## ✨ Features
 
 ### 🛍️ User Experience
-- 🔐 **Secure Authentication**: Clerk integration with profile management
+- 🔐 **Secure Authentication**: Auth.js (NextAuth v5) email + password login with signup email verification and profile management
 - 📱 **Mobile-First Design**: Responsive UI optimized for all devices
 - 🛒 **Shopping Cart**: Advanced cart management with quantity controls
 - ❤️ **Wishlist**: Save favorite items for later
@@ -26,10 +26,9 @@ A modern, mobile-first e-commerce platform for fashion retail, built with Next.j
 - 🔒 **Security**: Role-based permissions and secure API endpoints
 
 ### 🔗 Integrations
-- 🎯 **Clerk Webhooks**: Automatic user lifecycle management
-- 📲 **Real-time Sync**: Profile data synchronization
-- 🔍 **Webhook Debugging**: Live webhook monitoring interface
-- 💾 **Data Persistence**: Automatic cart and wishlist creation
+- 📧 **Transactional Email**: Signup verification links over SMTP (Resend) — see [docs/RESEND.md](docs/RESEND.md)
+- 💳 **Payment Webhooks**: Razorpay and Stripe webhook handling with signature verification
+- 💾 **Data Persistence**: Automatic cart and wishlist creation on signup
 
 ## 🛠️ Tech Stack
 
@@ -44,8 +43,8 @@ A modern, mobile-first e-commerce platform for fashion retail, built with Next.j
 ### Backend
 - **Database**: MongoDB
 - **ORM**: Prisma
-- **Authentication**: Clerk
-- **Webhook Processing**: Svix
+- **Authentication**: Auth.js (NextAuth v5), Credentials provider, JWT sessions
+- **Email**: Nodemailer over SMTP (Resend in production)
 - **API**: RESTful API with Next.js API Routes
 
 ### DevOps & Tools
@@ -56,11 +55,11 @@ A modern, mobile-first e-commerce platform for fashion retail, built with Next.j
 
 ## 📋 Prerequisites
 
-- Node.js 18.x or later
-- npm or yarn
+- Node.js 20.x or later
+- npm or pnpm
 - MongoDB database (local or MongoDB Atlas)
-- Clerk account for authentication
-- Ngrok (optional, for webhook testing)
+- Resend account (or any SMTP provider) for verification emails — optional in dev, links print to the console
+- Ngrok (optional, for payment-webhook testing)
 
 ## 🚀 Getting Started
 
@@ -91,19 +90,20 @@ Then edit `.env.local` with your actual values:
 # Database
 DATABASE_URL="mongodb+srv://username:password@cluster.mongodb.net/saree-shop?retryWrites=true&w=majority"
 
-# Clerk Authentication
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_your_clerk_publishable_key
-CLERK_SECRET_KEY=sk_test_your_clerk_secret_key
-CLERK_WEBHOOK_SECRET=whsec_your_clerk_webhook_secret
+# Authentication (Auth.js / NextAuth v5)
+# Generate with: openssl rand -base64 32
+AUTH_SECRET=your_generated_secret
 
-# Clerk URLs
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/
+# Email (SMTP) — signup verification links. Leave unset in dev to print
+# links to the console instead. See docs/RESEND.md for the full setup.
+SMTP_HOST=smtp.resend.com
+SMTP_PORT=587
+SMTP_USER=resend
+SMTP_PASS=re_your_resend_api_key
+EMAIL_FROM="Saakie by KNK <no-reply@yourdomain.com>"
 
 # Application URL
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=https://saakiebyknk.in
 
 # Payment Gateways (Optional)
 
@@ -138,10 +138,12 @@ Open [http://localhost:3000](http://localhost:3000) or [http://localhost:3001](h
 
 ```
 saakie-byknk/
-├── app/                    # Next.js 14 App Router
+├── app/                    # Next.js 15 App Router
 │   ├── (auth)/            # Authentication pages
 │   │   ├── sign-in/       # Sign in page
-│   │   └── sign-up/       # Sign up page
+│   │   └── sign-up/       # Sign up page (+ "check your email" screen)
+│   ├── auth/
+│   │   └── confirm/       # Email-confirmation link callback
 │   ├── admin/             # Admin dashboard
 │   │   ├── page.tsx       # Dashboard overview
 │   │   ├── users/         # User management
@@ -155,17 +157,18 @@ saakie-byknk/
 │   │   │   ├── products/  # Product CRUD operations
 │   │   │   ├── orders/    # Order management
 │   │   │   └── categories/ # Category CRUD operations
+│   │   ├── auth/          # Auth API (register, resend-verification, [...nextauth])
 │   │   ├── cart/          # Shopping cart API
 │   │   ├── categories/    # Category API
 │   │   ├── orders/        # Order API
 │   │   ├── products/      # Product API
 │   │   ├── users/         # User API
 │   │   └── webhooks/      # Webhook endpoints
-│   │       └── clerk/     # Clerk user webhooks
+│   │       ├── razorpay/  # Razorpay payment webhooks
+│   │       └── stripe/    # Stripe payment webhooks
 │   ├── cart/              # Shopping cart pages
 │   ├── categories/        # Category browsing pages
 │   ├── products/          # Product detail pages
-│   ├── webhook-logs/      # Webhook monitoring page
 │   ├── globals.css        # Global styles
 │   ├── layout.tsx         # Root layout
 │   └── page.tsx           # Home page
@@ -179,8 +182,8 @@ saakie-byknk/
 │   └── ui/               # UI components
 │       └── badge.tsx     # Badge component
 ├── lib/                  # Utility libraries
-│   ├── db.ts            # Database connection
-│   ├── users.ts         # User management utilities
+│   ├── prisma.ts        # Prisma client singleton
+│   ├── server/          # Server-only helpers (auth, email, verification, rate-limit, …)
 │   └── utils.ts         # Utility functions
 ├── prisma/              # Prisma schema and migrations
 │   └── schema.prisma    # Database schema
@@ -198,8 +201,9 @@ saakie-byknk/
 ```prisma
 model User {
   id                String   @id @default(auto()) @map("_id") @db.ObjectId
-  clerkId           String   @unique
   email             String   @unique
+  password          String?   // bcrypt hash; null for future OAuth-only users
+  emailVerified     DateTime? // set when the signup confirmation link is clicked
   name              String?
   phone             String?
   imageUrl          String?
@@ -214,6 +218,16 @@ model User {
   reviews           Review[]
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+}
+```
+
+#### VerificationToken Model
+```prisma
+model VerificationToken {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  identifier String   // email address being verified
+  token      String   @unique // SHA-256 hash of the emailed link token
+  expires    DateTime // 24 h after issue
 }
 ```
 
@@ -350,38 +364,31 @@ npm run ngrok        # Expose local server via ngrok
 - `PATCH /api/admin/categories/[id]` - Update category
 - `DELETE /api/admin/categories/[id]` - Delete category
 
+### Auth APIs
+- `POST /api/auth/register` - Email/password signup (sends the verification email)
+- `POST /api/auth/resend-verification` - Re-send the confirmation link (rate-limited)
+- `GET /auth/confirm?token=…` - Email-confirmation callback
+- `/api/auth/*` - Auth.js handlers (sign-in, callback, session, csrf, …)
+
 ### Webhook APIs
-- `POST /api/webhooks/clerk` - Clerk user webhooks
-- `GET /api/webhook-logs` - Get webhook logs
-- `POST /api/webhook-logs` - Store webhook logs
+- `POST /api/webhooks/razorpay` - Razorpay payment webhooks
+- `POST /api/webhooks/stripe` - Stripe payment webhooks
 
 ## 🔐 Authentication & Security
 
-### Clerk Integration
-- Secure user authentication
-- Profile management
-- Role-based access control
-- Webhook-based user lifecycle management
+### Auth.js (NextAuth v5) Integration
+- Email + password login (Credentials provider, bcrypt hashing)
+- **Signup email verification** — unverified accounts cannot sign in until the
+  emailed confirmation link is clicked (see [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md))
+- JWT sessions in an httpOnly cookie — no session table in the DB
+- Role-based access control (USER / ADMIN / SUPER_ADMIN)
 
 ### Security Features
-- Protected API routes
-- Role-based permissions
-- Webhook signature verification
+- Protected API routes (`requireAuth` / `requireAdmin`)
+- Verification tokens stored as SHA-256 hashes with a 24 h expiry
+- Enumeration-safe, rate-limited resend endpoint
+- Payment-webhook signature verification
 - Secure admin access
-
-## 🌐 Webhook Integration
-
-### Clerk Webhooks
-- **User Creation**: Automatic user record creation
-- **User Updates**: Profile synchronization
-- **User Deletion**: Cleanup of related data
-- **Real-time Monitoring**: Live webhook tracking at `/webhook-logs`
-
-### Webhook Security
-- SVix signature verification
-- Error handling and logging
-- Retry mechanisms
-- Status monitoring
 
 ## 📱 Deployment
 
@@ -405,19 +412,19 @@ npm start
 | Variable | Description |
 |----------|-------------|
 | `DATABASE_URL` | MongoDB connection string |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key |
-| `CLERK_SECRET_KEY` | Clerk secret key |
-| `CLERK_WEBHOOK_SECRET` | Clerk webhook secret |
-| `NEXT_PUBLIC_APP_URL` | Application URL |
+| `AUTH_SECRET` | Signs/encrypts the session JWT (`openssl rand -base64 32`) |
+| `NEXT_PUBLIC_APP_URL` | Application URL — baked into emailed verification links |
+| `SMTP_HOST` | SMTP server for verification emails (`smtp.resend.com`) |
+| `SMTP_PORT` | SMTP port (587) |
+| `SMTP_USER` | SMTP username (`resend` for Resend) |
+| `SMTP_PASS` | SMTP password (Resend API key) |
+| `EMAIL_FROM` | From header — must be on the verified sending domain |
 
 #### Optional Variables
 
 | Variable | Description | Used For |
 |----------|-------------|----------|
-| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | Sign-in page URL (default: /sign-in) | Custom auth flows |
-| `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | Sign-up page URL (default: /sign-up) | Custom auth flows |
-| `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` | Redirect after sign-in (default: /) | Post-auth redirects |
-| `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL` | Redirect after sign-up (default: /) | Post-auth redirects |
+| `AUTH_URL` | Auth.js base URL (auto-inferred on Vercel) | Non-Vercel hosts |
 | `STRIPE_SECRET_KEY` | Stripe secret key | Stripe payments |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signature | Stripe webhooks |
 | `RAZORPAY_KEY_ID` | Razorpay key ID | Razorpay payments |
@@ -430,12 +437,12 @@ npm start
 1. Install ngrok: `npm install -g ngrok`
 2. Start local server: `npm run dev`
 3. Expose via ngrok: `npm run ngrok`
-4. Use ngrok URL in Clerk webhook settings
+4. Use the ngrok URL in the Razorpay/Stripe webhook settings
 
 ### Local Testing
 - Use `http://localhost:3001` for development
 - Admin dashboard: `http://localhost:3001/admin`
-- Webhook monitoring: `http://localhost:3001/webhook-logs`
+- Signup verification links print to the `next dev` console when SMTP is unset
 
 ## 🤝 Contributing
 
@@ -456,7 +463,8 @@ For support, email support@saakie-byknk.com or create an issue in the repository
 ## 🙏 Acknowledgments
 
 - [Next.js](https://nextjs.org/) for the amazing React framework
-- [Clerk](https://clerk.com/) for authentication
+- [Auth.js](https://authjs.dev/) for authentication
+- [Resend](https://resend.com/) for email delivery
 - [Prisma](https://prisma.io/) for the database ORM
 - [Tailwind CSS](https://tailwindcss.com/) for styling
 - [Radix UI](https://radix-ui.com/) for accessible UI components
@@ -471,9 +479,9 @@ For support, email support@saakie-byknk.com or create an issue in the repository
 - ✅ **Product Creation Form** - Complete add product modal with validation
 - ✅ Order management with status workflow
 - ✅ Category management with hierarchy
-- ✅ Webhook integration with Clerk
-- ✅ Real-time webhook monitoring
-- ✅ Authentication and authorization
+- ✅ Payment webhook integration (Razorpay, Stripe)
+- ✅ Authentication and authorization (Auth.js credentials + JWT sessions)
+- ✅ **Signup email verification** — confirmation links over SMTP/Resend
 - ✅ Database schema with all relationships (User fields updated)
 - ✅ API architecture with full CRUD operations
 - ✅ Responsive UI with Tailwind CSS

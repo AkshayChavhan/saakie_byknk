@@ -31,6 +31,7 @@ const PUBLIC_PAGES = [
   '/disclaimer',
   '/sign-in',
   '/sign-up',
+  '/auth', // email-confirmation callback (/auth/confirm) — clicked while signed out
   '/offline', // service-worker offline fallback; must be reachable while signed out
 ];
 

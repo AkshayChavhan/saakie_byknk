@@ -31,9 +31,23 @@ model User {
   @@map("users")
 }
 
-// NOTE: When Google OAuth / magic-link providers are added later, Auth.js
-// adapter models (Account, Session, VerificationToken) go here. Not needed
-// now: Credentials provider uses the JWT session strategy.
+// Signup email-verification links. Shaped like the Auth.js adapter's
+// VerificationToken (identifier + token + expires, composite unique) so a
+// future Prisma adapter (Google OAuth / magic-link) can take this model over.
+// `token` stores a SHA-256 hash of the raw link token, never the raw value.
+model VerificationToken {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  identifier String // email address being verified
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// NOTE: When Google OAuth / magic-link providers are added later, the remaining
+// Auth.js adapter models (Account, Session) go here. Not needed now:
+// Credentials provider uses the JWT session strategy.
 
 model Category {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
