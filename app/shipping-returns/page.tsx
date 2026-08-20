@@ -14,7 +14,7 @@ export default function ShippingReturnsPage() {
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                Shipping & Returns
+                Returns
               </h1>
               <p className="text-lg text-gray-600">
                 Everything you need to know about our shipping policies and return process
@@ -24,7 +24,7 @@ export default function ShippingReturnsPage() {
         </section>
 
         {/* Quick Stats */}
-        <section className="py-12 -mt-8">
+        {/* <section className="py-12 -mt-8">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
               <div className="bg-white rounded-xl shadow-lg p-6 text-center">
@@ -57,7 +57,7 @@ export default function ShippingReturnsPage() {
               </div>
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* Returns Section */}
         <section className="py-16 bg-gray-50">

@@ -32,7 +32,7 @@ const footerLinks = {
   ],
   help: [
     { name: 'Care Instructions', href: '/care-instructions' },
-    { name: 'Shipping & Returns', href: '/shipping-returns' },
+    { name: 'Returns', href: '/shipping-returns' },
     { name: 'Contact Us', href: '/contact' },
   ],
   company: [
