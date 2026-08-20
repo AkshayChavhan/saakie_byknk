@@ -101,7 +101,6 @@ model Product {
   fabric        String?
   workType      String?
   blouseIncluded Boolean @default(false)
-  paymentModes  PaymentMode[] @default([PREPAID])
   isActive      Boolean  @default(true)
   isFeatured    Boolean  @default(false)
   reviews       Review[]
@@ -347,12 +346,6 @@ enum PaymentStatus {
   CANCELLED
 }
 
-// How a product accepts payment. PREPAID = pay via the online payment gateway.
-enum PaymentMode {
-  COD
-  PREPAID
-}
-
 model HeroSlide {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   title         String
@@ -407,19 +400,4 @@ model BlogPost {
   updatedAt     DateTime  @updatedAt
 
   @@map("blog_posts")
-}
-
-// Store-wide switches an admin flips from /admin/settings. A singleton: exactly
-// one row, found by `key`. When the row is absent every value falls back to the
-// defaults below, so a fresh database behaves exactly as before.
-model StoreSetting {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  key         String   @unique // always STORE_SETTING_KEY ("store")
-  // Store-wide Cash on Delivery kill switch. Products still opt in individually
-  // via Product.paymentModes — this gates all of them at once.
-  codEnabled  Boolean  @default(true)
-  updatedAt   DateTime @updatedAt
-  updatedById String?  @db.ObjectId
-
-  @@map("store_settings")
 }

@@ -10,7 +10,7 @@ import { PaymentMethods } from '@/components/checkout/payment-methods'
 import { formatPrice, cn } from '@/lib/utils'
 import { cartApi, userApi, fetchApi } from '@/lib/api'
 import { INDIAN_STATES } from '@/lib/india-states'
-import { availableChannels, isMethodAllowed, isValidUpiId, type PaymentChannel } from '@/lib/payment'
+import { availableChannels, isValidUpiId, type PaymentChannel } from '@/lib/payment'
 import { openRazorpayCheckout, type RazorpaySuccess } from '@/lib/razorpay-client'
 
 interface CartItem {
@@ -20,7 +20,6 @@ interface CartItem {
   product: {
     id: string
     name: string
-    paymentModes?: string[]
     images?: { url: string }[]
   }
 }
@@ -63,22 +62,11 @@ export default function CheckoutPage() {
   const [placing, setPlacing] = useState(false)
   const [channel, setChannel] = useState<PaymentChannel | null>(null)
   const [upiId, setUpiId] = useState('')
-  /** Store-wide COD switch from /api/store-settings; assume on until told otherwise. */
-  const [codEnabled, setCodEnabled] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     try {
-      const [cart, addrs, store] = await Promise.all([
-        cartApi.get(),
-        userApi.getAddresses(),
-        // Advisory only — the order API re-checks. If it fails we leave COD on
-        // and let the server be the one to refuse.
-        fetchApi('/api/store-settings')
-          .then((r) => (r.ok ? r.json() : null))
-          .catch(() => null),
-      ])
-      if (typeof store?.codEnabled === 'boolean') setCodEnabled(store.codEnabled)
+      const [cart, addrs] = await Promise.all([cartApi.get(), userApi.getAddresses()])
       const cartItems: CartItem[] = cart?.items ?? []
       setItems(cartItems)
       const list: Address[] = Array.isArray(addrs) ? addrs : []
@@ -102,15 +90,11 @@ export default function CheckoutPage() {
   const shipping = subtotal > 999 ? 0 : items.length > 0 ? 99 : 0
   const total = subtotal + shipping
 
-  // Which payment modes ALL cart items allow (intersection via every-item check).
-  const allowCod = items.length > 0 && items.every((i) => isMethodAllowed('COD', i.product.paymentModes))
-  const allowOnline =
-    items.length > 0 && items.every((i) => isMethodAllowed('PREPAID', i.product.paymentModes))
   const onlineConfigured = Boolean(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID)
 
   const channels = useMemo(
-    () => availableChannels({ allowCod, allowOnline, onlineConfigured, codEnabled }),
-    [allowCod, allowOnline, onlineConfigured, codEnabled]
+    () => availableChannels({ onlineConfigured }),
+    [onlineConfigured]
   )
 
   // Preselect the first offered channel (UPI whenever prepaid is on), and drop a
@@ -140,7 +124,7 @@ export default function CheckoutPage() {
     }
   }
 
-  const createOrder = async (gateway: 'cod' | 'razorpay', paymentChannel: PaymentChannel) => {
+  const createOrder = async (gateway: 'razorpay', paymentChannel: PaymentChannel) => {
     const res = await fetchApi('/api/payments/create-intent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -160,9 +144,8 @@ export default function CheckoutPage() {
   }
 
   /**
-   * Single entry point for the CTA. COD books the order straight away; every
-   * other channel books a PENDING order and hands off to the Razorpay modal,
-   * pinned to the block the shopper picked.
+   * Single entry point for the CTA. Books a PENDING order and hands off to the
+   * Razorpay modal, pinned to the block the shopper picked.
    */
   const placeOrder = async () => {
     if (!channel) return setError('Please choose a payment method')
@@ -172,16 +155,8 @@ export default function CheckoutPage() {
     setPlacing(true)
 
     try {
-      if (channel === 'cod') {
-        const data = await createOrder('cod', channel)
-        // Persistent confirmation route — survives refresh/back, unlike the old
-        // inline success state.
-        router.replace(`/checkout/confirmation/${data.order.id}`)
-        return
-      }
-
       const key = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
-      if (!key) throw new Error('Online payment is not configured. Please use Cash on Delivery.')
+      if (!key) throw new Error('Online payment is not configured. Please try again later.')
 
       const data = await createOrder('razorpay', channel)
       if (!data.razorpayOrderId) throw new Error('Online payment is unavailable right now.')
@@ -363,10 +338,7 @@ export default function CheckoutPage() {
                 <PaymentMethods
                   selected={channel}
                   onSelect={setChannel}
-                  allowCod={allowCod}
-                  allowOnline={allowOnline}
                   onlineConfigured={onlineConfigured}
-                  codEnabled={codEnabled}
                   upiId={upiId}
                   onUpiIdChange={setUpiId}
                   busy={placing}
@@ -378,9 +350,7 @@ export default function CheckoutPage() {
                   className="mt-4 w-full flex items-center justify-center gap-2 rounded-full bg-gray-900 text-white py-3 text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
                 >
                   {placing && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {channel === 'cod'
-                    ? `Place order · ${formatPrice(total)}`
-                    : `Pay ${formatPrice(total)}`}
+                  {`Pay ${formatPrice(total)}`}
                 </button>
 
                 {!selectedAddressId && (

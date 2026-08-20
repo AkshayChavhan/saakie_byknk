@@ -45,8 +45,8 @@ export default function ShippingReturnsPage() {
                 <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
                   <RefreshCw className="w-6 h-6 text-purple-600" />
                 </div>
-                <p className="font-bold text-2xl text-gray-900">7</p>
-                <p className="text-sm text-gray-600">Days Returns</p>
+                <p className="font-bold text-2xl text-gray-900">24 hrs</p>
+                <p className="text-sm text-gray-600">Damage Reporting</p>
               </div>
               <div className="bg-white rounded-xl shadow-lg p-6 text-center">
                 <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -74,25 +74,25 @@ export default function ShippingReturnsPage() {
                 {/* Return Policy */}
                 <div className="bg-white rounded-xl p-6">
                   <h3 className="font-semibold text-xl text-gray-900 mb-4">Return Policy</h3>
+                  <p className="text-gray-600 mb-6">
+                    At SAAKIE, we want you to be satisfied with your purchase. We accept
+                    returns only for damaged items, verified with an uncut unboxing video.
+                  </p>
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
                       <h4 className="font-medium text-green-600 mb-2">Eligible for Return</h4>
                       <ul className="space-y-2 text-gray-600">
                         <li className="flex items-center gap-2">
                           <Shield className="w-4 h-4 text-green-500" />
-                          Unused and unwashed items
+                          Damaged items only
                         </li>
                         <li className="flex items-center gap-2">
                           <Shield className="w-4 h-4 text-green-500" />
-                          Original packaging intact
+                          Reported within 24 hrs of delivery
                         </li>
                         <li className="flex items-center gap-2">
                           <Shield className="w-4 h-4 text-green-500" />
-                          All tags attached
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <Shield className="w-4 h-4 text-green-500" />
-                          Within 7 days of delivery
+                          Unboxing video without cuts provided
                         </li>
                       </ul>
                     </div>
@@ -101,19 +101,15 @@ export default function ShippingReturnsPage() {
                       <ul className="space-y-2 text-gray-600">
                         <li className="flex items-center gap-2">
                           <Package className="w-4 h-4 text-red-500" />
-                          Customized/altered products
+                          Undamaged items (change of mind, fit, colour)
                         </li>
                         <li className="flex items-center gap-2">
                           <Package className="w-4 h-4 text-red-500" />
-                          Innerwear and lingerie
+                          Damage reported after 24 hrs of delivery
                         </li>
                         <li className="flex items-center gap-2">
                           <Package className="w-4 h-4 text-red-500" />
-                          Sale items (final sale)
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <Package className="w-4 h-4 text-red-500" />
-                          Items without tags
+                          No uncut unboxing video available
                         </li>
                       </ul>
                     </div>
@@ -129,8 +125,8 @@ export default function ShippingReturnsPage() {
                         <span className="text-rose-600 font-bold">1</span>
                       </div>
                       <div>
-                        <h4 className="font-medium text-gray-900">Log into your account</h4>
-                        <p className="text-gray-600 text-sm">Go to &ldquo;My Orders&rdquo; and select the order containing the item you wish to return</p>
+                        <h4 className="font-medium text-gray-900">Record an unboxing video</h4>
+                        <p className="text-gray-600 text-sm">Film the package being opened in one continuous take, without cuts — this is required for verification</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-4">
@@ -138,8 +134,8 @@ export default function ShippingReturnsPage() {
                         <span className="text-rose-600 font-bold">2</span>
                       </div>
                       <div>
-                        <h4 className="font-medium text-gray-900">Click &ldquo;Return Item&rdquo;</h4>
-                        <p className="text-gray-600 text-sm">Select the item(s) you want to return and choose a reason</p>
+                        <h4 className="font-medium text-gray-900">Contact us within 24 hours</h4>
+                        <p className="text-gray-600 text-sm">If your item arrived damaged, reach out within 24 hrs of delivery via our contact page</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-4">
@@ -147,8 +143,8 @@ export default function ShippingReturnsPage() {
                         <span className="text-rose-600 font-bold">3</span>
                       </div>
                       <div>
-                        <h4 className="font-medium text-gray-900">Schedule pickup</h4>
-                        <p className="text-gray-600 text-sm">Choose a convenient date and time for our courier to collect the item</p>
+                        <h4 className="font-medium text-gray-900">Send the unboxing video</h4>
+                        <p className="text-gray-600 text-sm">Share the uncut video with our team so we can verify the damage</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-4">
@@ -157,7 +153,7 @@ export default function ShippingReturnsPage() {
                       </div>
                       <div>
                         <h4 className="font-medium text-gray-900">Receive refund</h4>
-                        <p className="text-gray-600 text-sm">Once we receive and verify the item, your refund will be processed within 5-7 business days</p>
+                        <p className="text-gray-600 text-sm">Once approved, your refund is issued to the original payment method</p>
                       </div>
                     </div>
                   </div>
@@ -166,20 +162,11 @@ export default function ShippingReturnsPage() {
                 {/* Refund Information */}
                 <div className="bg-white rounded-xl p-6">
                   <h3 className="font-semibold text-xl text-gray-900 mb-4">Refund Information</h3>
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="flex items-start gap-3">
-                      <CreditCard className="w-6 h-6 text-rose-600 flex-shrink-0 mt-1" />
-                      <div>
-                        <h4 className="font-medium text-gray-900">Card/UPI Payments</h4>
-                        <p className="text-gray-600 text-sm">Refunded to original payment method within 5-7 business days</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <Package className="w-6 h-6 text-rose-600 flex-shrink-0 mt-1" />
-                      <div>
-                        <h4 className="font-medium text-gray-900">COD Orders</h4>
-                        <p className="text-gray-600 text-sm">Refunded to your bank account (NEFT/IMPS) within 7-10 business days</p>
-                      </div>
+                  <div className="flex items-start gap-3">
+                    <CreditCard className="w-6 h-6 text-rose-600 flex-shrink-0 mt-1" />
+                    <div>
+                      <h4 className="font-medium text-gray-900">Original Payment Method</h4>
+                      <p className="text-gray-600 text-sm">Approved returns are refunded to the payment method used for the order</p>
                     </div>
                   </div>
                 </div>

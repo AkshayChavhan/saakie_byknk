@@ -9,11 +9,6 @@ import prisma from '@/lib/prisma';
  * an admin marking it paid via PATCH /api/admin/orders/[id]. PENDING / FAILED /
  * CANCELLED / REFUNDED do not qualify: a refunded order is money returned, not
  * money paid.
- *
- * Note for Cash on Delivery: COD orders are created PENDING and nothing flips
- * them automatically, not even delivery. A COD customer therefore unlocks
- * reviewing only once an admin marks their order PAID — deliberate, so that
- * "reviewed" always means "payment confirmed on our side".
  */
 export const PAID_ORDER_FILTER: Prisma.OrderWhereInput = {
   paymentStatus: 'PAID',

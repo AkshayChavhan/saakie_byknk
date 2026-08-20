@@ -485,7 +485,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 bg-black shadow-sm pt-safe">
       {/* <div className="bg-red-600 text-white py-2 text-center text-sm">
-        <p>Free shipping on orders above ₹2,999 | Cash on Delivery Available</p>
+        <p>Free shipping on orders above ₹2,999</p>
       </div> */}
       
       <nav className="container mx-auto px-4 sm:px-6 lg:px-8">

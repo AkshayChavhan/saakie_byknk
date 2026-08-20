@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth, verifyAddressOwnership } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
-import { normalizePaymentMethod, isMethodAllowed, storeBlockReason } from '@/lib/payment';
-import { getStoreSettings } from '@/lib/server/settings';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,7 +39,7 @@ export async function POST(request: Request) {
     const r = await requireAuth();
     if (r instanceof NextResponse) return r;
 
-    const { shippingAddressId, billingAddressId, paymentMethod } = await request.json();
+    const { shippingAddressId, billingAddressId } = await request.json();
 
     // Ensure the chosen addresses belong to this user — otherwise an attacker
     // could attach (and later read back) another user's address by id.
@@ -55,31 +53,6 @@ export async function POST(request: Request) {
 
     if (!cart || cart.items.length === 0) {
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
-    }
-
-    const chosenMethod = normalizePaymentMethod(paymentMethod);
-
-    // Store-wide switches first — an admin turning COD off must hold even if
-    // every product in the cart still lists COD in its own paymentModes.
-    const blocked = storeBlockReason(chosenMethod, await getStoreSettings());
-    if (blocked) {
-      return NextResponse.json({ error: blocked }, { status: 409 });
-    }
-
-    // Then the payment modes the admin defined per product: every product in
-    // the cart must accept the chosen method, otherwise reject the order.
-    const disallowed = cart.items.find(
-      (item) => !isMethodAllowed(chosenMethod, item.product.paymentModes)
-    );
-    if (disallowed) {
-      return NextResponse.json(
-        {
-          error: `"${disallowed.product.name}" is not available for ${
-            chosenMethod === 'COD' ? 'Cash on Delivery' : 'this payment method'
-          }. Please choose a different payment method.`,
-        },
-        { status: 409 }
-      );
     }
 
     const subtotal = cart.items.reduce(
@@ -105,7 +78,7 @@ export async function POST(request: Request) {
         total,
         shippingAddressId,
         billingAddressId: billingAddressId || shippingAddressId,
-        paymentMethod: chosenMethod,
+        paymentMethod: 'PREPAID',
         items: {
           create: cart.items.map((item) => ({
             productId: item.productId,

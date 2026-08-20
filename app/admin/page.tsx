@@ -26,8 +26,7 @@ import {
   Megaphone,
   Images,
   BookOpen,
-  Store,
-  Settings
+  Store
 } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
 import { fetchApi } from '@/lib/api'
@@ -216,7 +215,6 @@ export default function AdminDashboard() {
     { name: 'Hero Slides', href: '/admin/hero-slides', icon: Images },
     { name: 'Promotional Banners', href: '/admin/promotional-banners', icon: Megaphone },
     { name: 'Manage Blog', href: '/admin/blog', icon: BookOpen },
-    { name: 'Store Settings', href: '/admin/settings', icon: Settings },
   ]
 
   // Helper function to format time ago

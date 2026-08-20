@@ -8,8 +8,6 @@ function setup(overrides: Partial<PaymentMethodsProps> = {}) {
   const props: PaymentMethodsProps = {
     selected: 'upi',
     onSelect,
-    allowCod: true,
-    allowOnline: true,
     onlineConfigured: true,
     upiId: '',
     onUpiIdChange,
@@ -25,15 +23,15 @@ function radioFor(label: string): HTMLInputElement {
 }
 
 describe('PaymentMethods', () => {
-  it('lists every channel with UPI first and COD last', () => {
+  it('lists the four prepaid channels with UPI first, and no COD', () => {
     setup()
     const radios = screen.getAllByRole('radio')
-    expect(radios).toHaveLength(5)
+    expect(radios).toHaveLength(4)
     expect(screen.getByText('UPI')).toBeInTheDocument()
     expect(screen.getByText('Credit / Debit Card')).toBeInTheDocument()
     expect(screen.getByText('Net Banking')).toBeInTheDocument()
     expect(screen.getByText('Wallets')).toBeInTheDocument()
-    expect(screen.getByText('Cash on Delivery')).toBeInTheDocument()
+    expect(screen.queryByText('Cash on Delivery')).not.toBeInTheDocument()
   })
 
   it('shows the UPI app brands shoppers look for', () => {
@@ -49,7 +47,7 @@ describe('PaymentMethods', () => {
   })
 
   it('reports the picked channel', () => {
-    const { onSelect } = setup({ selected: 'cod' })
+    const { onSelect } = setup({ selected: 'upi' })
     fireEvent.click(radioFor('Credit / Debit Card'))
     expect(onSelect).toHaveBeenCalledWith('card')
   })
@@ -62,25 +60,18 @@ describe('PaymentMethods', () => {
     expect(screen.queryByText(/Approve the payment in your UPI app/i)).not.toBeInTheDocument()
   })
 
-  it('disables prepaid channels for a COD-only cart and explains why', () => {
-    setup({ selected: 'cod', allowOnline: false })
-    expect(radioFor('UPI').disabled).toBe(true)
-    expect(radioFor('Cash on Delivery').disabled).toBe(false)
-    const upiRow = radioFor('UPI').closest('label') as HTMLElement
-    expect(within(upiRow).getByText(/Not available for one or more items/i)).toBeInTheDocument()
-  })
-
-  it('disables COD for a prepaid-only cart', () => {
-    setup({ allowCod: false })
-    expect(radioFor('Cash on Delivery').disabled).toBe(true)
-    expect(radioFor('UPI').disabled).toBe(false)
-  })
-
   it('explains a missing gateway key rather than offering a dead option', () => {
-    setup({ selected: 'cod', onlineConfigured: false })
+    setup({ onlineConfigured: false })
     const upiRow = radioFor('UPI').closest('label') as HTMLElement
     expect(radioFor('UPI').disabled).toBe(true)
     expect(within(upiRow).getByText(/Online payment is temporarily unavailable/i)).toBeInTheDocument()
+  })
+
+  it('disables every channel when the gateway key is missing', () => {
+    setup({ onlineConfigured: false })
+    for (const radio of screen.getAllByRole('radio')) {
+      expect(radio).toBeDisabled()
+    }
   })
 
   it('offers an optional UPI ID field when UPI is selected', () => {
@@ -106,30 +97,6 @@ describe('PaymentMethods', () => {
     setup({ selected: 'upi', upiId: 'akshay@okhdfcbank' })
     expect(screen.getByLabelText(/UPI ID/i)).toHaveAttribute('aria-invalid', 'false')
     expect(screen.getByText(/Leave blank to choose your UPI app/i)).toBeInTheDocument()
-  })
-
-  it('disables COD when the admin has switched it off store-wide', () => {
-    setup({ selected: 'upi', codEnabled: false })
-    expect(radioFor('Cash on Delivery').disabled).toBe(true)
-    expect(radioFor('UPI').disabled).toBe(false)
-  })
-
-  it('blames the store, not the cart, when COD is switched off', () => {
-    setup({ selected: 'upi', codEnabled: false })
-    const codRow = radioFor('Cash on Delivery').closest('label') as HTMLElement
-    expect(within(codRow).getByText(/Cash on Delivery is currently unavailable/i)).toBeInTheDocument()
-    expect(within(codRow).queryByText(/one or more items/i)).not.toBeInTheDocument()
-  })
-
-  it('still blames the cart when the store allows COD but an item does not', () => {
-    setup({ selected: 'upi', allowCod: false, codEnabled: true })
-    const codRow = radioFor('Cash on Delivery').closest('label') as HTMLElement
-    expect(within(codRow).getByText(/one or more items/i)).toBeInTheDocument()
-  })
-
-  it('treats an omitted codEnabled as on', () => {
-    setup({ selected: 'upi' })
-    expect(radioFor('Cash on Delivery').disabled).toBe(false)
   })
 
   it('locks every control while an order is being placed', () => {
