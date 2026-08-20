@@ -12,9 +12,6 @@ import {
   Plus, 
   Minus,
   Share2,
-  Truck,
-  Shield,
-  RotateCcw,
   ChevronRight,
   ChevronLeft,
   CreditCard,
@@ -738,9 +735,6 @@ export function ProductDetail() {
                       <Plus size={16} />
                     </button>
                   </div>
-                  <span className="text-sm text-gray-600">
-                    {product.stock} available
-                  </span>
                 </div>
               </div>
             )}
@@ -813,21 +807,6 @@ export function ProductDetail() {
               </div>
             </div>
 
-            {/* Trust Badges */}
-            <div className="grid grid-cols-3 gap-4 pt-6 border-t border-gray-200">
-              <div className="text-center">
-                <Truck className="mx-auto mb-2 text-primary" size={24} />
-                <p className="text-xs text-gray-600">Free Shipping</p>
-              </div>
-              <div className="text-center">
-                <RotateCcw className="mx-auto mb-2 text-primary" size={24} />
-                <p className="text-xs text-gray-600">Easy Returns</p>
-              </div>
-              <div className="text-center">
-                <Shield className="mx-auto mb-2 text-primary" size={24} />
-                <p className="text-xs text-gray-600">Secure Payment</p>
-              </div>
-            </div>
           </div>
         </div>
 
