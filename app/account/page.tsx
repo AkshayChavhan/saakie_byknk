@@ -17,6 +17,7 @@ import {
   Star,
   Loader2,
   Trash2,
+  Languages,
   MapPin,
 } from 'lucide-react'
 import { Header } from '@/components/layout/header'
@@ -389,6 +390,11 @@ export default function AccountPage() {
           <Link href="/account/addresses" className="card p-4 flex items-center gap-3 hover:shadow-md transition-shadow">
             <MapPin className="h-5 w-5 text-emerald-600" />
             <span className="flex-1 text-sm font-medium text-gray-900">Saved Addresses</span>
+            <ChevronRight className="h-4 w-4 text-gray-400" />
+          </Link>
+          <Link href="/account/language" className="card p-4 flex items-center gap-3 hover:shadow-md transition-shadow">
+            <Languages className="h-5 w-5 text-blue-600" />
+            <span className="flex-1 text-sm font-medium text-gray-900">Select Language</span>
             <ChevronRight className="h-4 w-4 text-gray-400" />
           </Link>
           {isAdmin && (
