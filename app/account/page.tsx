@@ -17,8 +17,12 @@ import {
   Star,
   Loader2,
   Trash2,
+  Languages,
+  MapPin,
 } from 'lucide-react'
 import { Header } from '@/components/layout/header'
+import { PhoneInput } from '@/components/ui/phone-input'
+import { isValidPhone } from '@/lib/phone'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useToast } from '@/components/ui/toast'
 import { formatPrice, formatDate, cn } from '@/lib/utils'
@@ -208,6 +212,11 @@ export default function AccountPage() {
 
   const saveProfile = async () => {
     if (compressing) return
+    // PhoneInput shows the specific problem inline; this only blocks the save.
+    if (!isValidPhone(form.phone)) {
+      setEditError('Please fix the phone number before saving.')
+      return
+    }
     setSaving(true)
     setEditError(null)
     try {
@@ -321,11 +330,9 @@ export default function AccountPage() {
                   </div>
                   <div>
                     <label className="label">Phone</label>
-                    <input
-                      className="input"
+                    <PhoneInput
                       value={form.phone}
-                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                      placeholder="10-digit phone"
+                      onChange={(phone) => setForm({ ...form, phone })}
                     />
                   </div>
                   <p className="text-xs text-gray-400">Tap the photo to change your profile picture (JPG/PNG/WebP, ≤5MB).</p>
@@ -378,6 +385,16 @@ export default function AccountPage() {
           <Link href="/products" className="card p-4 flex items-center gap-3 hover:shadow-md transition-shadow">
             <ShoppingBag className="h-5 w-5 text-gray-700" />
             <span className="flex-1 text-sm font-medium text-gray-900">Continue Shopping</span>
+            <ChevronRight className="h-4 w-4 text-gray-400" />
+          </Link>
+          <Link href="/account/addresses" className="card p-4 flex items-center gap-3 hover:shadow-md transition-shadow">
+            <MapPin className="h-5 w-5 text-emerald-600" />
+            <span className="flex-1 text-sm font-medium text-gray-900">Saved Addresses</span>
+            <ChevronRight className="h-4 w-4 text-gray-400" />
+          </Link>
+          <Link href="/account/language" className="card p-4 flex items-center gap-3 hover:shadow-md transition-shadow">
+            <Languages className="h-5 w-5 text-blue-600" />
+            <span className="flex-1 text-sm font-medium text-gray-900">Select Language</span>
             <ChevronRight className="h-4 w-4 text-gray-400" />
           </Link>
           {isAdmin && (

@@ -100,7 +100,7 @@ describe('getOrderRemoval', () => {
       }
     )
 
-    it('refuses a delivered COD order that was never marked paid', () => {
+    it('refuses a delivered order that was never marked paid', () => {
       // The goods are with the customer even though payment never landed in
       // the system, so this is a return rather than a cancellation.
       const result = removal('DELIVERED', 'PENDING')

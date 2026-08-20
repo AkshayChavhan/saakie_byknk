@@ -222,6 +222,23 @@ export const userApi = {
    */
   setDefaultAddress: (addressId: string) =>
     apiFetch<any>(`/api/users/addresses/${addressId}`, { method: 'PATCH' }),
+
+  /**
+   * Update every field of an address. Resolves to the full address list,
+   * default first, so the caller re-renders from the server's answer.
+   */
+  updateAddress: (addressId: string, data: any) =>
+    apiFetch<any>(`/api/users/addresses/${addressId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  /**
+   * Delete an address. Resolves to the remaining address list, default first,
+   * so the caller re-renders from the server's answer.
+   */
+  deleteAddress: (addressId: string) =>
+    apiFetch<any>(`/api/users/addresses/${addressId}`, { method: 'DELETE' }),
 };
 
 // ============================================

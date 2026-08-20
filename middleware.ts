@@ -18,12 +18,9 @@ const PUBLIC_PAGES = [
   '/about',
   '/our-story',
   '/blog',
-  '/careers',
   '/contact',
-  '/faq',
   '/post',
   '/care-instructions',
-  '/size-guide',
   '/shipping-returns',
   '/privacy-policy',
   '/terms-of-service',
@@ -31,6 +28,7 @@ const PUBLIC_PAGES = [
   '/disclaimer',
   '/sign-in',
   '/sign-up',
+  '/auth', // email-confirmation callback (/auth/confirm) — clicked while signed out
   '/offline', // service-worker offline fallback; must be reachable while signed out
 ];
 

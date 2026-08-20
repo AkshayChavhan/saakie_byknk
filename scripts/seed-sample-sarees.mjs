@@ -304,8 +304,6 @@ async function main() {
       lowStockAlert: 5,
       weight: null,
       careInstructions: 'Dry clean recommended. Store folded in a cool, dry place.',
-      // Per-product accepted payment modes (mirrors the field on existing docs).
-      paymentModes: ['COD', 'PREPAID'],
       createdAt: now,
       updatedAt: now,
     })

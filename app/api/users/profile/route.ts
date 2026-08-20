@@ -4,6 +4,7 @@ import { uploadImage } from '@/lib/cloudinary';
 import { validateImageFile } from '@/lib/upload';
 import { requireAuth } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { isValidPhone, splitPhone, formatPhone } from '@/lib/phone';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -57,13 +58,18 @@ export async function PATCH(request: Request) {
 
     if (form.has('phone')) {
       const phone = String(form.get('phone') ?? '').trim();
-      if (phone) {
-        const digits = phone.replace(/\D/g, '');
-        if (digits.length < 10) {
-          return NextResponse.json({ error: 'Enter a valid phone number' }, { status: 400 });
-        }
+      // Country-aware check (India by default) — same rules the form applies,
+      // both living in lib/phone. Empty clears the number.
+      if (!isValidPhone(phone)) {
+        return NextResponse.json({ error: 'Enter a valid phone number' }, { status: 400 });
       }
-      data.phone = phone || '';
+      if (phone) {
+        // Store canonically as "+<dial> <digits>", whatever shape arrived.
+        const { country, national } = splitPhone(phone);
+        data.phone = formatPhone(country, national);
+      } else {
+        data.phone = '';
+      }
     }
 
     const image = form.get('image');

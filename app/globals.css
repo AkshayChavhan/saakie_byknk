@@ -952,3 +952,25 @@ html {
   }
 }
 
+
+/* Google website-translate (booted by components/i18n/google-translate-loader
+   when a non-English language is picked on /account/language). The widget
+   injects a top banner and shifts the body down; the storefront hides that
+   chrome so translation reads as a native feature. */
+.skiptranslate iframe,
+.goog-te-banner-frame {
+  display: none !important;
+  visibility: hidden !important;
+}
+body {
+  top: 0 !important;
+}
+/* Google's hover tooltip highlighting the original text. */
+#goog-gt-tt,
+.goog-te-balloon-frame {
+  display: none !important;
+}
+font[style*='background-color'] {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}

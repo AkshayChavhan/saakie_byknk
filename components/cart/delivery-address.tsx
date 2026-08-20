@@ -3,8 +3,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
-import { Loader2, MapPin, Plus, X } from 'lucide-react'
+import { Loader2, MapPin, Plus, Trash2, X } from 'lucide-react'
 import { userApi } from '@/lib/api'
+import { INDIAN_STATES } from '@/lib/india-states'
+import { districtsFor } from '@/lib/india-districts'
+import { PhoneInput } from '@/components/ui/phone-input'
+import { isValidPhone } from '@/lib/phone'
 import { useToast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 
@@ -15,6 +19,8 @@ export interface Address {
   addressLine1: string
   addressLine2: string | null
   city: string
+  /** Null only on rows saved before the field existed. */
+  district: string | null
   state: string
   pincode: string
   isDefault: boolean
@@ -26,16 +32,18 @@ const EMPTY_FORM = {
   addressLine1: '',
   addressLine2: '',
   city: '',
+  district: '',
   state: '',
   pincode: '',
 }
 
-/** "Flat 1005, Block A, Pune, Maharashtra" — everything but the pincode. */
+/** "Flat 1005, Block A, Pune, Pune, Maharashtra" — everything but the pincode. */
 export function formatAddressLine(address: Address): string {
   return [
     address.addressLine1,
     address.addressLine2,
     address.city,
+    address.district,
     address.state,
   ]
     .filter(Boolean)
@@ -65,6 +73,8 @@ export function DeliveryAddress() {
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<Address | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -107,6 +117,11 @@ export function DeliveryAddress() {
 
   const saveAddress = async (event: React.FormEvent) => {
     event.preventDefault()
+    // PhoneInput shows the specific problem inline; this only blocks the save.
+    if (!form.phone || !isValidPhone(form.phone)) {
+      setFormError('Please enter a valid phone number.')
+      return
+    }
     setSaving(true)
     setFormError(null)
     try {
@@ -132,15 +147,36 @@ export function DeliveryAddress() {
     }
   }
 
-  // Close on Escape while the picker is up.
+  const removeAddress = async () => {
+    if (!confirmDelete || deleting) return
+    setDeleting(true)
+    try {
+      const list = await userApi.deleteAddress(confirmDelete.id)
+      setAddresses(Array.isArray(list) ? list : [])
+      setConfirmDelete(null)
+      toast.success('Address deleted')
+    } catch (error) {
+      toast.error(
+        "Couldn't delete the address",
+        error instanceof Error ? error.message : 'Please try again.'
+      )
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  // Close on Escape while the picker is up — the delete confirmation first,
+  // then the picker itself.
   useEffect(() => {
     if (!pickerOpen) return
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !savingId && !saving) setPickerOpen(false)
+      if (event.key !== 'Escape' || savingId || saving || deleting) return
+      if (confirmDelete) setConfirmDelete(null)
+      else setPickerOpen(false)
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [pickerOpen, savingId, saving])
+  }, [pickerOpen, savingId, saving, deleting, confirmDelete])
 
   if (status === 'loading' || (isSignedIn && loading)) {
     return <div className="card mb-4 h-[68px] animate-pulse bg-gray-100" />
@@ -237,50 +273,63 @@ export function DeliveryAddress() {
                   {addresses.map((address) => {
                     const isSelected = address.id === selected?.id
                     return (
-                      <button
+                      <div
                         key={address.id}
-                        type="button"
-                        onClick={() => choose(address.id)}
-                        disabled={!!savingId}
                         className={cn(
-                          'flex items-start gap-3 rounded-xl border p-3 text-left transition-colors disabled:opacity-60',
+                          'flex items-start gap-3 rounded-xl border p-3 transition-colors',
                           isSelected
                             ? 'border-gray-900 bg-gray-50'
                             : 'border-gray-200 hover:border-gray-400'
                         )}
                       >
-                        <span
-                          className={cn(
-                            'mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border',
-                            isSelected ? 'border-gray-900' : 'border-gray-300'
-                          )}
-                          aria-hidden="true"
+                        <button
+                          type="button"
+                          onClick={() => choose(address.id)}
+                          disabled={!!savingId}
+                          className="flex min-w-0 flex-1 items-start gap-3 text-left disabled:opacity-60"
                         >
-                          {isSelected && (
-                            <span className="h-2 w-2 rounded-full bg-gray-900" />
-                          )}
-                        </span>
-                        <span className="min-w-0 flex-1 text-sm">
-                          <span className="font-medium text-gray-900">
-                            {address.name}
+                          <span
+                            className={cn(
+                              'mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border',
+                              isSelected ? 'border-gray-900' : 'border-gray-300'
+                            )}
+                            aria-hidden="true"
+                          >
+                            {isSelected && (
+                              <span className="h-2 w-2 rounded-full bg-gray-900" />
+                            )}
                           </span>
-                          <span className="text-gray-500"> · {address.phone}</span>
-                          {address.isDefault && (
-                            <span className="ml-2 rounded-full bg-gray-900 px-2 py-0.5 text-[11px] font-medium text-white">
-                              Default
+                          <span className="min-w-0 flex-1 text-sm">
+                            <span className="font-medium text-gray-900">
+                              {address.name}
                             </span>
-                          )}
-                          <span className="mt-0.5 block text-gray-600">
-                            {formatAddressLine(address)} {address.pincode}
+                            <span className="text-gray-500"> · {address.phone}</span>
+                            {address.isDefault && (
+                              <span className="ml-2 rounded-full bg-gray-900 px-2 py-0.5 text-[11px] font-medium text-white">
+                                Default
+                              </span>
+                            )}
+                            <span className="mt-0.5 block text-gray-600">
+                              {formatAddressLine(address)} {address.pincode}
+                            </span>
                           </span>
-                        </span>
+                        </button>
                         {savingId === address.id && (
                           <Loader2
                             size={16}
                             className="mt-0.5 shrink-0 animate-spin text-gray-500"
                           />
                         )}
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDelete(address)}
+                          disabled={!!savingId || deleting}
+                          aria-label={`Delete address for ${address.name}`}
+                          className="mt-0.5 shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     )
                   })}
 
@@ -302,12 +351,42 @@ export function DeliveryAddress() {
                     </div>
                   )}
                   <input className="input" placeholder="Full name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-                  <input className="input" placeholder="Phone (10 digits)" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required />
+                  <PhoneInput value={form.phone} onChange={(phone) => setForm({ ...form, phone })} />
                   <input className="input sm:col-span-2" placeholder="Address line 1" value={form.addressLine1} onChange={(e) => setForm({ ...form, addressLine1: e.target.value })} required />
-                  <input className="input sm:col-span-2" placeholder="Address line 2 (optional)" value={form.addressLine2} onChange={(e) => setForm({ ...form, addressLine2: e.target.value })} />
+                  <input className="input sm:col-span-2" placeholder="Address line 2" value={form.addressLine2} onChange={(e) => setForm({ ...form, addressLine2: e.target.value })} required />
                   <input className="input" placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} required />
-                  <input className="input" placeholder="State" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} required />
-                  <input className="input sm:col-span-2" placeholder="Pincode (6 digits)" value={form.pincode} onChange={(e) => setForm({ ...form, pincode: e.target.value })} required />
+                  <select
+                    className={cn('input', !form.state && 'text-gray-400')}
+                    value={form.state}
+                    onChange={(e) => setForm({ ...form, state: e.target.value, district: '' })}
+                    required
+                    aria-label="State"
+                  >
+                    <option value="" disabled>State</option>
+                    {INDIAN_STATES.map((state) => (
+                      <option key={state} value={state} className="text-gray-900">
+                        {state}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    className={cn('input', !form.district && 'text-gray-400')}
+                    value={form.district}
+                    onChange={(e) => setForm({ ...form, district: e.target.value })}
+                    required
+                    disabled={!form.state}
+                    aria-label="District"
+                  >
+                    <option value="" disabled>
+                      {form.state ? 'District' : 'District (choose a state first)'}
+                    </option>
+                    {districtsFor(form.state).map((district) => (
+                      <option key={district} value={district} className="text-gray-900">
+                        {district}
+                      </option>
+                    ))}
+                  </select>
+                  <input className="input" placeholder="Pincode (6 digits)" value={form.pincode} onChange={(e) => setForm({ ...form, pincode: e.target.value })} required />
                   <div className="flex gap-2 sm:col-span-2">
                     <button
                       type="submit"
@@ -333,6 +412,47 @@ export function DeliveryAddress() {
                 </form>
               )}
             </div>
+
+            {confirmDelete && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center rounded-t-2xl bg-black/40 p-4 sm:rounded-2xl">
+                <div
+                  role="alertdialog"
+                  aria-modal="true"
+                  aria-labelledby="delete-address-title"
+                  className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl"
+                >
+                  <h3
+                    id="delete-address-title"
+                    className="text-base font-semibold text-gray-900"
+                  >
+                    Do you want to delete this address?
+                  </h3>
+                  <p className="mt-1.5 text-sm text-gray-600">
+                    {confirmDelete.name}, {formatAddressLine(confirmDelete)}{' '}
+                    {confirmDelete.pincode}
+                  </p>
+                  <div className="mt-4 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDelete(null)}
+                      disabled={deleting}
+                      className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      No
+                    </button>
+                    <button
+                      type="button"
+                      onClick={removeAddress}
+                      disabled={deleting}
+                      className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+                    >
+                      {deleting && <Loader2 size={14} className="animate-spin" />}
+                      {deleting ? 'Deleting…' : 'Yes, delete'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

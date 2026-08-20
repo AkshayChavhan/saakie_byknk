@@ -9,10 +9,9 @@
  * here only decides which block that modal opens on (see `lib/razorpay-client`).
  */
 
-import { Banknote, Building2, CreditCard, Smartphone, Wallet } from 'lucide-react'
+import { Building2, CreditCard, Smartphone, Wallet } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
-  COD_DISABLED_MESSAGE,
   PAYMENT_CHANNELS,
   isChannelAvailable,
   isValidUpiId,
@@ -24,20 +23,13 @@ const ICONS: Record<PaymentChannel, React.ComponentType<{ size?: number; classNa
   card: CreditCard,
   netbanking: Building2,
   wallet: Wallet,
-  cod: Banknote,
 }
 
 export interface PaymentMethodsProps {
   selected: PaymentChannel | null
   onSelect: (channel: PaymentChannel) => void
-  /** Every cart item accepts Cash on Delivery. */
-  allowCod: boolean
-  /** Every cart item accepts prepaid payment. */
-  allowOnline: boolean
   /** NEXT_PUBLIC_RAZORPAY_KEY_ID is present. */
   onlineConfigured: boolean
-  /** Store-wide COD switch controlled from /admin/settings. Defaults to on. */
-  codEnabled?: boolean
   /** Optional UPI VPA, prefilled into the Razorpay modal. */
   upiId: string
   onUpiIdChange: (value: string) => void
@@ -45,28 +37,19 @@ export interface PaymentMethodsProps {
   busy?: boolean
 }
 
-const CART_REASON = 'Not available for one or more items in your cart'
-
 /** Why a channel can't be picked, or null when it can. */
 function unavailableReason(
   channel: PaymentChannel,
-  gates: Pick<PaymentMethodsProps, 'allowCod' | 'allowOnline' | 'onlineConfigured' | 'codEnabled'>
+  gates: Pick<PaymentMethodsProps, 'onlineConfigured'>
 ): string | null {
   if (isChannelAvailable(channel, gates)) return null
-  // Distinguish "the store switched COD off" from "this cart can't use COD" —
-  // the shopper can act on the second, not the first.
-  if (channel === 'cod') return gates.codEnabled === false ? COD_DISABLED_MESSAGE : CART_REASON
-  if (!gates.onlineConfigured) return 'Online payment is temporarily unavailable'
-  return CART_REASON
+  return 'Online payment is temporarily unavailable'
 }
 
 export function PaymentMethods({
   selected,
   onSelect,
-  allowCod,
-  allowOnline,
   onlineConfigured,
-  codEnabled = true,
   upiId,
   onUpiIdChange,
   busy = false,
@@ -78,12 +61,7 @@ export function PaymentMethods({
     <div role="radiogroup" aria-label="Payment method" className="divide-y divide-gray-100 rounded-lg border border-gray-200 overflow-hidden">
       {PAYMENT_CHANNELS.map((channel) => {
         const Icon = ICONS[channel.id]
-        const reason = unavailableReason(channel.id, {
-          allowCod,
-          allowOnline,
-          onlineConfigured,
-          codEnabled,
-        })
+        const reason = unavailableReason(channel.id, { onlineConfigured })
         const disabled = reason !== null || busy
         const isSelected = selected === channel.id
 

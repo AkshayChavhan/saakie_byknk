@@ -42,7 +42,7 @@ Types: feat, fix, docs, style, refactor, test, chore
 ---
 
 ## Project Overview
-A premium fashion e-commerce platform built with Next.js 14, TypeScript, Prisma, MongoDB, and Clerk authentication. Features mobile-first design, comprehensive product management, user authentication, shopping cart, wishlist, order management, and a comprehensive admin dashboard with full CRUD operations.
+A premium fashion e-commerce platform built with Next.js 15, TypeScript, Prisma, MongoDB, and Auth.js (NextAuth v5) credentials authentication with signup email verification. Features mobile-first design, comprehensive product management, user authentication, shopping cart, wishlist, order management, and a comprehensive admin dashboard with full CRUD operations.
 
 ## Development Commands
 
@@ -83,12 +83,15 @@ app/                    # Next.js 14 App Router
 │   ├── orders/        # Order API
 │   ├── products/      # Product API
 │   ├── users/         # User API
+│   ├── auth/          # Auth API (register, resend-verification, [...nextauth])
 │   └── webhooks/      # Webhook endpoints
-│       └── clerk/     # Clerk user webhooks
+│       ├── razorpay/  # Razorpay payment webhooks
+│       └── stripe/    # Stripe payment webhooks
+├── auth/
+│   └── confirm/       # Email-confirmation link callback
 ├── cart/              # Shopping cart pages
 ├── categories/        # Category browsing pages
 ├── products/          # Product detail pages
-├── webhook-logs/      # Webhook monitoring page
 ├── globals.css        # Global styles
 ├── layout.tsx         # Root layout
 └── page.tsx          # Home page
@@ -117,9 +120,10 @@ types/               # TypeScript type definitions
 ## Database Schema (MongoDB via Prisma)
 
 ### Key Models
-- **User** - Customer accounts with Clerk integration
+- **User** - Customer accounts (email + bcrypt `password`, `emailVerified` stamp)
   - Added: `imageUrl`, `profileImageUrl`, `gender` fields
   - Roles: USER, ADMIN, SUPER_ADMIN
+- **VerificationToken** - Signup email-verification tokens (SHA-256 hash, 24 h TTL)
 - **Product** - Fashion products with variants, colors, sizes, images
 - **Category** - Hierarchical product categories
 - **Cart/CartItem** - Shopping cart functionality
@@ -145,14 +149,16 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 ### Database
 - `DATABASE_URL` - MongoDB connection string (required)
 
-### Authentication (Clerk)
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Clerk publishable key (required)
-- `CLERK_SECRET_KEY` - Clerk secret key (required)
-- `CLERK_WEBHOOK_SECRET` - Clerk webhook signature verification (required)
-- `NEXT_PUBLIC_CLERK_SIGN_IN_URL` - Sign-in page URL (default: /sign-in)
-- `NEXT_PUBLIC_CLERK_SIGN_UP_URL` - Sign-up page URL (default: /sign-up)
-- `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` - Redirect after sign-in (default: /)
-- `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL` - Redirect after sign-up (default: /)
+### Authentication (Auth.js / NextAuth v5)
+- `AUTH_SECRET` - Signs/encrypts the session JWT (required; `openssl rand -base64 32`)
+- `AUTH_URL` - Base URL for Auth.js (optional; auto-inferred on Vercel)
+
+### Email (SMTP — signup verification links)
+- `SMTP_HOST` - SMTP server, e.g. `smtp.resend.com` (unset in dev → links print to console)
+- `SMTP_PORT` - SMTP port (587)
+- `SMTP_USER` - SMTP username (literal `resend` for Resend)
+- `SMTP_PASS` - SMTP password (Resend API key)
+- `EMAIL_FROM` - From header; address must be on the verified sending domain (see docs/RESEND.md)
 
 ### Application
 - `NEXT_PUBLIC_APP_URL` - Application base URL (required)
@@ -172,15 +178,15 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - `INSTAGRAM_ACCESS_TOKEN` - Instagram Basic Display API long-lived access token (optional - required for Instagram feed display on /post page)
 
 ## Tech Stack
-- **Framework**: Next.js 14 (App Router)
+- **Framework**: Next.js 15 (App Router)
 - **Language**: TypeScript
 - **Database**: MongoDB with Prisma ORM
-- **Authentication**: Clerk
+- **Authentication**: Auth.js (NextAuth v5) — Credentials provider, JWT sessions, signup email verification
+- **Email**: Nodemailer over SMTP (Resend in production)
 - **Styling**: Tailwind CSS
 - **UI Components**: Radix UI
 - **State Management**: TanStack Query (React Query)
 - **Icons**: Lucide React
-- **Webhook Processing**: Svix
 
 ## Admin Dashboard Features
 
@@ -225,27 +231,31 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - **Tree Navigation**: Visual category hierarchy
 - **Bulk Management**: Mass category operations
 
+## Auth Flow (signup email verification)
+
+- `POST /api/auth/register` creates the User (`emailVerified: null`) + Cart +
+  Wishlist, then emails a confirmation link (token stored as SHA-256 hash,
+  24 h TTL). No auto-login — the sign-up page shows "check your email".
+- `GET /auth/confirm?token=…` verifies the link, stamps `emailVerified`, and
+  redirects to `/sign-in?verified=1`.
+- `authorize()` in `auth.ts` refuses unverified accounts with a
+  `CredentialsSignin` subclass (`code: 'email_not_verified'`); the sign-in page
+  offers a rate-limited resend via `POST /api/auth/resend-verification`.
+- Full walkthrough: `docs/AUTHENTICATION.md`; email/Resend setup: `docs/RESEND.md`.
+- `scripts/backfill-email-verified.mjs` stamps accounts that predate the feature.
+
 ## Webhook Integration
 
-### Clerk Webhooks (`/api/webhooks/clerk`)
-- **User Lifecycle**: Automatic user creation/update/deletion
-- **Profile Sync**: Image URL, gender, and profile data sync
-- **Cart/Wishlist**: Auto-creation for new users
-- **Webhook Logging**: Real-time webhook monitoring at `/webhook-logs`
-- **Security**: SVix signature verification
-
-### Webhook Monitoring (`/webhook-logs`)
-- **Real-time Logging**: Live webhook event tracking
-- **Event Details**: Complete webhook payload inspection
-- **Status Monitoring**: Success/failure tracking
-- **Admin Access**: Webhook debugging for administrators
+### Payment Webhooks
+- `POST /api/webhooks/razorpay` — Razorpay payment events (signature-verified)
+- `POST /api/webhooks/stripe` — Stripe payment events (signature-verified)
 
 ## Key Features
 
 ### User Experience
 - Mobile-responsive design
 - Progressive Web App (PWA) capabilities
-- User authentication (Clerk)
+- User authentication (Auth.js credentials + email verification)
 - Product catalog with advanced filtering
 - Shopping cart and wishlist functionality
 - Order tracking and management
@@ -264,10 +274,10 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - User management and role assignment
 
 ### Security & Performance
-- Clerk authentication integration
+- Auth.js credentials authentication with signup email verification
 - Role-based access control (RBAC)
 - Secure API endpoints with authentication
-- Webhook signature verification
+- Payment-webhook signature verification
 - Optimized database queries
 - Efficient pagination
 - Image optimization
@@ -279,8 +289,7 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - Prisma for database operations
 - Path alias `@/*` maps to project root
 - MongoDB as primary database
-- Clerk handles all authentication flows
-- SVix for webhook processing
+- Auth.js (auth.ts / auth.config.ts) handles all authentication flows
 - Middleware for admin route protection
 - Build process includes Prisma client generation
 
@@ -302,10 +311,14 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - **PATCH /api/admin/categories/[id]** - Update category
 - **DELETE /api/admin/categories/[id]** - Delete category
 
+### Auth APIs
+- **POST /api/auth/register** - Email/password signup (sends verification email)
+- **POST /api/auth/resend-verification** - Re-send confirmation link (rate-limited)
+- **GET /auth/confirm** - Email-confirmation callback
+
 ### Webhook APIs
-- **POST /api/webhooks/clerk** - Clerk user webhooks
-- **GET /api/webhook-logs** - Webhook log retrieval
-- **POST /api/webhook-logs** - Webhook log storage
+- **POST /api/webhooks/razorpay** - Razorpay payment webhooks
+- **POST /api/webhooks/stripe** - Stripe payment webhooks
 
 ## Database Relationships
 
@@ -329,9 +342,9 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - ✅ **Product Creation Form** - Complete add product modal with validation
 - ✅ Order management with status workflow
 - ✅ Category management with hierarchy
-- ✅ Webhook integration with Clerk
-- ✅ Real-time webhook monitoring
-- ✅ Authentication and authorization
+- ✅ Payment webhook integration (Razorpay, Stripe)
+- ✅ Authentication and authorization (Auth.js credentials + JWT sessions)
+- ✅ Signup email verification (SMTP/Resend, hashed tokens, resend flow)
 - ✅ Database schema with all relationships (User fields updated)
 - ✅ API architecture with full CRUD operations
 - ✅ Responsive UI with Tailwind CSS

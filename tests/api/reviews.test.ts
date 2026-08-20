@@ -85,8 +85,8 @@ describe('Reviews API', () => {
       await POST(postReview())
 
       // The purchase lookup must filter to orders whose payment is confirmed —
-      // not merely to any order the user placed. A pending COD order does not
-      // count until an admin marks it PAID.
+      // not merely to any order the user placed. A pending, unpaid order does
+      // not count until it is marked PAID.
       const where = mockPrisma.orderItem.findFirst.mock.calls[0][0].where
       expect(where.productId).toBe('prod_123')
       expect(where.order).toEqual({ userId: 'user_123', paymentStatus: 'PAID' })

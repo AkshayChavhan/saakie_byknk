@@ -84,15 +84,6 @@ const values = [
   },
 ]
 
-const hashtags = [
-  '#SaakieWomen',
-  '#SisterhoodStories',
-  '#WearYourStory',
-  '#SareeLove',
-  '#SistersForLife',
-  '#EthnicElegance',
-]
-
 export default function OurStoryPage() {
   return (
     <div className="min-h-screen bg-white">
@@ -155,27 +146,6 @@ export default function OurStoryPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-5xl mx-auto">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
-              {/* Image */}
-              <div className="relative animate-slide-left order-2 lg:order-1">
-                <div className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl">
-                  <Image
-                    src="https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=800&h=1000&fit=crop"
-                    alt="Traditional Indian Fashion"
-                    fill
-                    sizes="(min-width: 1024px) 50vw, 100vw"
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                </div>
-                {/* Quote card */}
-                <div className="absolute -bottom-6 -right-6 lg:-right-12 bg-white rounded-2xl p-6 shadow-xl max-w-xs animate-float">
-                  <Quote className="w-8 h-8 text-rose-300 mb-2" />
-                  <p className="text-gray-700 italic">
-                    &ldquo;Every great journey begins with a story told by someone we love...&rdquo;
-                  </p>
-                </div>
-              </div>
-
               {/* Story Content */}
               <div className="order-1 lg:order-2 animate-slide-right">
                 <span className="inline-block px-4 py-2 bg-rose-100 rounded-full text-rose-600 font-medium text-sm mb-6">
@@ -199,17 +169,6 @@ export default function OurStoryPage() {
                 <p className="mt-8 text-xl sm:text-2xl font-semibold text-gray-900">
                   Because Every Attire Tells a Story <span aria-hidden="true">🤍</span>
                 </p>
-
-                <ul className="mt-6 flex flex-wrap gap-2" aria-label="Brand hashtags">
-                  {hashtags.map((tag) => (
-                    <li
-                      key={tag}
-                      className="rounded-full bg-rose-50 px-3 py-1 text-sm font-medium text-rose-600"
-                    >
-                      {tag}
-                    </li>
-                  ))}
-                </ul>
               </div>
             </div>
           </div>
@@ -293,7 +252,7 @@ export default function OurStoryPage() {
       </section>
 
       {/* Meet the Sisters */}
-      <section className="py-16 md:py-24 lg:py-32">
+      {/* <section className="py-16 md:py-24 lg:py-32">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
             <span className="inline-block px-4 py-2 bg-pink-100 rounded-full text-pink-600 font-medium text-sm mb-4">
@@ -323,7 +282,6 @@ export default function OurStoryPage() {
                         className="object-cover"
                       />
                     </div>
-                    {/* Letter badge */}
                     <div className={`absolute -bottom-2 -right-2 sm:right-1/4 w-10 h-10 bg-gradient-to-br ${founder.gradient} rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg`}>
                       {founder.letter}
                     </div>
@@ -335,7 +293,7 @@ export default function OurStoryPage() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Values Section */}
       <section className="py-16 md:py-24 bg-gray-50">

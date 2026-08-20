@@ -9,7 +9,9 @@ import { Header } from '@/components/layout/header'
 import { PaymentMethods } from '@/components/checkout/payment-methods'
 import { formatPrice, cn } from '@/lib/utils'
 import { cartApi, userApi, fetchApi } from '@/lib/api'
-import { availableChannels, isMethodAllowed, isValidUpiId, type PaymentChannel } from '@/lib/payment'
+import { INDIAN_STATES } from '@/lib/india-states'
+import { districtsFor } from '@/lib/india-districts'
+import { availableChannels, isValidUpiId, type PaymentChannel } from '@/lib/payment'
 import { openRazorpayCheckout, type RazorpaySuccess } from '@/lib/razorpay-client'
 
 interface CartItem {
@@ -19,7 +21,6 @@ interface CartItem {
   product: {
     id: string
     name: string
-    paymentModes?: string[]
     images?: { url: string }[]
   }
 }
@@ -31,6 +32,7 @@ interface Address {
   addressLine1: string
   addressLine2: string | null
   city: string
+  district: string | null
   state: string
   pincode: string
   isDefault: boolean
@@ -42,6 +44,7 @@ const EMPTY_FORM = {
   addressLine1: '',
   addressLine2: '',
   city: '',
+  district: '',
   state: '',
   pincode: '',
 }
@@ -62,22 +65,11 @@ export default function CheckoutPage() {
   const [placing, setPlacing] = useState(false)
   const [channel, setChannel] = useState<PaymentChannel | null>(null)
   const [upiId, setUpiId] = useState('')
-  /** Store-wide COD switch from /api/store-settings; assume on until told otherwise. */
-  const [codEnabled, setCodEnabled] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     try {
-      const [cart, addrs, store] = await Promise.all([
-        cartApi.get(),
-        userApi.getAddresses(),
-        // Advisory only — the order API re-checks. If it fails we leave COD on
-        // and let the server be the one to refuse.
-        fetchApi('/api/store-settings')
-          .then((r) => (r.ok ? r.json() : null))
-          .catch(() => null),
-      ])
-      if (typeof store?.codEnabled === 'boolean') setCodEnabled(store.codEnabled)
+      const [cart, addrs] = await Promise.all([cartApi.get(), userApi.getAddresses()])
       const cartItems: CartItem[] = cart?.items ?? []
       setItems(cartItems)
       const list: Address[] = Array.isArray(addrs) ? addrs : []
@@ -101,15 +93,11 @@ export default function CheckoutPage() {
   const shipping = subtotal > 999 ? 0 : items.length > 0 ? 99 : 0
   const total = subtotal + shipping
 
-  // Which payment modes ALL cart items allow (intersection via every-item check).
-  const allowCod = items.length > 0 && items.every((i) => isMethodAllowed('COD', i.product.paymentModes))
-  const allowOnline =
-    items.length > 0 && items.every((i) => isMethodAllowed('PREPAID', i.product.paymentModes))
   const onlineConfigured = Boolean(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID)
 
   const channels = useMemo(
-    () => availableChannels({ allowCod, allowOnline, onlineConfigured, codEnabled }),
-    [allowCod, allowOnline, onlineConfigured, codEnabled]
+    () => availableChannels({ onlineConfigured }),
+    [onlineConfigured]
   )
 
   // Preselect the first offered channel (UPI whenever prepaid is on), and drop a
@@ -139,7 +127,7 @@ export default function CheckoutPage() {
     }
   }
 
-  const createOrder = async (gateway: 'cod' | 'razorpay', paymentChannel: PaymentChannel) => {
+  const createOrder = async (gateway: 'razorpay', paymentChannel: PaymentChannel) => {
     const res = await fetchApi('/api/payments/create-intent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -159,9 +147,8 @@ export default function CheckoutPage() {
   }
 
   /**
-   * Single entry point for the CTA. COD books the order straight away; every
-   * other channel books a PENDING order and hands off to the Razorpay modal,
-   * pinned to the block the shopper picked.
+   * Single entry point for the CTA. Books a PENDING order and hands off to the
+   * Razorpay modal, pinned to the block the shopper picked.
    */
   const placeOrder = async () => {
     if (!channel) return setError('Please choose a payment method')
@@ -171,16 +158,8 @@ export default function CheckoutPage() {
     setPlacing(true)
 
     try {
-      if (channel === 'cod') {
-        const data = await createOrder('cod', channel)
-        // Persistent confirmation route — survives refresh/back, unlike the old
-        // inline success state.
-        router.replace(`/checkout/confirmation/${data.order.id}`)
-        return
-      }
-
       const key = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
-      if (!key) throw new Error('Online payment is not configured. Please use Cash on Delivery.')
+      if (!key) throw new Error('Online payment is not configured. Please try again later.')
 
       const data = await createOrder('razorpay', channel)
       if (!data.razorpayOrderId) throw new Error('Online payment is unavailable right now.')
@@ -299,7 +278,7 @@ export default function CheckoutPage() {
                     <span className="text-sm text-gray-700">
                       <span className="font-medium text-gray-900">{a.name}</span> · {a.phone}
                       <br />
-                      {a.addressLine1}{a.addressLine2 ? `, ${a.addressLine2}` : ''}, {a.city}, {a.state} {a.pincode}
+                      {a.addressLine1}{a.addressLine2 ? `, ${a.addressLine2}` : ''}, {a.city}{a.district ? `, ${a.district}` : ''}, {a.state} {a.pincode}
                     </span>
                   </label>
                 ))}
@@ -317,9 +296,39 @@ export default function CheckoutPage() {
                 <input className="input" placeholder="Full name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
                 <input className="input" placeholder="Phone (10 digits)" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required />
                 <input className="input sm:col-span-2" placeholder="Address line 1" value={form.addressLine1} onChange={(e) => setForm({ ...form, addressLine1: e.target.value })} required />
-                <input className="input sm:col-span-2" placeholder="Address line 2 (optional)" value={form.addressLine2} onChange={(e) => setForm({ ...form, addressLine2: e.target.value })} />
+                <input className="input sm:col-span-2" placeholder="Address line 2" value={form.addressLine2} onChange={(e) => setForm({ ...form, addressLine2: e.target.value })} required />
                 <input className="input" placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} required />
-                <input className="input" placeholder="State" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} required />
+                <select
+                  className={cn('input', !form.state && 'text-gray-400')}
+                  value={form.state}
+                  onChange={(e) => setForm({ ...form, state: e.target.value, district: '' })}
+                  required
+                  aria-label="State"
+                >
+                  <option value="" disabled>State</option>
+                  {INDIAN_STATES.map((state) => (
+                    <option key={state} value={state} className="text-gray-900">
+                      {state}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className={cn('input', !form.district && 'text-gray-400')}
+                  value={form.district}
+                  onChange={(e) => setForm({ ...form, district: e.target.value })}
+                  required
+                  disabled={!form.state}
+                  aria-label="District"
+                >
+                  <option value="" disabled>
+                    {form.state ? 'District' : 'District (choose a state first)'}
+                  </option>
+                  {districtsFor(form.state).map((district) => (
+                    <option key={district} value={district} className="text-gray-900">
+                      {district}
+                    </option>
+                  ))}
+                </select>
                 <input className="input" placeholder="Pincode (6 digits)" value={form.pincode} onChange={(e) => setForm({ ...form, pincode: e.target.value })} required />
                 <div className="sm:col-span-2 flex gap-2">
                   <button type="submit" disabled={savingAddress} className="btn-primary disabled:opacity-60">
@@ -349,10 +358,7 @@ export default function CheckoutPage() {
                 <PaymentMethods
                   selected={channel}
                   onSelect={setChannel}
-                  allowCod={allowCod}
-                  allowOnline={allowOnline}
                   onlineConfigured={onlineConfigured}
-                  codEnabled={codEnabled}
                   upiId={upiId}
                   onUpiIdChange={setUpiId}
                   busy={placing}
@@ -364,9 +370,7 @@ export default function CheckoutPage() {
                   className="mt-4 w-full flex items-center justify-center gap-2 rounded-full bg-gray-900 text-white py-3 text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
                 >
                   {placing && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {channel === 'cod'
-                    ? `Place order · ${formatPrice(total)}`
-                    : `Pay ${formatPrice(total)}`}
+                  {`Pay ${formatPrice(total)}`}
                 </button>
 
                 {!selectedAddressId && (

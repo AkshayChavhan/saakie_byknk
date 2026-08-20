@@ -12,16 +12,12 @@ import {
   Plus, 
   Minus,
   Share2,
-  Truck,
-  Shield,
-  RotateCcw,
   ChevronRight,
   ChevronLeft,
   CreditCard,
   Check
 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
-import { isMethodAllowed, describeModes } from '@/lib/payment'
 import { fetchApi, cartApi, wishlistApi } from '@/lib/api'
 import { useToast } from '@/components/ui/toast'
 import { Header } from '@/components/layout/header'
@@ -104,7 +100,6 @@ interface Product {
   workType: string | null
   blouseIncluded: boolean
   weight: number | null
-  paymentModes?: ('COD' | 'PREPAID')[]
   images: ProductImage[]
   colors: Color[]
   sizes: Size[]
@@ -378,9 +373,7 @@ export function ProductDetail() {
   }
 
   // "Buy Now" — add this product to the cart, then send the user to the unified
-  // checkout (which handles address + COD / online Razorpay payment, honoring
-  // each product's accepted payment modes). Replaces the old hardcoded
-  // single-product COD/QR modal.
+  // checkout (which handles address + online Razorpay payment).
   const handleBuyNow = async () => {
     if (!product) return
     if (authStatus !== 'authenticated') {
@@ -635,15 +628,7 @@ export function ProductDetail() {
             <div className="flex items-center space-x-2">
               <div className={`w-3 h-3 rounded-full ${product.inStock ? 'bg-green-500' : 'bg-red-500'}`}></div>
               <span className={`text-sm font-medium ${product.inStock ? 'text-green-600' : 'text-red-600'}`}>
-                {product.inStock ? `In Stock (${product.stock} available)` : 'Out of Stock'}
-              </span>
-            </div>
-
-            {/* Accepted payment modes (as set by the seller) */}
-            <div className="flex items-center gap-2">
-              <CreditCard size={16} className="text-gray-500" />
-              <span className="text-sm text-gray-600">
-                Payment: <span className="font-medium text-gray-900">{describeModes(product.paymentModes)}</span>
+                {product.inStock ? 'In Stock' : 'Out of Stock'}
               </span>
             </div>
 
@@ -738,9 +723,6 @@ export function ProductDetail() {
                       <Plus size={16} />
                     </button>
                   </div>
-                  <span className="text-sm text-gray-600">
-                    {product.stock} available
-                  </span>
                 </div>
               </div>
             )}
@@ -813,21 +795,6 @@ export function ProductDetail() {
               </div>
             </div>
 
-            {/* Trust Badges */}
-            <div className="grid grid-cols-3 gap-4 pt-6 border-t border-gray-200">
-              <div className="text-center">
-                <Truck className="mx-auto mb-2 text-primary" size={24} />
-                <p className="text-xs text-gray-600">Free Shipping</p>
-              </div>
-              <div className="text-center">
-                <RotateCcw className="mx-auto mb-2 text-primary" size={24} />
-                <p className="text-xs text-gray-600">Easy Returns</p>
-              </div>
-              <div className="text-center">
-                <Shield className="mx-auto mb-2 text-primary" size={24} />
-                <p className="text-xs text-gray-600">Secure Payment</p>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -1298,9 +1265,6 @@ export function ProductDetail() {
           )}
         </div>
       </div>
-
-      {/* The old single-product COD/QR modal was removed — "Buy Now" now adds to
-          cart and routes to the unified /checkout (COD + online Razorpay). */}
 
       {/* Bottom padding so the fixed mobile bar never covers real content.
           Tinted to the footer's colour because it now sits beneath it. */}

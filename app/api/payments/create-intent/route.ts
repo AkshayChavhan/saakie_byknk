@@ -4,25 +4,17 @@ import { stripe } from '@/lib/stripe';
 import { razorpay } from '@/lib/razorpay';
 import { requireAuth, verifyAddressOwnership } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
-import {
-  normalizePaymentMethod,
-  isMethodAllowed,
-  storedPaymentMethod,
-  storeBlockReason,
-} from '@/lib/payment';
-import { getStoreSettings } from '@/lib/server/settings';
+import { storedPaymentMethod } from '@/lib/payment';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const SUPPORTED_GATEWAYS = ['cod', 'razorpay', 'stripe'];
+const SUPPORTED_GATEWAYS = ['razorpay', 'stripe'];
 
 /**
  * Reject a gateway we cannot actually charge, before any order row exists.
- * Without this, anything that wasn't a configured 'stripe'/'razorpay' fell
- * through to the COD-shaped success response — so `paymentGateway: 'anything'`
- * (or 'razorpay' with the keys unset) produced an unpaid PENDING order labelled
- * PREPAID, side-stepping the store-wide COD switch entirely.
+ * Without this, anything that wasn't a configured 'stripe'/'razorpay' would
+ * produce an unpaid PENDING order that no gateway ever settles.
  */
 function gatewayError(gateway: string): NextResponse | null {
   if (!SUPPORTED_GATEWAYS.includes(gateway)) {
@@ -77,31 +69,6 @@ export async function POST(request: Request) {
     const gatewayIssue = gatewayError(gateway);
     if (gatewayIssue) return gatewayIssue;
 
-    const chosenMethod = normalizePaymentMethod(gateway);
-
-    // Store-wide switches first — an admin turning COD off must hold even if
-    // every product in the cart still lists COD in its own paymentModes.
-    const blocked = storeBlockReason(chosenMethod, await getStoreSettings());
-    if (blocked) {
-      return NextResponse.json({ error: blocked }, { status: 409 });
-    }
-
-    // Then per-product payment modes: a COD-only product cannot be paid via a
-    // prepaid gateway, and vice-versa.
-    const disallowed = cart.items.find(
-      (item) => !isMethodAllowed(chosenMethod, item.product.paymentModes)
-    );
-    if (disallowed) {
-      return NextResponse.json(
-        {
-          error: `"${disallowed.product.name}" does not accept ${
-            chosenMethod === 'COD' ? 'Cash on Delivery' : 'prepaid (online) payment'
-          }. Please choose a different payment method.`,
-        },
-        { status: 409 }
-      );
-    }
-
     const subtotal = cart.items.reduce(
       (total, item) => total + item.product.price * item.quantity,
       0
@@ -125,9 +92,8 @@ export async function POST(request: Request) {
         total,
         shippingAddressId,
         billingAddressId: billingAddressId || shippingAddressId,
-        // Records the concrete instrument ("UPI", "CARD", …) for the admin view;
-        // normalizePaymentMethod() still reads every value back as COD/PREPAID.
-        paymentMethod: storedPaymentMethod(chosenMethod, paymentChannel),
+        // Records the concrete instrument ("UPI", "CARD", …) for the admin view.
+        paymentMethod: storedPaymentMethod(paymentChannel),
         status: 'PENDING',
         paymentStatus: 'PENDING',
         items: {
@@ -183,15 +149,11 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json({
-      success: true,
-      order: {
-        id: order.id,
-        orderNumber: order.orderNumber,
-        total: order.total,
-      },
-      gateway: 'cod',
-    });
+    // Unreachable: gatewayError() already guaranteed a configured gateway.
+    return NextResponse.json(
+      { error: 'Online payment is unavailable right now. Please try again later.' },
+      { status: 503 }
+    );
   } catch (error) {
     return apiError(error);
   }

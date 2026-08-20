@@ -254,11 +254,6 @@ function ProductsContent() {
                 Discover exquisite sarees for every occasion
               </p>
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="rounded-full bg-white/10 px-3 py-1.5 text-zari-light ring-1 ring-zari/30 backdrop-blur-sm">
-                {pagination.totalCount} Products
-              </span>
-            </div>
           </div>
         </div>
 
@@ -587,7 +582,7 @@ function ProductsContent() {
                           </p>
 
                           {/* Name */}
-                          <h3 className={`font-semibold text-gray-900 line-clamp-2 mb-2 group-hover:text-rose-600 transition-colors ${
+                          <h3 className={`font-semibold text-gray-900 line-clamp-2 mb-2 ${
                             viewMode === 'grid' ? 'text-sm' : 'text-base'
                           }`}>
                             {product.name}

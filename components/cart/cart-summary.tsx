@@ -96,14 +96,6 @@ export function CartSummary({ subtotal, itemCount, isLoading }: CartSummaryProps
           <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
           Secure Checkout
         </div>
-        <div className="flex items-center">
-          <div className="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
-          Easy Returns
-        </div>
-        <div className="flex items-center">
-          <div className="w-2 h-2 bg-orange-500 rounded-full mr-1"></div>
-          Cash on Delivery
-        </div>
       </div>
     </div>
   )

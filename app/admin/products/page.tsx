@@ -26,7 +26,6 @@ interface Product {
   comparePrice?: number
   stock: number
   lowStockAlert: number
-  paymentModes?: string[]
   isActive: boolean
   isFeatured: boolean
   category: {
@@ -103,7 +102,6 @@ export default function ProductsManagement() {
     length: '',
     width: '',
     blouseIncluded: false,
-    paymentModes: [] as string[],
     isActive: true,
     isFeatured: false,
     images: [] as File[]
@@ -332,7 +330,6 @@ export default function ProductsManagement() {
         length: '',
         width: '',
         blouseIncluded: !!p.blouseIncluded,
-        paymentModes: Array.isArray(p.paymentModes) ? p.paymentModes : [],
         isActive: !!p.isActive,
         isFeatured: !!p.isFeatured,
         images: [],
@@ -452,7 +449,6 @@ export default function ProductsManagement() {
         careInstructions: formData.careInstructions,
         weight: formData.weight,
         blouseIncluded: formData.blouseIncluded,
-        paymentModes: formData.paymentModes,
         isActive: formData.isActive,
         isFeatured: formData.isFeatured,
         length: formData.length,
@@ -555,7 +551,6 @@ export default function ProductsManagement() {
       length: '',
       width: '',
       blouseIncluded: false,
-      paymentModes: [],
       isActive: true,
       isFeatured: false,
       images: []
@@ -566,15 +561,6 @@ export default function ProductsManagement() {
     return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
   }
 
-  // Add/remove a payment mode (COD / PREPAID) from the multi-select.
-  const togglePaymentMode = (mode: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      paymentModes: prev.paymentModes.includes(mode)
-        ? prev.paymentModes.filter((m) => m !== mode)
-        : [...prev.paymentModes, mode],
-    }))
-  }
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value
@@ -1411,40 +1397,6 @@ export default function ProductsManagement() {
                         ))}
                       </select>
                     </div>
-                  </div>
-
-                  {/* Payment Mode — how this product accepts payment. */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Payment Mode</label>
-                    <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
-                      {[
-                        { value: 'COD', label: 'Cash on Delivery (COD)' },
-                        { value: 'PREPAID', label: 'Prepaid (Payment Gateway)' },
-                      ].map((mode) => {
-                        const checked = formData.paymentModes.includes(mode.value)
-                        return (
-                          <label
-                            key={mode.value}
-                            className={`flex flex-1 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-colors ${
-                              checked
-                                ? 'border-red-500 bg-red-50'
-                                : 'border-gray-200 bg-gray-50 hover:border-gray-300'
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => togglePaymentMode(mode.value)}
-                              className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
-                            />
-                            <span className="text-sm font-medium text-gray-700">{mode.label}</span>
-                          </label>
-                        )
-                      })}
-                    </div>
-                    <p className="mt-1.5 text-xs text-gray-500">
-                      If none selected, the product defaults to Prepaid.
-                    </p>
                   </div>
 
                   {/* Additional Details */}

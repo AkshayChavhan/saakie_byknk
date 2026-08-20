@@ -13,9 +13,9 @@ interface UnderDevelopmentProps {
 
 /**
  * Saree-themed "page under development" placeholder. Used by the legal /
- * informational routes (Privacy Policy, Terms of Service, Return Policy,
- * Disclaimer) until their real content is written. Keeps the site header and
- * footer so navigation still works.
+ * informational routes (Privacy Policy, Terms of Service, Disclaimer) until
+ * their real content is written. Keeps the site header and footer so
+ * navigation still works.
  */
 export function UnderDevelopment({ title, description }: UnderDevelopmentProps) {
   return (

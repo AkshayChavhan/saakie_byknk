@@ -31,9 +31,23 @@ model User {
   @@map("users")
 }
 
-// NOTE: When Google OAuth / magic-link providers are added later, Auth.js
-// adapter models (Account, Session, VerificationToken) go here. Not needed
-// now: Credentials provider uses the JWT session strategy.
+// Signup email-verification links. Shaped like the Auth.js adapter's
+// VerificationToken (identifier + token + expires, composite unique) so a
+// future Prisma adapter (Google OAuth / magic-link) can take this model over.
+// `token` stores a SHA-256 hash of the raw link token, never the raw value.
+model VerificationToken {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  identifier String // email address being verified
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// NOTE: When Google OAuth / magic-link providers are added later, the remaining
+// Auth.js adapter models (Account, Session) go here. Not needed now:
+// Credentials provider uses the JWT session strategy.
 
 model Category {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
@@ -87,7 +101,6 @@ model Product {
   fabric        String?
   workType      String?
   blouseIncluded Boolean @default(false)
-  paymentModes  PaymentMode[] @default([PREPAID])
   isActive      Boolean  @default(true)
   isFeatured    Boolean  @default(false)
   reviews       Review[]
@@ -269,6 +282,9 @@ model Address {
   addressLine1   String
   addressLine2   String?
   city           String
+  // Nullable only for rows saved before the field existed — the API requires
+  // it on every create and update.
+  district       String?
   state          String
   pincode        String
   country        String  @default("India")
@@ -333,12 +349,6 @@ enum PaymentStatus {
   CANCELLED
 }
 
-// How a product accepts payment. PREPAID = pay via the online payment gateway.
-enum PaymentMode {
-  COD
-  PREPAID
-}
-
 model HeroSlide {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   title         String
@@ -393,19 +403,4 @@ model BlogPost {
   updatedAt     DateTime  @updatedAt
 
   @@map("blog_posts")
-}
-
-// Store-wide switches an admin flips from /admin/settings. A singleton: exactly
-// one row, found by `key`. When the row is absent every value falls back to the
-// defaults below, so a fresh database behaves exactly as before.
-model StoreSetting {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  key         String   @unique // always STORE_SETTING_KEY ("store")
-  // Store-wide Cash on Delivery kill switch. Products still opt in individually
-  // via Product.paymentModes — this gates all of them at once.
-  codEnabled  Boolean  @default(true)
-  updatedAt   DateTime @updatedAt
-  updatedById String?  @db.ObjectId
-
-  @@map("store_settings")
 }

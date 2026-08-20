@@ -1,5 +1,11 @@
 # Backend Architecture & Folder Structure
 
+> **⚠️ HISTORICAL DOCUMENT** — this describes a retired separate Express
+> backend with Clerk authentication. The current app is a single Next.js 15
+> project (API routes in `app/api/`) using Auth.js (NextAuth v5) with signup
+> email verification. See the root `ARCHITECTURE.md` and
+> [AUTHENTICATION.md](AUTHENTICATION.md) for the current architecture.
+
 Complete documentation of the Express backend architecture, folder structure, and implementation details.
 
 ## Table of Contents

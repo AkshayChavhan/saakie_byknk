@@ -11,6 +11,7 @@ import {
   PasswordField,
   SubmitButton,
   ErrorBanner,
+  SuccessBanner,
 } from '@/components/auth/auth-fields'
 
 function SignInForm() {
@@ -20,12 +21,32 @@ function SignInForm() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  // Landed here from a successful /auth/confirm redirect.
+  const [verified, setVerified] = useState(
+    searchParams.get('verified') === '1'
+  )
+  // Surface an email-confirmation failure redirected here by /auth/confirm.
+  const [error, setError] = useState<string | null>(() =>
+    searchParams.get('error') === 'confirmation_failed'
+      ? 'Your confirmation link was invalid or has expired. Enter your email below to request a new one.'
+      : null
+  )
+  // True when credentials were right but the email is still unconfirmed —
+  // shows the "resend confirmation email" affordance under the error.
+  const [needsVerification, setNeedsVerification] = useState(
+    searchParams.get('error') === 'confirmation_failed'
+  )
+  const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent'>(
+    'idle'
+  )
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setVerified(false)
+    setNeedsVerification(false)
+    setResendState('idle')
     setIsLoading(true)
 
     const result = await signIn('credentials', {
@@ -37,7 +58,14 @@ function SignInForm() {
     setIsLoading(false)
 
     if (result?.error) {
-      setError('Invalid email or password. Please try again.')
+      if (result.code === 'email_not_verified') {
+        setNeedsVerification(true)
+        setError(
+          'Your email address has not been confirmed yet. Check your inbox for the link, or resend it below.'
+        )
+      } else {
+        setError('Invalid email or password. Please try again.')
+      }
       return
     }
 
@@ -45,9 +73,44 @@ function SignInForm() {
     router.refresh()
   }
 
+  const handleResend = async () => {
+    if (!email.trim() || resendState === 'sending') return
+    setResendState('sending')
+    try {
+      await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+    } finally {
+      setResendState('sent')
+    }
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {verified && (
+        <SuccessBanner message="Your email is confirmed — sign in to continue." />
+      )}
       {error && <ErrorBanner message={error} />}
+      {needsVerification && (
+        <p className="-mt-2 text-center text-xs text-gray-500">
+          {resendState === 'sent' ? (
+            'If an unverified account exists for this address, a new link is on its way.'
+          ) : (
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={!email.trim() || resendState === 'sending'}
+              className="font-semibold text-rose-400 underline-offset-2 transition-colors hover:text-rose-300 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {resendState === 'sending'
+                ? 'Sending…'
+                : 'Resend confirmation email'}
+            </button>
+          )}
+        </p>
+      )}
 
       <TextField
         id="email"

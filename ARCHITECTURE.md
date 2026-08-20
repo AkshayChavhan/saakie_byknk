@@ -15,7 +15,7 @@
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Frontend      │    │   Backend       │    │   Database      │
-│   (Next.js 14)  │    │   (API Routes)  │    │   (MongoDB)     │
+│   (Next.js 15)  │    │   (API Routes)  │    │   (MongoDB)     │
 │                 │    │                 │    │                 │
 │ - Pages         │◄──►│ - Authentication│◄──►│ - Users         │
 │ - Components    │    │ - Product APIs  │    │ - Products      │
@@ -28,49 +28,52 @@
 │   External      │    │   Middleware    │    │   File Storage  │
 │   Services      │    │                 │    │                 │
 │                 │    │ - Auth Check    │    │ - Product Images│
-│ - Clerk Auth    │    │ - Rate Limiting │    │ - User Avatars  │
+│ - SMTP (Resend) │    │ - Rate Limiting │    │ - User Avatars  │
 │ - Payment Gway  │    │ - CORS          │    │ - Documents     │
-│ - Email Service │    │ - Validation    │    │                 │
+│ - Cloudinary    │    │ - Validation    │    │                 │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
 ## User Registration & Authentication Flow
 
-### Sign-Up Process with Database Integration
+### Sign-Up Process with Email Verification
 
 ```mermaid
 sequenceDiagram
     participant User
-    participant ClerkAuth
     participant NextJS
-    participant Webhook
+    participant Email as SMTP (Resend)
     participant Database
-    
-    User->>ClerkAuth: 1. Sign up with email/password
-    ClerkAuth->>ClerkAuth: 2. Validate & create user account
-    ClerkAuth->>User: 3. Return success + user data
-    ClerkAuth->>Webhook: 4. Send user.created webhook
-    Webhook->>NextJS: 5. POST /api/webhooks/clerk
-    NextJS->>Database: 6. Create user record in MongoDB
-    Database->>NextJS: 7. Return created user
-    NextJS->>Webhook: 8. Return 200 OK
-    User->>NextJS: 9. Redirect to dashboard
-    NextJS->>Database: 10. Fetch user profile
-    Database->>NextJS: 11. Return user data
-    NextJS->>User: 12. Display personalized content
+
+    User->>NextJS: 1. POST /api/auth/register (name, email, password)
+    NextJS->>NextJS: 2. Validate + bcrypt.hash(password, 12)
+    NextJS->>Database: 3. Create User (emailVerified: null) + Cart + Wishlist
+    NextJS->>Database: 4. Store verification token (SHA-256 hash, 24 h TTL)
+    NextJS->>Email: 5. Send confirmation link
+    NextJS->>User: 6. 201 requiresVerification → "check your email" screen
+    User->>NextJS: 7. Click link → GET /auth/confirm?token=…
+    NextJS->>Database: 8. Verify token hash → stamp emailVerified
+    NextJS->>User: 9. Redirect /sign-in?verified=1
+    User->>NextJS: 10. signIn('credentials') → authorize() gate passes
+    NextJS->>User: 11. JWT session cookie set — signed in
 ```
 
 ### User Data Flow
-1. **Clerk Registration**: User signs up through Clerk authentication
-2. **Webhook Trigger**: Clerk sends `user.created` webhook to `/api/webhooks/clerk`
-3. **Database Sync**: Webhook handler creates user record in MongoDB with:
-   - `clerkId`: Unique Clerk user identifier
-   - `email`: User's email address
+1. **Registration**: `/api/auth/register` validates input, hashes the password
+   (bcrypt), and creates the user in MongoDB with:
+   - `email`: User's email address (unique, lowercased)
+   - `password`: bcrypt hash
+   - `emailVerified`: `null` until the confirmation link is clicked
    - `name`: User's display name
    - `role`: Default USER role
-   - `createdAt`: Timestamp
-4. **Profile Setup**: User can update additional profile information
-5. **Cart/Wishlist**: Empty cart and wishlist are created for the user
+2. **Cart/Wishlist**: Empty cart and wishlist are created with the user
+3. **Verification Email**: A confirmation link (hashed token, 24 h expiry) is
+   sent via SMTP; unverified accounts cannot sign in
+   (`authorize()` rejects with `code: 'email_not_verified'`)
+4. **Confirmation**: `/auth/confirm` stamps `emailVerified` and redirects to
+   sign-in; a rate-limited resend endpoint covers lost emails
+5. **Profile Setup**: User can update additional profile information after
+   signing in
 
 ## Database Architecture
 
@@ -80,7 +83,7 @@ sequenceDiagram
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │    User     │────▶│   Address   │     │  Category   │
 │             │     │             │     │             │
-│ - clerkId   │     │ - name      │     │ - name      │
+│ - password  │     │ - name      │     │ - name      │
 │ - email     │     │ - phone     │     │ - slug      │
 │ - name      │     │ - address1  │     │ - parentId  │
 │ - role      │     │ - city      │     │ - isActive  │
@@ -117,9 +120,9 @@ sequenceDiagram
 - **Flow**:
   1. User clicks "Sign Up"
   2. User enters email, password, name
-  3. Clerk validates and creates account
-  4. Webhook creates user record in database
-  5. User receives welcome email
+  3. `/api/auth/register` validates input and creates the account (unverified)
+  4. User receives a confirmation email and clicks the link
+  5. Account is verified; user signs in
   6. User can access platform features
 
 #### 1.2 Product Browsing & Search
@@ -197,7 +200,7 @@ sequenceDiagram
 - **Goal**: Access admin dashboard
 - **Preconditions**: User has ADMIN or SUPER_ADMIN role
 - **Flow**:
-  1. Admin logs in through Clerk
+  1. Admin signs in with email + password (Auth.js credentials)
   2. System verifies admin role
   3. Admin accesses dashboard
   4. Admin views analytics overview
@@ -289,8 +292,11 @@ sequenceDiagram
 ### RESTful API Endpoints
 
 ```
-Authentication (handled by Clerk + Webhooks)
-POST /api/webhooks/clerk          # Sync user data from Clerk
+Authentication (Auth.js + custom routes)
+POST /api/auth/register            # Email/password signup (sends verification email)
+POST /api/auth/resend-verification # Re-send confirmation link (rate-limited)
+GET  /auth/confirm                 # Email-confirmation callback
+ALL  /api/auth/[...nextauth]       # Auth.js handlers (sign-in, session, csrf, …)
 
 Users
 GET /api/users/profile           # Get current user profile
@@ -354,8 +360,8 @@ components/
 │   ├── CartItem.tsx            # Individual cart item
 │   └── CartSummary.tsx         # Order total and checkout
 ├── auth/
-│   ├── SignInForm.tsx          # Sign-in form (Clerk)
-│   └── SignUpForm.tsx          # Sign-up form (Clerk)
+│   ├── auth-shell.tsx          # Shared sign-in/sign-up page chrome
+│   └── auth-fields.tsx         # Form primitives (fields, banners, submit)
 └── ui/
     ├── Button.tsx              # Reusable button component
     ├── Input.tsx               # Form input component
@@ -367,16 +373,17 @@ components/
 - **TanStack Query**: Server state management and caching
 - **React Context**: User authentication state
 - **Local State**: Component-specific state (React hooks)
-- **Clerk**: Authentication state management
+- **Auth.js**: Authentication state (`useSession()` / `auth()`)
 
 ## Security Architecture
 
 ### Authentication & Authorization
-1. **Clerk Integration**: Handles all authentication flows
-2. **JWT Tokens**: Secure API communication
-3. **Role-Based Access**: USER, ADMIN, SUPER_ADMIN roles
-4. **Middleware Protection**: Route-level authentication
-5. **API Validation**: Input sanitization and validation
+1. **Auth.js (NextAuth v5)**: Credentials provider with bcrypt password hashing
+2. **Email Verification**: Signup requires clicking an emailed link before sign-in
+3. **JWT Sessions**: Signed/encrypted cookie, no DB session table
+4. **Role-Based Access**: USER, ADMIN, SUPER_ADMIN roles
+5. **Middleware Protection**: Route-level authentication
+6. **API Validation**: Input sanitization and validation
 
 ### Data Security
 1. **Environment Variables**: Sensitive data in env files
@@ -419,9 +426,9 @@ components/
 7. **Database**: Prisma migrations applied
 
 ### Environment Configuration
-- **Development**: Local MongoDB, development Clerk keys
-- **Staging**: Staging database, staging Clerk environment
-- **Production**: Production MongoDB Atlas, production Clerk keys
+- **Development**: Demo MongoDB, SMTP unset (verification links print to console)
+- **Staging**: Staging database, test SMTP credentials
+- **Production**: Production MongoDB Atlas, Resend SMTP + verified domain
 
 ## Performance Considerations
 

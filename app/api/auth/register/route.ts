@@ -3,6 +3,11 @@ import { Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { apiError } from '@/lib/server/errors';
+import { sendVerificationEmail } from '@/lib/server/email';
+import {
+  createVerificationToken,
+  verificationUrl,
+} from '@/lib/server/verification';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,8 +20,10 @@ const MIN_PASSWORD_LENGTH = 8;
  *
  * Auth.js has no built-in sign-up for the Credentials provider, so this route
  * creates the user. It mirrors what the old Clerk `user.created` webhook did:
- * create the User, then its Cart and Wishlist. The client signs the user in
- * (via `signIn('credentials', ...)`) after a successful response.
+ * create the User, then its Cart and Wishlist. The account starts unverified
+ * (`emailVerified: null`) and a confirmation link is emailed; `authorize()` in
+ * auth.ts refuses to sign in unverified users, so the client shows a
+ * "check your email" screen instead of signing in directly.
  */
 export async function POST(request: Request) {
   try {
@@ -73,7 +80,24 @@ export async function POST(request: Request) {
       prisma.wishlist.create({ data: { userId: user.id } }),
     ]);
 
-    return NextResponse.json({ success: true, user }, { status: 201 });
+    // Email the confirmation link. A send failure must not orphan the freshly
+    // created account (re-registering would hit the 409), so log and continue —
+    // the sign-in screen offers a resend.
+    try {
+      const token = await createVerificationToken(email);
+      await sendVerificationEmail({
+        to: email,
+        name,
+        verifyUrl: verificationUrl(request, token),
+      });
+    } catch (emailError) {
+      console.error('[register] failed to send verification email:', emailError);
+    }
+
+    return NextResponse.json(
+      { success: true, requiresVerification: true, user },
+      { status: 201 }
+    );
   } catch (error) {
     // Unique-constraint race: another request created the email concurrently.
     if (
