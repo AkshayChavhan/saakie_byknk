@@ -20,7 +20,6 @@ const STATIC_PATHS = [
   '/shipping-returns',
   '/privacy-policy',
   '/terms-of-service',
-  '/return-policy',
   '/disclaimer',
 ]
 
