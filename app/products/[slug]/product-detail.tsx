@@ -632,7 +632,7 @@ export function ProductDetail() {
             <div className="flex items-center space-x-2">
               <div className={`w-3 h-3 rounded-full ${product.inStock ? 'bg-green-500' : 'bg-red-500'}`}></div>
               <span className={`text-sm font-medium ${product.inStock ? 'text-green-600' : 'text-red-600'}`}>
-                {product.inStock ? `In Stock (${product.stock} available)` : 'Out of Stock'}
+                {product.inStock ? 'In Stock' : 'Out of Stock'}
               </span>
             </div>
 
