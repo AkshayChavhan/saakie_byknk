@@ -1,10 +1,36 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { watermarkImageUrl, WATERMARK_TEXT } from '@/lib/image-watermark'
 
 const CLOUDINARY =
   'https://res.cloudinary.com/doilfcjxb/image/upload/v1785130199/saakie-byknk/products/abc123.jpg'
 
+describe('watermarkImageUrl when disabled (the default)', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('passes URLs through untouched when WATERMARK_ENABLED is unset', () => {
+    vi.stubEnv('WATERMARK_ENABLED', undefined)
+    expect(watermarkImageUrl(CLOUDINARY)).toBe(CLOUDINARY)
+  })
+
+  it('treats anything but the string "true" as off', () => {
+    for (const value of ['false', '1', 'TRUE', 'yes']) {
+      vi.stubEnv('WATERMARK_ENABLED', value)
+      expect(watermarkImageUrl(CLOUDINARY)).toBe(CLOUDINARY)
+    }
+  })
+})
+
 describe('watermarkImageUrl', () => {
+  beforeEach(() => {
+    vi.stubEnv('WATERMARK_ENABLED', 'true')
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   it('splices the overlay in after /image/upload/', () => {
     const result = watermarkImageUrl(CLOUDINARY)
 

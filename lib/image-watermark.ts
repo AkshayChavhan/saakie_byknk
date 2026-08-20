@@ -17,11 +17,22 @@
  * Note this is pure string work against a public URL — no API secret involved —
  * so it is safe to import from client code too, though the API layer is the
  * correct place.
+ *
+ * The whole feature sits behind WATERMARK_ENABLED (default off): unless the
+ * environment sets it to "true", URLs pass through untouched.
  */
 
 const UPLOAD_MARKER = '/image/upload/';
 
 export const WATERMARK_TEXT = 'owned by saakiebyknk';
+
+/**
+ * Read at call time rather than module scope so the flag can be flipped per
+ * environment (and stubbed in tests) without re-importing the module.
+ */
+function watermarkEnabled(): boolean {
+  return process.env.WATERMARK_ENABLED === 'true';
+}
 
 /**
  * Cloudinary parses `,` and `/` as transformation separators, so a literal one
@@ -45,13 +56,16 @@ export interface WatermarkOptions {
  * Returns `url` with an ownership watermark applied.
  *
  * Non-Cloudinary sources (local placeholder SVGs, the Unsplash/Pexels demo
- * photos) are returned untouched — they are not ours to mark.
+ * photos) are returned untouched — they are not ours to mark. The same goes
+ * for every URL while WATERMARK_ENABLED is not "true".
  */
 export function watermarkImageUrl(
   url: string,
   options: WatermarkOptions = {}
 ): string {
   if (!url) return url;
+
+  if (!watermarkEnabled()) return url;
 
   const markerAt = url.indexOf(UPLOAD_MARKER);
   if (markerAt === -1) return url;
