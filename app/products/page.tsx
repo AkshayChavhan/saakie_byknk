@@ -254,11 +254,6 @@ function ProductsContent() {
                 Discover exquisite sarees for every occasion
               </p>
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="rounded-full bg-white/10 px-3 py-1.5 text-zari-light ring-1 ring-zari/30 backdrop-blur-sm">
-                {pagination.totalCount} Products
-              </span>
-            </div>
           </div>
         </div>
 
