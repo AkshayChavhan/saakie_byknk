@@ -587,7 +587,7 @@ function ProductsContent() {
                           </p>
 
                           {/* Name */}
-                          <h3 className={`font-semibold text-gray-900 line-clamp-2 mb-2 group-hover:text-rose-600 transition-colors ${
+                          <h3 className={`font-semibold text-gray-900 line-clamp-2 mb-2 ${
                             viewMode === 'grid' ? 'text-sm' : 'text-base'
                           }`}>
                             {product.name}
