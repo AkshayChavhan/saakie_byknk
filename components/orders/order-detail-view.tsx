@@ -13,6 +13,7 @@ interface OrderAddress {
   addressLine1: string
   addressLine2?: string | null
   city: string
+  district?: string | null
   state: string
   pincode: string
   country: string
@@ -62,7 +63,8 @@ function AddressBlock({ title, address }: { title: string; address: OrderAddress
         <p>{address.addressLine1}</p>
         {address.addressLine2 && <p>{address.addressLine2}</p>}
         <p>
-          {address.city}, {address.state} {address.pincode}
+          {address.city}, {address.district ? `${address.district}, ` : ''}
+          {address.state} {address.pincode}
         </p>
         <p>{address.country}</p>
         <p className="mt-1">{address.phone}</p>

@@ -10,6 +10,7 @@ import { PaymentMethods } from '@/components/checkout/payment-methods'
 import { formatPrice, cn } from '@/lib/utils'
 import { cartApi, userApi, fetchApi } from '@/lib/api'
 import { INDIAN_STATES } from '@/lib/india-states'
+import { districtsFor } from '@/lib/india-districts'
 import { availableChannels, isValidUpiId, type PaymentChannel } from '@/lib/payment'
 import { openRazorpayCheckout, type RazorpaySuccess } from '@/lib/razorpay-client'
 
@@ -31,6 +32,7 @@ interface Address {
   addressLine1: string
   addressLine2: string | null
   city: string
+  district: string | null
   state: string
   pincode: string
   isDefault: boolean
@@ -42,6 +44,7 @@ const EMPTY_FORM = {
   addressLine1: '',
   addressLine2: '',
   city: '',
+  district: '',
   state: '',
   pincode: '',
 }
@@ -275,7 +278,7 @@ export default function CheckoutPage() {
                     <span className="text-sm text-gray-700">
                       <span className="font-medium text-gray-900">{a.name}</span> · {a.phone}
                       <br />
-                      {a.addressLine1}{a.addressLine2 ? `, ${a.addressLine2}` : ''}, {a.city}, {a.state} {a.pincode}
+                      {a.addressLine1}{a.addressLine2 ? `, ${a.addressLine2}` : ''}, {a.city}{a.district ? `, ${a.district}` : ''}, {a.state} {a.pincode}
                     </span>
                   </label>
                 ))}
@@ -298,7 +301,7 @@ export default function CheckoutPage() {
                 <select
                   className={cn('input', !form.state && 'text-gray-400')}
                   value={form.state}
-                  onChange={(e) => setForm({ ...form, state: e.target.value })}
+                  onChange={(e) => setForm({ ...form, state: e.target.value, district: '' })}
                   required
                   aria-label="State"
                 >
@@ -306,6 +309,23 @@ export default function CheckoutPage() {
                   {INDIAN_STATES.map((state) => (
                     <option key={state} value={state} className="text-gray-900">
                       {state}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className={cn('input', !form.district && 'text-gray-400')}
+                  value={form.district}
+                  onChange={(e) => setForm({ ...form, district: e.target.value })}
+                  required
+                  disabled={!form.state}
+                  aria-label="District"
+                >
+                  <option value="" disabled>
+                    {form.state ? 'District' : 'District (choose a state first)'}
+                  </option>
+                  {districtsFor(form.state).map((district) => (
+                    <option key={district} value={district} className="text-gray-900">
+                      {district}
                     </option>
                   ))}
                 </select>

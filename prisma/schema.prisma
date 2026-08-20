@@ -282,6 +282,9 @@ model Address {
   addressLine1   String
   addressLine2   String?
   city           String
+  // Nullable only for rows saved before the field existed — the API requires
+  // it on every create and update.
+  district       String?
   state          String
   pincode        String
   country        String  @default("India")

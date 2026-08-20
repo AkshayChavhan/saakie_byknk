@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react'
 import { Loader2, MapPin, Plus, Trash2, X } from 'lucide-react'
 import { userApi } from '@/lib/api'
 import { INDIAN_STATES } from '@/lib/india-states'
+import { districtsFor } from '@/lib/india-districts'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { isValidPhone } from '@/lib/phone'
 import { useToast } from '@/components/ui/toast'
@@ -18,6 +19,8 @@ export interface Address {
   addressLine1: string
   addressLine2: string | null
   city: string
+  /** Null only on rows saved before the field existed. */
+  district: string | null
   state: string
   pincode: string
   isDefault: boolean
@@ -29,16 +32,18 @@ const EMPTY_FORM = {
   addressLine1: '',
   addressLine2: '',
   city: '',
+  district: '',
   state: '',
   pincode: '',
 }
 
-/** "Flat 1005, Block A, Pune, Maharashtra" — everything but the pincode. */
+/** "Flat 1005, Block A, Pune, Pune, Maharashtra" — everything but the pincode. */
 export function formatAddressLine(address: Address): string {
   return [
     address.addressLine1,
     address.addressLine2,
     address.city,
+    address.district,
     address.state,
   ]
     .filter(Boolean)
@@ -353,7 +358,7 @@ export function DeliveryAddress() {
                   <select
                     className={cn('input', !form.state && 'text-gray-400')}
                     value={form.state}
-                    onChange={(e) => setForm({ ...form, state: e.target.value })}
+                    onChange={(e) => setForm({ ...form, state: e.target.value, district: '' })}
                     required
                     aria-label="State"
                   >
@@ -364,7 +369,24 @@ export function DeliveryAddress() {
                       </option>
                     ))}
                   </select>
-                  <input className="input sm:col-span-2" placeholder="Pincode (6 digits)" value={form.pincode} onChange={(e) => setForm({ ...form, pincode: e.target.value })} required />
+                  <select
+                    className={cn('input', !form.district && 'text-gray-400')}
+                    value={form.district}
+                    onChange={(e) => setForm({ ...form, district: e.target.value })}
+                    required
+                    disabled={!form.state}
+                    aria-label="District"
+                  >
+                    <option value="" disabled>
+                      {form.state ? 'District' : 'District (choose a state first)'}
+                    </option>
+                    {districtsFor(form.state).map((district) => (
+                      <option key={district} value={district} className="text-gray-900">
+                        {district}
+                      </option>
+                    ))}
+                  </select>
+                  <input className="input" placeholder="Pincode (6 digits)" value={form.pincode} onChange={(e) => setForm({ ...form, pincode: e.target.value })} required />
                   <div className="flex gap-2 sm:col-span-2">
                     <button
                       type="submit"

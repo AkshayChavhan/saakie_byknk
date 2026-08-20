@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
 import { isValidPhone, splitPhone, formatPhone } from '@/lib/phone';
+import { districtsFor } from '@/lib/india-districts';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -47,16 +48,23 @@ export async function POST(request: Request) {
     const addressLine1 = str(body.addressLine1);
     const addressLine2 = str(body.addressLine2);
     const city = str(body.city);
+    const district = str(body.district);
     const state = str(body.state);
     const pincode = str(body.pincode);
     const country = str(body.country) || 'India';
 
-    const missing = Object.entries({ name, phone, addressLine1, addressLine2, city, state, pincode })
+    const missing = Object.entries({ name, phone, addressLine1, addressLine2, city, district, state, pincode })
       .filter(([, v]) => !v)
       .map(([k]) => k);
     if (missing.length) {
       return NextResponse.json(
         { error: `Missing required field(s): ${missing.join(', ')}` },
+        { status: 400 }
+      );
+    }
+    if (!districtsFor(state).includes(district)) {
+      return NextResponse.json(
+        { error: 'Choose a district that belongs to the selected state' },
         { status: 400 }
       );
     }
@@ -83,6 +91,7 @@ export async function POST(request: Request) {
         addressLine1,
         addressLine2,
         city,
+        district,
         state,
         pincode,
         country,
