@@ -693,8 +693,9 @@ export function Header() {
             </div>
 
             {/* Navigation Links — the only scrolling region, so an expanded
-                Categories list runs long without displacing anything else. */}
-            <nav className="flex-1 overflow-y-auto p-4">
+                Categories list runs long without displacing anything else.
+                Black to read as one surface with the logo bar above. */}
+            <nav className="flex-1 overflow-y-auto p-4 bg-black">
               <div className="flex flex-col space-y-1">
                 <SuspendedNavLinks
                   variant="drawer"
