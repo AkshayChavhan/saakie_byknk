@@ -312,7 +312,6 @@ export default function CareInstructionsPage() {
                 </div>
                 <div>
                   <h3 className="text-2xl font-bold text-gray-900">Silk Sarees</h3>
-                  <p className="text-gray-600">Kanjivaram, Tussar, Mysore Silk, Patola</p>
                 </div>
               </div>
               <div className="grid md:grid-cols-2 gap-6">

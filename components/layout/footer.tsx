@@ -12,21 +12,19 @@ const footerLinks = {
     { name: 'Sale', href: '/products?sale=true' },
   ],
   help: [
-    { name: 'Size Guide', href: '/size-guide' },
     { name: 'Care Instructions', href: '/care-instructions' },
     { name: 'Shipping & Returns', href: '/shipping-returns' },
-    { name: 'FAQ', href: '/faq' },
     { name: 'Contact Us', href: '/contact' },
   ],
   company: [
     { name: 'About Us', href: '/about' },
     { name: 'Our Story', href: '/our-story' },
-    { name: 'Careers', href: '/careers' },
     { name: 'Blog', href: '/blog' },
   ],
   legal: [
     { name: 'Privacy Policy', href: '/privacy-policy' },
     { name: 'Terms of Service', href: '/terms-of-service' },
+    { name: 'Return Policy', href: '/return-policy' },
     { name: 'Disclaimer', href: '/disclaimer' },
   ],
 }

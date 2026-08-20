@@ -11,15 +11,13 @@ const STATIC_PATHS = [
   '/about',
   '/our-story',
   '/blog',
-  '/careers',
   '/contact',
-  '/faq',
   '/post',
   '/care-instructions',
-  '/size-guide',
   '/shipping-returns',
   '/privacy-policy',
   '/terms-of-service',
+  '/return-policy',
   '/disclaimer',
 ]
 

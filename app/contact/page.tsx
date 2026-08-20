@@ -74,20 +74,10 @@ export default function ContactPage() {
 
               <div className="bg-white rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow">
                 <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MapPin className="w-6 h-6 text-rose-600" />
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Address</h3>
-                <p className="text-gray-600 text-sm">123 Fashion Street</p>
-                <p className="text-gray-600 text-sm">Mumbai, MH 400001</p>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow">
-                <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Clock className="w-6 h-6 text-rose-600" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Business Hours</h3>
-                <p className="text-gray-600 text-sm">Mon - Sat: 10AM - 8PM</p>
-                <p className="text-gray-600 text-sm">Sunday: 11AM - 6PM</p>
+                <p className="text-gray-600 text-sm">Mon - Sat: 10AM - 5PM</p>
               </div>
             </div>
           </div>
@@ -230,15 +220,8 @@ export default function ContactPage() {
                   )}
                 </div>
 
-                {/* Map / Additional Info */}
+                {/* Additional Info */}
                 <div>
-                  <div className="bg-gray-100 rounded-xl h-64 lg:h-80 mb-6 flex items-center justify-center">
-                    <div className="text-center text-gray-500">
-                      <MapPin className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                      <p>Map placeholder</p>
-                    </div>
-                  </div>
-
                   <div className="bg-rose-50 rounded-xl p-6">
                     <h3 className="font-semibold text-gray-900 mb-4">Quick Support</h3>
                     <ul className="space-y-3 text-sm text-gray-600">
@@ -248,11 +231,7 @@ export default function ContactPage() {
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-rose-600 font-bold">-</span>
-                        Returns can be initiated from your account dashboard
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-rose-600 font-bold">-</span>
-                        Check our FAQ page for common questions
+                        Check our Return Policy page for return and refund questions
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-rose-600 font-bold">-</span>

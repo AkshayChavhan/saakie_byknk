@@ -319,10 +319,10 @@ export default function ShippingReturnsPage() {
                   Contact Support
                 </Link>
                 <Link
-                  href="/faq"
+                  href="/return-policy"
                   className="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-900 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
                 >
-                  View FAQ
+                  View Return Policy
                 </Link>
               </div>
             </div>
