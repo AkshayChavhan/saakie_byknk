@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { ChatBubble } from '@/components/chat'
 import { ToastProvider } from '@/components/ui/toast'
 import { InstallPrompt } from '@/components/pwa/install-prompt'
+import { GoogleTranslateLoader } from '@/components/i18n/google-translate-loader'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -27,6 +28,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           {children}
           <ChatBubble />
           <InstallPrompt />
+          <GoogleTranslateLoader />
         </ToastProvider>
       </QueryClientProvider>
     </SessionProvider>
