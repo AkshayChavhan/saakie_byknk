@@ -67,14 +67,19 @@ const CATEGORY_TREE = [
 ]
 
 /**
- * Renders the header with the category tree already in the query cache, so
- * the dropdown is present on the first render and every assertion stays
- * synchronous. `staleTime` in the component keeps seeded data fresh, so no
- * request goes out — the fetch path has its own test below.
+ * Renders the header with the category tree and the nav counts already in the
+ * query cache, so the dropdown and the conditional Sale/Blog links are present
+ * on the first render and every assertion stays synchronous. `staleTime` in
+ * the component keeps seeded data fresh, so no request goes out — the fetch
+ * path has its own test below.
  */
-const renderHeader = (tree: unknown[] = CATEGORY_TREE) => {
+const renderHeader = (
+  tree: unknown[] = CATEGORY_TREE,
+  counts: { sale: number; blog: number } = { sale: 1, blog: 1 }
+) => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   queryClient.setQueryData(['category-nav'], tree)
+  queryClient.setQueryData(['nav-counts'], counts)
   return render(
     <QueryClientProvider client={queryClient}>
       <Header />
@@ -103,7 +108,13 @@ describe('Header component', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockUseSession.mockReturnValue(signedOut())
-    api.fetchApi.mockResolvedValue({ ok: true, json: async () => CATEGORY_TREE })
+    // The header issues two requests; answer each by URL so tests that render
+    // without a seeded cache still resolve both queries.
+    api.fetchApi.mockImplementation(async (url: string) =>
+      url === '/api/nav-counts'
+        ? { ok: true, json: async () => ({ sale: 1, blog: 1 }) }
+        : { ok: true, json: async () => CATEGORY_TREE }
+    )
     at('/')
   })
 
@@ -375,6 +386,38 @@ describe('Header component', () => {
 
     const saleLinks = screen.getAllByRole('link', { name: 'Sale' })
     expect(saleLinks[0]).toHaveAttribute('href', '/products?sale=true')
+  })
+
+  describe('conditional Sale and Blog links', () => {
+    it('hides Sale everywhere when nothing is marked down', () => {
+      renderHeader(CATEGORY_TREE, { sale: 0, blog: 1 })
+
+      expect(screen.queryAllByRole('link', { name: 'Sale' })).toHaveLength(0)
+      // The rest of the nav is unaffected.
+      expect(screen.getAllByRole('link', { name: 'Posts' }).length).toBeGreaterThan(0)
+    })
+
+    it('shows Sale when at least one product is marked down', () => {
+      renderHeader(CATEGORY_TREE, { sale: 3, blog: 0 })
+
+      expect(screen.getAllByRole('link', { name: 'Sale' }).length).toBeGreaterThan(0)
+    })
+
+    it('hides the drawer Blog link while no post is published', () => {
+      renderHeader(CATEGORY_TREE, { sale: 1, blog: 0 })
+      fireEvent.click(screen.getByRole('button', { name: 'Open menu' }))
+
+      expect(screen.queryByRole('link', { name: 'Blog' })).not.toBeInTheDocument()
+      // Its neighbours in the drawer's footer section still render.
+      expect(screen.getByRole('link', { name: 'About Us' })).toBeInTheDocument()
+    })
+
+    it('shows the drawer Blog link once a post is published', () => {
+      renderHeader(CATEGORY_TREE, { sale: 1, blog: 2 })
+      fireEvent.click(screen.getByRole('button', { name: 'Open menu' }))
+
+      expect(screen.getByRole('link', { name: 'Blog' })).toBeInTheDocument()
+    })
   })
 
   describe('account avatar', () => {

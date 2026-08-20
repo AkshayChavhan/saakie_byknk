@@ -1,5 +1,9 @@
+'use client'
+
 import Link from 'next/link'
+import { useQuery } from '@tanstack/react-query'
 import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin } from 'lucide-react'
+import { fetchApi } from '@/lib/api'
 
 const footerLinks = {
   shop: [
@@ -35,6 +39,28 @@ const socialLinks = [
 ]
 
 export function Footer() {
+  // Same cache entry as the header's query, so the two together cost one
+  // request. Links to an empty sale listing or an empty blog index are
+  // dropped rather than shipping a dead end.
+  const { data: navCounts } = useQuery<{ sale: number; blog: number }>({
+    queryKey: ['nav-counts'],
+    queryFn: async () => {
+      const response = await fetchApi('/api/nav-counts')
+      if (!response.ok) throw new Error('Failed to load nav counts')
+      return response.json()
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+  const hasSaleItems = (navCounts?.sale ?? 0) > 0
+  const hasBlogPosts = (navCounts?.blog ?? 0) > 0
+
+  const shopLinks = footerLinks.shop.filter(
+    (link) => hasSaleItems || link.href !== '/products?sale=true'
+  )
+  const companyLinks = footerLinks.company.filter(
+    (link) => hasBlogPosts || link.href !== '/blog'
+  )
+
   return (
     <footer className="bg-gray-900 text-white pb-safe">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -69,7 +95,7 @@ export function Footer() {
           <div>
             <h3 className="font-semibold text-lg mb-4">Shop</h3>
             <ul className="space-y-2">
-              {footerLinks.shop.map((link) => (
+              {shopLinks.map((link) => (
                 <li key={link.name}>
                   <Link
                     href={link.href}
@@ -101,7 +127,7 @@ export function Footer() {
           <div>
             <h3 className="font-semibold text-lg mb-4">Company</h3>
             <ul className="space-y-2">
-              {footerLinks.company.map((link) => (
+              {companyLinks.map((link) => (
                 <li key={link.name}>
                   <Link
                     href={link.href}

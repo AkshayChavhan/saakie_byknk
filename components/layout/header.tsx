@@ -20,9 +20,10 @@ interface NavCategory {
   children: Array<{ id: string; name: string; slug: string }>
 }
 
-/** A plain link, or the slot the Categories dropdown occupies. */
+/** A plain link, or the slot the Categories dropdown occupies. A link marked
+ *  `needsSale` only renders while at least one product is marked down. */
 type NavItem =
-  | { kind: 'link'; name: string; href: string }
+  | { kind: 'link'; name: string; href: string; needsSale?: true }
   | { kind: 'categories'; name: string }
 
 const navigation: NavItem[] = [
@@ -31,7 +32,7 @@ const navigation: NavItem[] = [
   // Took over the slot the flat "All Products" link held; the unfiltered
   // listing is still reachable from the foot of the dropdown.
   { kind: 'categories', name: 'Categories' },
-  { kind: 'link', name: 'Sale', href: '/products?sale=true' },
+  { kind: 'link', name: 'Sale', href: '/products?sale=true', needsSale: true },
   { kind: 'link', name: 'Posts', href: '/post' },
 ]
 
@@ -256,6 +257,8 @@ interface NavLinksProps {
   activeHref: string | null
   categoriesActive: boolean
   categories: NavCategory[]
+  /** Whether any product is marked down; gates the `needsSale` links. */
+  hasSaleItems: boolean
   openMenu: NavVariant | null
   onToggleMenu: (variant: NavVariant) => void
   onNavigate?: () => void
@@ -268,6 +271,7 @@ function NavLinks({
   activeHref,
   categoriesActive,
   categories,
+  hasSaleItems,
   openMenu,
   onToggleMenu,
   onNavigate,
@@ -301,6 +305,10 @@ function NavLinks({
             />
           )
         }
+
+        // A sale link with nothing on sale would land on an empty listing —
+        // dropped entirely, like the empty Categories dropdown above.
+        if (item.needsSale && !hasSaleItems) return null
 
         return (
           <Link
@@ -379,6 +387,21 @@ export function Header() {
     },
     staleTime: 5 * 60 * 1000,
   })
+
+  // Existence counts behind the conditional chrome: the Sale tab and the Blog
+  // link only render when there is something behind them. Shares its cache
+  // entry with the footer, so the chrome costs one request per session.
+  const { data: navCounts } = useQuery<{ sale: number; blog: number }>({
+    queryKey: ['nav-counts'],
+    queryFn: async () => {
+      const response = await fetchApi('/api/nav-counts')
+      if (!response.ok) throw new Error('Failed to load nav counts')
+      return response.json()
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+  const hasSaleItems = (navCounts?.sale ?? 0) > 0
+  const hasBlogPosts = (navCounts?.blog ?? 0) > 0
 
   // Categories has no href of its own, so the whole section lights it up.
   const categoriesActive = pathname === '/categories' || pathname.startsWith('/categories/')
@@ -501,6 +524,7 @@ export function Header() {
               variant="desktop"
               categoriesActive={categoriesActive}
               categories={categoryTree}
+              hasSaleItems={hasSaleItems}
               openMenu={openMenu}
               onToggleMenu={toggleCategoryMenu}
             />
@@ -590,6 +614,7 @@ export function Header() {
               variant="mobileRow"
               categoriesActive={categoriesActive}
               categories={categoryTree}
+              hasSaleItems={hasSaleItems}
               openMenu={openMenu}
               onToggleMenu={toggleCategoryMenu}
             />
@@ -701,6 +726,7 @@ export function Header() {
                   variant="drawer"
                   categoriesActive={categoriesActive}
                   categories={categoryTree}
+                  hasSaleItems={hasSaleItems}
                   openMenu={openMenu}
                   onToggleMenu={toggleCategoryMenu}
                   onNavigate={handleCloseMenu}
@@ -747,16 +773,20 @@ export function Header() {
                 >
                   Our Story
                 </Link>
-                <Link
-                  href="/blog"
-                  onClick={handleCloseMenu}
-                  className={cn(
-                    "text-sm font-medium py-2.5 px-4 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition-all duration-200",
-                    isClosing ? "menu-item-exit menu-stagger-exit-8" : "menu-item-enter menu-stagger-8"
-                  )}
-                >
-                  Blog
-                </Link>
+                {/* Dropped while no post is published — a link to an empty
+                    blog index helps nobody. Admin keeps its own entry. */}
+                {hasBlogPosts && (
+                  <Link
+                    href="/blog"
+                    onClick={handleCloseMenu}
+                    className={cn(
+                      "text-sm font-medium py-2.5 px-4 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition-all duration-200",
+                      isClosing ? "menu-item-exit menu-stagger-exit-8" : "menu-item-enter menu-stagger-8"
+                    )}
+                  >
+                    Blog
+                  </Link>
+                )}
               </div>
             </nav>
 
