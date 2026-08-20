@@ -9,6 +9,7 @@ import { Header } from '@/components/layout/header'
 import { PaymentMethods } from '@/components/checkout/payment-methods'
 import { formatPrice, cn } from '@/lib/utils'
 import { cartApi, userApi, fetchApi } from '@/lib/api'
+import { INDIAN_STATES } from '@/lib/india-states'
 import { availableChannels, isMethodAllowed, isValidUpiId, type PaymentChannel } from '@/lib/payment'
 import { openRazorpayCheckout, type RazorpaySuccess } from '@/lib/razorpay-client'
 
@@ -317,9 +318,22 @@ export default function CheckoutPage() {
                 <input className="input" placeholder="Full name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
                 <input className="input" placeholder="Phone (10 digits)" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required />
                 <input className="input sm:col-span-2" placeholder="Address line 1" value={form.addressLine1} onChange={(e) => setForm({ ...form, addressLine1: e.target.value })} required />
-                <input className="input sm:col-span-2" placeholder="Address line 2 (optional)" value={form.addressLine2} onChange={(e) => setForm({ ...form, addressLine2: e.target.value })} />
+                <input className="input sm:col-span-2" placeholder="Address line 2" value={form.addressLine2} onChange={(e) => setForm({ ...form, addressLine2: e.target.value })} required />
                 <input className="input" placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} required />
-                <input className="input" placeholder="State" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} required />
+                <select
+                  className={cn('input', !form.state && 'text-gray-400')}
+                  value={form.state}
+                  onChange={(e) => setForm({ ...form, state: e.target.value })}
+                  required
+                  aria-label="State"
+                >
+                  <option value="" disabled>State</option>
+                  {INDIAN_STATES.map((state) => (
+                    <option key={state} value={state} className="text-gray-900">
+                      {state}
+                    </option>
+                  ))}
+                </select>
                 <input className="input" placeholder="Pincode (6 digits)" value={form.pincode} onChange={(e) => setForm({ ...form, pincode: e.target.value })} required />
                 <div className="sm:col-span-2 flex gap-2">
                   <button type="submit" disabled={savingAddress} className="btn-primary disabled:opacity-60">

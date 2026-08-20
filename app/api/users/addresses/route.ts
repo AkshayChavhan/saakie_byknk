@@ -44,14 +44,13 @@ export async function POST(request: Request) {
     const name = str(body.name);
     const phone = str(body.phone);
     const addressLine1 = str(body.addressLine1);
-    const addressLine2 = str(body.addressLine2) || null;
+    const addressLine2 = str(body.addressLine2);
     const city = str(body.city);
     const state = str(body.state);
     const pincode = str(body.pincode);
     const country = str(body.country) || 'India';
 
-    // Required fields per the Address model.
-    const missing = Object.entries({ name, phone, addressLine1, city, state, pincode })
+    const missing = Object.entries({ name, phone, addressLine1, addressLine2, city, state, pincode })
       .filter(([, v]) => !v)
       .map(([k]) => k);
     if (missing.length) {

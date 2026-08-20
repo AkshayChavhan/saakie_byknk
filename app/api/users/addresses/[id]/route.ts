@@ -64,3 +64,66 @@ export async function PATCH(
     return apiError(error);
   }
 }
+
+/**
+ * DELETE — remove this address from the user's address book.
+ *
+ * Past orders keep a required reference to their shipping address, so a row
+ * any order points at is detached from the account (userId cleared) rather
+ * than deleted — the order history keeps rendering, while the customer never
+ * sees the address again. Rows no order references are deleted outright.
+ * If the removed address was the default, the first remaining one is promoted
+ * so the "exactly one default" invariant survives.
+ */
+export async function DELETE(
+  _request: Request,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const r = await requireAuth();
+    if (r instanceof NextResponse) return r;
+    const { id } = await context.params;
+
+    const address = await prisma.address.findFirst({
+      where: { id, userId: r.id },
+      select: { id: true, isDefault: true },
+    });
+
+    if (!address) {
+      return NextResponse.json({ error: 'Address not found' }, { status: 404 });
+    }
+
+    const orderCount = await prisma.order.count({
+      where: { OR: [{ shippingAddressId: id }, { billingAddressId: id }] },
+    });
+
+    await prisma.$transaction(async (tx) => {
+      if (orderCount > 0) {
+        await tx.address.update({
+          where: { id },
+          data: { userId: null, isDefault: false },
+        });
+      } else {
+        await tx.address.delete({ where: { id } });
+      }
+      if (address.isDefault) {
+        const next = await tx.address.findFirst({ where: { userId: r.id } });
+        if (next) {
+          await tx.address.update({
+            where: { id: next.id },
+            data: { isDefault: true },
+          });
+        }
+      }
+    });
+
+    const addresses = await prisma.address.findMany({
+      where: { userId: r.id },
+      orderBy: [{ isDefault: 'desc' }],
+    });
+
+    return NextResponse.json(addresses);
+  } catch (error) {
+    return apiError(error);
+  }
+}
