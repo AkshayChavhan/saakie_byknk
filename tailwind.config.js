@@ -14,6 +14,10 @@ module.exports = {
       },
       colors: {
         primary: {
+          // Bare `bg-primary` / `text-primary` resolve to this. Without a
+          // DEFAULT those classes generate no CSS at all — which is how the
+          // Add to Cart button once shipped white-on-white.
+          DEFAULT: '#dc2626',
           50: '#fef2f2',
           100: '#fee2e2',
           200: '#fecaca',
