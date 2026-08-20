@@ -61,7 +61,6 @@ const approaches = [
 
 const benefits = [
   { icon: Award, title: 'Premium Quality', description: 'Finest materials with meticulous attention', color: 'rose' },
-  { icon: Building2, title: 'Expert Design', description: 'Architectural precision meets fashion', color: 'orange' },
   { icon: Heart, title: 'Made with Love', description: 'Every piece carries our passion', color: 'pink' },
   { icon: Users, title: 'Customer First', description: 'Your satisfaction is our measure', color: 'purple' },
 ]
@@ -218,7 +217,7 @@ export default function AboutPage() {
               </h2>
             </div>
 
-            <div className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:overflow-visible">
+            <div className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:overflow-visible">
               {benefits.map((benefit, index) => {
                 const Icon = benefit.icon
                 const colors = {
