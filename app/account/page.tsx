@@ -19,6 +19,8 @@ import {
   Trash2,
 } from 'lucide-react'
 import { Header } from '@/components/layout/header'
+import { PhoneInput } from '@/components/ui/phone-input'
+import { isValidPhone } from '@/lib/phone'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useToast } from '@/components/ui/toast'
 import { formatPrice, formatDate, cn } from '@/lib/utils'
@@ -208,6 +210,11 @@ export default function AccountPage() {
 
   const saveProfile = async () => {
     if (compressing) return
+    // PhoneInput shows the specific problem inline; this only blocks the save.
+    if (!isValidPhone(form.phone)) {
+      setEditError('Please fix the phone number before saving.')
+      return
+    }
     setSaving(true)
     setEditError(null)
     try {
@@ -321,11 +328,9 @@ export default function AccountPage() {
                   </div>
                   <div>
                     <label className="label">Phone</label>
-                    <input
-                      className="input"
+                    <PhoneInput
                       value={form.phone}
-                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                      placeholder="10-digit phone"
+                      onChange={(phone) => setForm({ ...form, phone })}
                     />
                   </div>
                   <p className="text-xs text-gray-400">Tap the photo to change your profile picture (JPG/PNG/WebP, ≤5MB).</p>

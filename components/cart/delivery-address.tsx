@@ -6,6 +6,8 @@ import { useSession } from 'next-auth/react'
 import { Loader2, MapPin, Plus, Trash2, X } from 'lucide-react'
 import { userApi } from '@/lib/api'
 import { INDIAN_STATES } from '@/lib/india-states'
+import { PhoneInput } from '@/components/ui/phone-input'
+import { isValidPhone } from '@/lib/phone'
 import { useToast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 
@@ -110,6 +112,11 @@ export function DeliveryAddress() {
 
   const saveAddress = async (event: React.FormEvent) => {
     event.preventDefault()
+    // PhoneInput shows the specific problem inline; this only blocks the save.
+    if (!form.phone || !isValidPhone(form.phone)) {
+      setFormError('Please enter a valid phone number.')
+      return
+    }
     setSaving(true)
     setFormError(null)
     try {
@@ -339,7 +346,7 @@ export function DeliveryAddress() {
                     </div>
                   )}
                   <input className="input" placeholder="Full name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-                  <input className="input" placeholder="Phone (10 digits)" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required />
+                  <PhoneInput value={form.phone} onChange={(phone) => setForm({ ...form, phone })} />
                   <input className="input sm:col-span-2" placeholder="Address line 1" value={form.addressLine1} onChange={(e) => setForm({ ...form, addressLine1: e.target.value })} required />
                   <input className="input sm:col-span-2" placeholder="Address line 2" value={form.addressLine2} onChange={(e) => setForm({ ...form, addressLine2: e.target.value })} required />
                   <input className="input" placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} required />

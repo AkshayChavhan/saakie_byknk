@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { isValidPhone, splitPhone, formatPhone } from '@/lib/phone';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -62,9 +63,14 @@ export async function POST(request: Request) {
     if (!/^\d{6}$/.test(pincode)) {
       return NextResponse.json({ error: 'Pincode must be 6 digits' }, { status: 400 });
     }
-    if (!/^\d{10}$/.test(phone.replace(/\D/g, '').slice(-10))) {
-      return NextResponse.json({ error: 'Enter a valid 10-digit phone number' }, { status: 400 });
+    // Country-aware check (India by default) — the same rules the form's
+    // PhoneInput applies, both living in lib/phone.
+    if (!isValidPhone(phone)) {
+      return NextResponse.json({ error: 'Enter a valid phone number' }, { status: 400 });
     }
+    // Store canonically as "+<dial> <digits>", whatever shape arrived.
+    const parsedPhone = splitPhone(phone);
+    const canonicalPhone = formatPhone(parsedPhone.country, parsedPhone.national);
 
     // First saved address becomes the default.
     const count = await prisma.address.count({ where: { userId: r.id } });
@@ -73,7 +79,7 @@ export async function POST(request: Request) {
       data: {
         userId: r.id,
         name,
-        phone,
+        phone: canonicalPhone,
         addressLine1,
         addressLine2,
         city,
