@@ -8,11 +8,12 @@ import { Loader2, MapPin, CreditCard, Plus, ShieldCheck } from 'lucide-react'
 import { Header } from '@/components/layout/header'
 import { PaymentMethods } from '@/components/checkout/payment-methods'
 import { formatPrice, cn } from '@/lib/utils'
-import { cartApi, userApi, fetchApi } from '@/lib/api'
+import { cartApi, userApi, fetchApi, settingsApi } from '@/lib/api'
 import { INDIAN_STATES } from '@/lib/india-states'
 import { districtsFor } from '@/lib/india-districts'
 import { availableChannels, isValidUpiId, type PaymentChannel } from '@/lib/payment'
 import { openRazorpayCheckout, type RazorpaySuccess } from '@/lib/razorpay-client'
+import { calculateShipping } from '@/lib/shipping'
 
 interface CartItem {
   id: string
@@ -66,12 +67,21 @@ export default function CheckoutPage() {
   const [channel, setChannel] = useState<PaymentChannel | null>(null)
   const [upiId, setUpiId] = useState('')
   const [error, setError] = useState<string | null>(null)
+  // Admin switch. Assume charged until the setting loads, so the total
+  // never jumps upward after render; the server recomputes it anyway.
+  const [shippingEnabled, setShippingEnabled] = useState(true)
 
   const load = useCallback(async () => {
     try {
-      const [cart, addrs] = await Promise.all([cartApi.get(), userApi.getAddresses()])
+      const [cart, addrs, settings] = await Promise.all([
+        cartApi.get(),
+        userApi.getAddresses(),
+        // A settings failure must not block checkout — fall back to charging.
+        settingsApi.get().catch(() => ({ shippingEnabled: true })),
+      ])
       const cartItems: CartItem[] = cart?.items ?? []
       setItems(cartItems)
+      setShippingEnabled(settings?.shippingEnabled !== false)
       const list: Address[] = Array.isArray(addrs) ? addrs : []
       setAddresses(list)
       setSelectedAddressId(list.find((a) => a.isDefault)?.id || list[0]?.id || '')
@@ -90,7 +100,8 @@ export default function CheckoutPage() {
 
   // Totals — mirrors the server math in /api/payments/create-intent.
   const subtotal = items.reduce((t, i) => t + i.price * i.quantity, 0)
-  const shipping = subtotal > 999 ? 0 : items.length > 0 ? 99 : 0
+  const itemCount = items.reduce((n, i) => n + i.quantity, 0)
+  const shipping = calculateShipping(subtotal, itemCount, { shippingEnabled })
   const total = subtotal + shipping
 
   const onlineConfigured = Boolean(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID)

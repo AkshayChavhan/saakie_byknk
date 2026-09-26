@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth, verifyAddressOwnership } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { getStoreSettings } from '@/lib/server/settings';
+import { calculateShipping } from '@/lib/shipping';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -60,7 +62,10 @@ export async function POST(request: Request) {
       0
     );
     const tax = 0;
-    const shipping = subtotal > 999 ? 0 : 99;
+    // Shipping is an admin switch (/admin/settings): off ⇒ free for everyone.
+    const settings = await getStoreSettings();
+    const itemCount = cart.items.reduce((n, item) => n + item.quantity, 0);
+    const shipping = calculateShipping(subtotal, itemCount, settings);
     const total = subtotal + tax + shipping;
 
     const orderNumber = `ORD-${Date.now()}-${Math.random()
