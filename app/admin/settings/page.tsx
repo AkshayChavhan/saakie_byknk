@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { ArrowLeft, Settings, Truck, Loader2, Clock } from 'lucide-react'
 import { fetchApi } from '@/lib/api'
 import { useToast } from '@/components/ui/toast'
@@ -61,7 +63,17 @@ function Switch({
 
 export default function StoreSettingsPage() {
   const router = useRouter()
+  const { data: session, status } = useSession()
+  // Role comes straight from the Auth.js session — no API round-trip. Middleware
+  // only checks that you are signed in; the role gate lives here, as on /admin.
+  const authorized = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN'
   const toast = useToast()
+  // ToastProvider hands out a fresh context object on every toast, so anything
+  // that both depends on `toast` and toasts on failure re-creates itself and
+  // re-runs its effect — an unbounded request loop. Read it through a ref so
+  // fetchSettings keeps a stable identity.
+  const toastRef = useRef(toast)
+  toastRef.current = toast
   const [settings, setSettings] = useState<StoreSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -72,19 +84,26 @@ export default function StoreSettingsPage() {
       if (response.ok) {
         setSettings(await response.json())
       } else {
-        toast.error('Failed to Load', 'Could not load store settings.')
+        toastRef.current.error('Failed to Load', 'Could not load store settings.')
       }
     } catch (error) {
       console.error('Failed to fetch store settings:', error)
-      toast.error('Failed to Load', 'Could not load store settings.')
+      toastRef.current.error('Failed to Load', 'Could not load store settings.')
     } finally {
       setLoading(false)
     }
-  }, [toast])
+  }, [])
 
+  // Never call the admin endpoint for someone who cannot use it — a 403 here
+  // would only produce a toast and no settings.
   useEffect(() => {
+    if (status === 'loading') return
+    if (!authorized) {
+      setLoading(false)
+      return
+    }
     fetchSettings()
-  }, [fetchSettings])
+  }, [status, authorized, fetchSettings])
 
   // Saves on the flip itself — one switch, no separate Save button to forget.
   // The UI moves first and rolls back if the request fails.
@@ -101,7 +120,7 @@ export default function StoreSettingsPage() {
       })
       if (response.ok) {
         setSettings(await response.json())
-        toast.success(
+        toastRef.current.success(
           shippingEnabled ? 'Shipping Fee On' : 'Shipping Fee Off',
           shippingEnabled
             ? `${formatPrice(SHIPPING_FEE)} on orders up to ${formatPrice(FREE_SHIPPING_THRESHOLD)}; free above.`
@@ -109,23 +128,39 @@ export default function StoreSettingsPage() {
         )
       } else {
         setSettings(previous)
-        toast.error('Update Failed', 'Could not save the setting.')
+        toastRef.current.error('Update Failed', 'Could not save the setting.')
       }
     } catch (error) {
       console.error('Failed to update store settings:', error)
       setSettings(previous)
-      toast.error('Update Failed', 'An error occurred.')
+      toastRef.current.error('Update Failed', 'An error occurred.')
     } finally {
       setSaving(false)
     }
   }
 
-  if (loading) {
+  if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-red-600 mx-auto mb-3" />
           <p className="text-gray-600">Loading settings…</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!authorized) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-2xl w-full">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
+          <p className="text-gray-600 mb-4">
+            You don&apos;t have permission to change store settings.
+          </p>
+          <Link href="/" className="inline-block bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700">
+            Go to Home
+          </Link>
         </div>
       </div>
     )
