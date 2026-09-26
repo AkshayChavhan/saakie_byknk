@@ -70,7 +70,7 @@ export function CartSummary({ subtotal, itemCount, isLoading }: CartSummaryProps
         </div>
       </div>
 
-      {addForFreeShipping > 0 && itemCount > 0 && (
+      {shipping > 0 && addForFreeShipping > 0 && (
         <p className="text-sm text-gray-600 mt-4 p-3 bg-blue-50 rounded-lg">
           Add ₹{addForFreeShipping.toLocaleString()} more for FREE shipping!
         </p>
