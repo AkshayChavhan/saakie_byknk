@@ -223,6 +223,21 @@ model WishlistItem {
   @@map("wishlist_items")
 }
 
+// Store-wide switches an admin can flip at runtime. One document, keyed
+// `default`; read through lib/server/settings.ts, which falls back to the
+// defaults below until an admin first saves — a fresh database needs no seed.
+model StoreSettings {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  key             String   @unique @default("default")
+  // Off ⇒ every order ships free, whatever the subtotal. On ⇒ the flat fee
+  // below the free-shipping threshold in lib/shipping.ts applies.
+  shippingEnabled Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("store_settings")
+}
+
 model Order {
   id              String        @id @default(auto()) @map("_id") @db.ObjectId
   orderNumber     String        @unique
