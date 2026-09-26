@@ -48,5 +48,10 @@ export function amountToFreeShipping(
   settings: ShippingSettings = DEFAULT_SHIPPING_SETTINGS
 ): number {
   if (!settings.shippingEnabled) return 0
-  return Math.max(0, FREE_SHIPPING_THRESHOLD + 1 - subtotal)
+  // Mirror calculateShipping's `> threshold` test exactly. Prices are Floats,
+  // so a subtotal can land between the threshold and the next rupee (₹999.50):
+  // without this guard the panel would say "Shipping FREE" and "Add ₹0.50 more
+  // for FREE shipping!" at the same time.
+  if (subtotal > FREE_SHIPPING_THRESHOLD) return 0
+  return FREE_SHIPPING_THRESHOLD + 1 - subtotal
 }

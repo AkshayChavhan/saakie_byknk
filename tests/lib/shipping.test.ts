@@ -76,5 +76,33 @@ describe('lib/shipping', () => {
       expect(amountToFreeShipping(0, OFF)).toBe(0)
       expect(amountToFreeShipping(400, OFF)).toBe(0)
     })
+
+    // Prices are Floats, so a subtotal can sit between the threshold and the
+    // next whole rupee. The nudge must agree with the shipping row there:
+    // the panel must never say "FREE" and "add a little more for FREE" at once.
+    describe('agrees with calculateShipping either side of the threshold', () => {
+      it.each([999.01, 999.5, 999.99, 1000, 5000])(
+        'shows no nudge at a subtotal of %s, which already ships free',
+        (subtotal) => {
+          expect(calculateShipping(subtotal, 1, ON)).toBe(0)
+          expect(amountToFreeShipping(subtotal, ON)).toBe(0)
+        }
+      )
+
+      it.each([0, 1, 400, 998.5, 999])(
+        'shows a nudge at a subtotal of %s, which is still charged',
+        (subtotal) => {
+          expect(calculateShipping(subtotal, 1, ON)).toBe(SHIPPING_FEE)
+          expect(amountToFreeShipping(subtotal, ON)).toBeGreaterThan(0)
+        }
+      )
+
+      it('quotes an amount that actually reaches free shipping', () => {
+        for (const subtotal of [0, 400, 998.5, 999]) {
+          const needed = amountToFreeShipping(subtotal, ON)
+          expect(calculateShipping(subtotal + needed, 1, ON)).toBe(0)
+        }
+      })
+    })
   })
 })
