@@ -93,6 +93,10 @@ export const mockPrismaClient = {
     findMany: vi.fn(),
     findFirst: vi.fn(),
   },
+  storeSettings: {
+    findUnique: vi.fn(),
+    upsert: vi.fn(),
+  },
   $transaction: vi.fn((callbacks) => Promise.all(callbacks)),
   $connect: vi.fn(),
   $disconnect: vi.fn(),

@@ -23,6 +23,8 @@ const mockPrisma = {
   cart: { findUnique: vi.fn() },
   order: { create: vi.fn() },
   address: { count: vi.fn() },
+  // The shipping fee is an admin switch; unset here means "use the defaults".
+  storeSettings: { findUnique: vi.fn().mockResolvedValue(null), upsert: vi.fn() },
 }
 
 vi.mock('@/lib/prisma', () => ({
