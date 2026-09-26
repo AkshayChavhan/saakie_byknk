@@ -70,14 +70,16 @@ app/                    # Next.js 14 App Router
 │   ├── users/         # User management
 │   ├── products/      # Product management
 │   ├── orders/        # Order management
-│   └── categories/    # Category management
+│   ├── categories/    # Category management
+│   └── settings/      # Store-wide switches (shipping fee on/off)
 ├── api/               # API routes
 │   ├── admin/         # Admin API endpoints
 │   │   ├── dashboard/ # Dashboard statistics
 │   │   ├── users/     # User CRUD operations
 │   │   ├── products/  # Product CRUD operations
 │   │   ├── orders/    # Order management
-│   │   └── categories/ # Category CRUD operations
+│   │   ├── categories/ # Category CRUD operations
+│   │   └── settings/  # Store settings read/update (admin)
 │   ├── cart/          # Shopping cart API
 │   ├── categories/    # Category API
 │   ├── orders/        # Order API
@@ -109,7 +111,10 @@ components/            # Reusable React components
 lib/                  # Utility libraries
 ├── db.ts            # Database connection
 ├── users.ts         # User management utilities (create, update, delete)
-└── utils.ts         # Utility functions
+├── utils.ts         # Utility functions
+├── shipping.ts      # Shared shipping maths — fee, threshold, admin toggle
+└── server/
+    └── settings.ts  # Store settings singleton (read + update)
 
 prisma/              # Database schema and migrations
 └── schema.prisma    # Prisma schema file
@@ -131,6 +136,7 @@ types/               # TypeScript type definitions
 - **Wishlist/WishlistItem** - User wishlist feature
 - **Review** - Product reviews and ratings
 - **Address** - User shipping/billing addresses
+- **StoreSettings** - Store-wide admin switches, one document keyed `default` (`shippingEnabled`)
 
 ### User Roles & Permissions
 - **USER** (default) - Standard customer access
@@ -231,6 +237,13 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - **Tree Navigation**: Visual category hierarchy
 - **Bulk Management**: Mass category operations
 
+### Store Settings (`/admin/settings`)
+- **Charge shipping fee**: toggle off and every order ships free, whatever the subtotal; on (default) charges ₹99 up to ₹999 and free above
+- **Applies live**: saved to `store_settings` and read on the next cart/checkout load — no deploy
+- **Past orders unaffected**: `Order.shipping` is stamped at creation
+- **Server-authoritative**: `/api/payments/create-intent` recomputes shipping from the database, so the client cannot talk the store into free delivery
+- Full details: `docs/STORE_SETTINGS.md`
+
 ## Auth Flow (signup email verification)
 
 - `POST /api/auth/register` creates the User (`emailVerified: null`) + Cart +
@@ -311,6 +324,11 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - **PATCH /api/admin/categories/[id]** - Update category
 - **DELETE /api/admin/categories/[id]** - Delete category
 
+### Store Settings APIs
+- **GET /api/settings** - Public `{ shippingEnabled }` for cart/checkout totals
+- **GET /api/admin/settings** - Full store settings (admin)
+- **PATCH /api/admin/settings** - Update settings, e.g. `{ shippingEnabled: false }` (admin)
+
 ### Auth APIs
 - **POST /api/auth/register** - Email/password signup (sends verification email)
 - **POST /api/auth/resend-verification** - Re-send confirmation link (rate-limited)
@@ -350,3 +368,4 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - ✅ Responsive UI with Tailwind CSS
 - ✅ Build process optimization
 - ✅ Schema-aligned product creation with dimensions support
+- ✅ Store settings with an admin shipping-fee toggle (off ⇒ free shipping on every order)

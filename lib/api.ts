@@ -250,9 +250,31 @@ export const reviewApi = {
 };
 
 // ============================================
+// Store Settings (public subset)
+// ============================================
+export interface PublicStoreSettings {
+  /** Admin toggle: false ⇒ every order ships free. */
+  shippingEnabled: boolean;
+}
+
+export const settingsApi = {
+  get: () => apiFetch<PublicStoreSettings>('/api/settings'),
+};
+
+// ============================================
 // Admin APIs (Requires Admin Auth — session cookie)
 // ============================================
 export const adminApi = {
+  // Store settings
+  getSettings: () =>
+    apiFetch<any>('/api/admin/settings'),
+
+  updateSettings: (data: { shippingEnabled?: boolean }) =>
+    apiFetch<any>('/api/admin/settings', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
   getDashboard: () =>
     apiFetch<any>('/api/admin/dashboard'),
 

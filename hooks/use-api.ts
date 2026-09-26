@@ -9,6 +9,7 @@ import {
   orderApi,
   userApi,
   adminApi,
+  settingsApi,
   ProductListParams,
 } from '@/lib/api';
 
@@ -228,5 +229,21 @@ export function useUpdateOrderStatus() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
     },
+  });
+}
+
+// ============================================
+// Store Settings Hooks
+// ============================================
+/**
+ * Public store settings (shipping on/off). Defaults to "shipping on" until
+ * loaded so the totals never flash from ₹0 up to a fee; the server recomputes
+ * everything at order time regardless.
+ */
+export function useStoreSettings() {
+  return useQuery({
+    queryKey: ['store-settings'],
+    queryFn: () => settingsApi.get(),
+    staleTime: 30 * 1000,
   });
 }

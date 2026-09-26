@@ -2,6 +2,8 @@
 
 import Link from 'next/link'
 import { ShoppingBag } from 'lucide-react'
+import { useStoreSettings } from '@/hooks/use-api'
+import { calculateShipping, amountToFreeShipping } from '@/lib/shipping'
 
 interface CartSummaryProps {
   subtotal: number
@@ -10,9 +12,14 @@ interface CartSummaryProps {
 }
 
 export function CartSummary({ subtotal, itemCount, isLoading }: CartSummaryProps) {
-  const shipping = subtotal > 2999 ? 0 : 99
-  const tax = Math.round(subtotal * 0.18) // 18% GST
-  const total = subtotal + shipping + tax
+  // Mirrors the server maths in /api/payments/create-intent so the cart, the
+  // checkout page and the amount actually charged all agree. Until the setting
+  // loads, assume shipping is charged so the total never jumps upward.
+  const { data: settings } = useStoreSettings()
+  const shippingEnabled = settings?.shippingEnabled !== false
+  const shipping = calculateShipping(subtotal, itemCount, { shippingEnabled })
+  const total = subtotal + shipping
+  const addForFreeShipping = amountToFreeShipping(subtotal, { shippingEnabled })
 
   if (isLoading) {
     return (
@@ -55,11 +62,6 @@ export function CartSummary({ subtotal, itemCount, isLoading }: CartSummaryProps
           </span>
         </div>
 
-        <div className="flex justify-between">
-          <span className="text-gray-600">Tax (GST 18%)</span>
-          <span className="font-medium">₹{tax.toLocaleString()}</span>
-        </div>
-
         <div className="border-t pt-3">
           <div className="flex justify-between">
             <span className="text-base font-semibold">Total</span>
@@ -68,9 +70,9 @@ export function CartSummary({ subtotal, itemCount, isLoading }: CartSummaryProps
         </div>
       </div>
 
-      {subtotal < 2999 && (
+      {addForFreeShipping > 0 && itemCount > 0 && (
         <p className="text-sm text-gray-600 mt-4 p-3 bg-blue-50 rounded-lg">
-          Add ₹{(2999 - subtotal).toLocaleString()} more for FREE shipping!
+          Add ₹{addForFreeShipping.toLocaleString()} more for FREE shipping!
         </p>
       )}
 

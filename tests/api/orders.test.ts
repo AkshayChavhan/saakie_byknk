@@ -31,6 +31,12 @@ const mockPrisma = {
     create: vi.fn(),
     findMany: vi.fn(),
   },
+  // The shipping fee is an admin switch; unset here means "use the defaults",
+  // i.e. the flat fee below the free-shipping threshold.
+  storeSettings: {
+    findUnique: vi.fn().mockResolvedValue(null),
+    upsert: vi.fn(),
+  },
   address: {
     // Used by verifyAddressOwnership: returns how many of the requested ids
     // belong to the user. Default-implemented per call so happy-path tests
