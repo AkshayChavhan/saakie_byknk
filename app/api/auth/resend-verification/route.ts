@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { apiError } from '@/lib/server/errors';
 import { clientIp, rateLimit } from '@/lib/server/rate-limit';
-import { sendVerificationEmail } from '@/lib/server/email';
+import { isDeliveryFailure, sendVerificationEmail } from '@/lib/server/email';
 import {
   createVerificationToken,
+  deleteVerificationTokens,
   pendingTokenAgeMs,
   verificationUrl,
 } from '@/lib/server/verification';
@@ -57,16 +58,37 @@ export async function POST(request: Request) {
 
     // Only unverified accounts get a fresh link — and not more than once a
     // minute. Every other case falls through to the generic success response.
+    let failed = false;
     if (user && !user.emailVerified) {
       const age = await pendingTokenAgeMs(email);
       if (age === null || age >= MIN_REISSUE_AGE_MS) {
         const token = await createVerificationToken(email);
-        await sendVerificationEmail({
+        const result = await sendVerificationEmail({
           to: email,
           name: user.name,
           verifyUrl: verificationUrl(request, token),
         });
+        failed = isDeliveryFailure(result);
+        if (failed) await deleteVerificationTokens(email);
       }
+    }
+
+    // A delivery failure is reported, because claiming "a new link is on its
+    // way" when the provider refused the message is how this bug stayed
+    // invisible. The cause is always global (unverified sender domain, bad
+    // creds, unreachable host), never specific to one address, so the message
+    // stays generic. It does narrow the anti-probing guarantee above: a 503
+    // implies an unverified account exists. That only holds while mail is
+    // already broken store-wide, which is the right moment to be loud.
+    if (failed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            'We could not send the confirmation email just now. Please try again shortly or contact support.',
+        },
+        { status: 503 }
+      );
     }
 
     return NextResponse.json({

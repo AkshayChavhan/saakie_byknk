@@ -13,11 +13,21 @@ import {
   ErrorBanner,
   SuccessBanner,
 } from '@/components/auth/auth-fields'
+import { EmailFailureDialog } from '@/components/auth/email-failure-dialog'
 
 function SignInForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl') || '/'
+  // Only same-origin relative paths. An absolute URL here would be handed to
+  // router.push after a genuine sign-in, which next/navigation turns into a full
+  // document navigation — i.e. /sign-in?callbackUrl=https://evil.example logs the
+  // customer in for real and then drops them on someone else's "session expired"
+  // page. Middleware only ever sets a pathname, so nothing legitimate is lost.
+  const rawCallbackUrl = searchParams.get('callbackUrl') || '/'
+  const callbackUrl =
+    rawCallbackUrl.startsWith('/') && !rawCallbackUrl.startsWith('//')
+      ? rawCallbackUrl
+      : '/'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -36,10 +46,12 @@ function SignInForm() {
   const [needsVerification, setNeedsVerification] = useState(
     searchParams.get('error') === 'confirmation_failed'
   )
-  const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent'>(
-    'idle'
-  )
+  const [resendState, setResendState] = useState<
+    'idle' | 'sending' | 'sent' | 'failed'
+  >('idle')
   const [isLoading, setIsLoading] = useState(false)
+  // A failed resend interrupts instead of whispering under the form.
+  const [showFailureDialog, setShowFailureDialog] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -49,10 +61,17 @@ function SignInForm() {
     setResendState('idle')
     setIsLoading(true)
 
+    // redirectTo must be passed explicitly. Without it next-auth defaults to
+    // window.location.href, and on SUCCESS Auth.js echoes that URL back; the
+    // client then reads `error` out of its query string. So arriving here as
+    // /sign-in?error=confirmation_failed (which /auth/confirm does on an expired
+    // link) made every subsequent CORRECT sign-in report "Invalid email or
+    // password" — while the session cookie was actually set.
     const result = await signIn('credentials', {
       email,
       password,
       redirect: false,
+      redirectTo: callbackUrl,
     })
 
     setIsLoading(false)
@@ -77,13 +96,18 @@ function SignInForm() {
     if (!email.trim() || resendState === 'sending') return
     setResendState('sending')
     try {
-      await fetch('/api/auth/resend-verification', {
+      const res = await fetch('/api/auth/resend-verification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       })
-    } finally {
-      setResendState('sent')
+      // A 503 means the send was attempted and refused, so do not claim a link
+      // is on its way. 429 is the rate limit — also not a successful send.
+      setResendState(res.ok ? 'sent' : 'failed')
+      setShowFailureDialog(!res.ok)
+    } catch {
+      setResendState('failed')
+      setShowFailureDialog(true)
     }
   }
 
@@ -97,6 +121,20 @@ function SignInForm() {
         <p className="-mt-2 text-center text-xs text-gray-500">
           {resendState === 'sent' ? (
             'If an unverified account exists for this address, a new link is on its way.'
+          ) : resendState === 'failed' ? (
+            <>
+              <span className="text-amber-400">
+                We could not send the email just now.
+              </span>{' '}
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={!email.trim()}
+                className="font-semibold text-rose-400 underline-offset-2 transition-colors hover:text-rose-300 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Try again
+              </button>
+            </>
           ) : (
             <button
               type="button"
@@ -160,6 +198,14 @@ function SignInForm() {
           Create an account
         </Link>
       </p>
+
+      <EmailFailureDialog
+        open={showFailureDialog}
+        email={email.trim() || null}
+        busy={resendState === 'sending'}
+        onRetry={handleResend}
+        onClose={() => setShowFailureDialog(false)}
+      />
     </form>
   )
 }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { User, Mail, Lock, MailCheck } from 'lucide-react'
+import { User, Mail, Lock, MailCheck, MailWarning } from 'lucide-react'
 import { AuthShell } from '@/components/auth/auth-shell'
 import {
   TextField,
@@ -10,6 +10,7 @@ import {
   SubmitButton,
   ErrorBanner,
 } from '@/components/auth/auth-fields'
+import { EmailFailureDialog } from '@/components/auth/email-failure-dialog'
 
 export default function SignUpPage() {
   const [name, setName] = useState('')
@@ -22,9 +23,16 @@ export default function SignUpPage() {
   // screen. The account stays unusable until the emailed link is clicked
   // (authorize() refuses unverified users), so there is no auto sign-in here.
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null)
-  const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent'>(
-    'idle'
-  )
+  // The API reports whether the confirmation link actually left the server.
+  // False means the account exists but no email was delivered (misconfigured
+  // sender domain, SMTP down) — say so rather than "check your email".
+  const [emailSent, setEmailSent] = useState(true)
+  const [resendState, setResendState] = useState<
+    'idle' | 'sending' | 'sent' | 'failed'
+  >('idle')
+  // A send failure interrupts rather than sitting quietly in the page: the
+  // headline next to it would otherwise be telling them to check their inbox.
+  const [showFailureDialog, setShowFailureDialog] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,7 +68,11 @@ export default function SignUpPage() {
         return
       }
 
+      const data = await res.json().catch(() => ({}))
+      const sent = data.emailSent !== false
+      setEmailSent(sent)
       setRegisteredEmail(email.trim().toLowerCase())
+      if (!sent) setShowFailureDialog(true)
     } catch {
       setError('Something went wrong. Please try again.')
       setIsLoading(false)
@@ -71,13 +83,18 @@ export default function SignUpPage() {
     if (!registeredEmail || resendState === 'sending') return
     setResendState('sending')
     try {
-      await fetch('/api/auth/resend-verification', {
+      const res = await fetch('/api/auth/resend-verification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: registeredEmail }),
       })
-    } finally {
-      setResendState('sent')
+      setResendState(res.ok ? 'sent' : 'failed')
+      setEmailSent(res.ok)
+      setShowFailureDialog(!res.ok)
+    } catch {
+      setResendState('failed')
+      setEmailSent(false)
+      setShowFailureDialog(true)
     }
   }
 
@@ -85,19 +102,47 @@ export default function SignUpPage() {
     return (
       <AuthShell
         eyebrow="One last step"
-        title="Check your email"
-        subtitle="Your account is created — it just needs a quick confirmation."
+        title={emailSent ? 'Check your email' : 'Account created'}
+        subtitle={
+          emailSent
+            ? 'Your account is created — it just needs a quick confirmation.'
+            : 'Your account is created, but we could not send the confirmation email.'
+        }
         panelQuote="From the loom to your wardrobe — join a legacy of artisans."
       >
         <div className="rounded-xl border border-gray-800 bg-gray-800/40 p-8 text-center">
-          <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-rose-950/60 text-rose-400 ring-1 ring-rose-800/70">
-            <MailCheck className="h-6 w-6" aria-hidden="true" />
+          <div
+            className={`mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full ring-1 ${
+              emailSent
+                ? 'bg-rose-950/60 text-rose-400 ring-rose-800/70'
+                : 'bg-amber-950/60 text-amber-400 ring-amber-800/70'
+            }`}
+          >
+            {emailSent ? (
+              <MailCheck className="h-6 w-6" aria-hidden="true" />
+            ) : (
+              <MailWarning className="h-6 w-6" aria-hidden="true" />
+            )}
           </div>
-          <p className="text-sm leading-relaxed text-gray-300">
-            We sent a confirmation link to{' '}
-            <span className="font-semibold text-white">{registeredEmail}</span>.
-            Click it to activate your account, then sign in.
-          </p>
+          {emailSent ? (
+            <p className="text-sm leading-relaxed text-gray-300">
+              We sent a confirmation link to{' '}
+              <span className="font-semibold text-white">
+                {registeredEmail}
+              </span>
+              . Click it to activate your account, then sign in.
+            </p>
+          ) : (
+            <p className="text-sm leading-relaxed text-gray-300">
+              We could not send the confirmation link to{' '}
+              <span className="font-semibold text-white">
+                {registeredEmail}
+              </span>{' '}
+              — this is a problem on our side, not with your details. Your
+              account is saved. Please try again in a few minutes, or contact us
+              and we will confirm it for you.
+            </p>
+          )}
           <Link
             href="/sign-in"
             className="mt-6 flex w-full items-center justify-center rounded-xl bg-rose-600 py-3.5 text-[15px] font-semibold text-white shadow-lg shadow-rose-600/30 transition-all duration-200 hover:bg-rose-700"
@@ -107,9 +152,22 @@ export default function SignUpPage() {
           <p className="mt-5 text-xs text-gray-500">
             {resendState === 'sent' ? (
               'A new link is on its way — check your inbox.'
+            ) : resendState === 'failed' ? (
+              <>
+                <span className="text-amber-400">
+                  Sending failed — our email service is not reachable right now.
+                </span>{' '}
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  className="font-semibold text-rose-400 underline-offset-2 transition-colors hover:text-rose-300 hover:underline"
+                >
+                  Try again
+                </button>
+              </>
             ) : (
               <>
-                Didn&apos;t receive it?{' '}
+                {emailSent ? "Didn't receive it? " : 'Ready to retry? '}
                 <button
                   type="button"
                   onClick={handleResend}
@@ -122,6 +180,14 @@ export default function SignUpPage() {
             )}
           </p>
         </div>
+
+        <EmailFailureDialog
+          open={showFailureDialog}
+          email={registeredEmail}
+          busy={resendState === 'sending'}
+          onRetry={handleResend}
+          onClose={() => setShowFailureDialog(false)}
+        />
       </AuthShell>
     )
   }
