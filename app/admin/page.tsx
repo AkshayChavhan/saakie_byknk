@@ -28,6 +28,7 @@ import {
   BookOpen,
   Store,
   Settings,
+  DatabaseBackup,
 } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
 import { fetchApi } from '@/lib/api'
@@ -217,6 +218,7 @@ export default function AdminDashboard() {
     { name: 'Promotional Banners', href: '/admin/promotional-banners', icon: Megaphone },
     { name: 'Manage Blog', href: '/admin/blog', icon: BookOpen },
     { name: 'Store Settings', href: '/admin/settings', icon: Settings },
+    { name: 'Backups', href: '/admin/backup', icon: DatabaseBackup },
   ]
 
   // Helper function to format time ago

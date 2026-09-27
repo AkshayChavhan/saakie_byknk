@@ -71,7 +71,8 @@ app/                    # Next.js 14 App Router
 │   ├── products/      # Product management
 │   ├── orders/        # Order management
 │   ├── categories/    # Category management
-│   └── settings/      # Store-wide switches (shipping fee on/off)
+│   ├── settings/      # Store-wide switches (shipping fee on/off)
+│   └── backup/        # Database backups (SUPER_ADMIN)
 ├── api/               # API routes
 │   ├── admin/         # Admin API endpoints
 │   │   ├── dashboard/ # Dashboard statistics
@@ -79,7 +80,8 @@ app/                    # Next.js 14 App Router
 │   │   ├── products/  # Product CRUD operations
 │   │   ├── orders/    # Order management
 │   │   ├── categories/ # Category CRUD operations
-│   │   └── settings/  # Store settings read/update (admin)
+│   │   ├── settings/  # Store settings read/update (admin)
+│   │   └── backup/    # Run a backup / list backup history (SUPER_ADMIN)
 │   ├── cart/          # Shopping cart API
 │   ├── categories/    # Category API
 │   ├── orders/        # Order API
@@ -114,7 +116,8 @@ lib/                  # Utility libraries
 ├── utils.ts         # Utility functions
 ├── shipping.ts      # Shared shipping maths — fee, threshold, admin toggle
 └── server/
-    └── settings.ts  # Store settings singleton (read + update)
+    ├── settings.ts  # Store settings singleton (read + update)
+    └── backup.ts    # Whole-database snapshot copy to a separate cluster
 
 prisma/              # Database schema and migrations
 └── schema.prisma    # Prisma schema file
@@ -137,6 +140,7 @@ types/               # TypeScript type definitions
 - **Review** - Product reviews and ratings
 - **Address** - User shipping/billing addresses
 - **StoreSettings** - Store-wide admin switches, one document keyed `default` (`shippingEnabled`)
+- **BackupRun** - One row per backup run (snapshot stamp, status, per-collection counts); the authoritative manifest lives in the backup database
 
 ### User Roles & Permissions
 - **USER** (default) - Standard customer access
@@ -179,6 +183,9 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - `RAZORPAY_KEY_ID` - Razorpay key ID (optional - required for Razorpay payments)
 - `RAZORPAY_KEY_SECRET` - Razorpay key secret (optional - required for Razorpay payments)
 - `RAZORPAY_WEBHOOK_SECRET` - Razorpay webhook signature verification (optional - required for Razorpay webhooks)
+
+### Database Backups
+- `BACKUP_DATABASE_URL` - Connection string for a database on a **separate cluster**; required for `/admin/backup` (see docs/BACKUP.md)
 
 ### Instagram Integration
 - `INSTAGRAM_ACCESS_TOKEN` - Instagram Basic Display API long-lived access token (optional - required for Instagram feed display on /post page)
@@ -243,6 +250,15 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - **Past orders unaffected**: `Order.shipping` is stamped at creation
 - **Server-authoritative**: `/api/payments/create-intent` recomputes shipping from the database, so the client cannot talk the store into free delivery
 - Full details: `docs/STORE_SETTINGS.md`
+
+### Backups (`/admin/backup`) — SUPER_ADMIN only
+- **Back up now**: copies every collection to a separate backup database as a timestamped snapshot
+- **Snapshots, not a mirror**: the last 5 runs are kept, so corruption copied over one generation does not destroy the others
+- **Self-describing**: a `_backup_runs` manifest is written into the backup database, so a restore works even if the live database is gone
+- **Downloads a copy too**: each run also downloads `saakie-backup-<snapshot>.json` to the admin's computer (canonical Extended JSON, so ObjectIds/Dates restore intact); past snapshots have a Download button
+- **Refuses to run against the live database** (host + database name compared), and redacts credentials from every message
+- **Restore is a CLI script**, not a button: `node scripts/restore-backup.mjs`
+- Full details: `docs/BACKUP.md`
 
 ## Auth Flow (signup email verification)
 
@@ -329,6 +345,11 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - **GET /api/admin/settings** - Full store settings (admin)
 - **PATCH /api/admin/settings** - Update settings, e.g. `{ shippingEnabled: false }` (admin)
 
+### Backup APIs
+- **GET /api/admin/backup** - Backup history + whether a destination is configured (SUPER_ADMIN)
+- **POST /api/admin/backup** - Run a backup now (SUPER_ADMIN)
+- **GET /api/admin/backup/[snapshot]/download** - Download a snapshot as a JSON file (SUPER_ADMIN)
+
 ### Auth APIs
 - **POST /api/auth/register** - Email/password signup (sends verification email)
 - **POST /api/auth/resend-verification** - Re-send confirmation link (rate-limited)
@@ -369,3 +390,4 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - ✅ Build process optimization
 - ✅ Schema-aligned product creation with dimensions support
 - ✅ Store settings with an admin shipping-fee toggle (off ⇒ free shipping on every order)
+- ✅ On-demand database backups to a separate cluster, with snapshot retention, a downloaded file copy, and a CLI restore
