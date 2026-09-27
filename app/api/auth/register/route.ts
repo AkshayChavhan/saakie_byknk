@@ -3,9 +3,10 @@ import { Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { apiError } from '@/lib/server/errors';
-import { sendVerificationEmail } from '@/lib/server/email';
+import { isDeliveryFailure, sendVerificationEmail } from '@/lib/server/email';
 import {
   createVerificationToken,
+  deleteVerificationTokens,
   verificationUrl,
 } from '@/lib/server/verification';
 
@@ -81,21 +82,29 @@ export async function POST(request: Request) {
     ]);
 
     // Email the confirmation link. A send failure must not orphan the freshly
-    // created account (re-registering would hit the 409), so log and continue —
-    // the sign-in screen offers a resend.
+    // created account (re-registering would hit the 409), so we keep the account
+    // and report the outcome instead: `emailSent: false` tells the client to say
+    // the link could not be sent rather than "check your email", which is what
+    // previously turned a misconfigured sender into a silent dead end.
+    let emailSent = false;
     try {
       const token = await createVerificationToken(email);
-      await sendVerificationEmail({
+      const result = await sendVerificationEmail({
         to: email,
         name,
         verifyUrl: verificationUrl(request, token),
       });
+      emailSent = !isDeliveryFailure(result);
+      // Nothing was delivered, so this token must not sit there looking freshly
+      // issued — it would make the customer's immediate "retry" a silent no-op.
+      if (!emailSent) await deleteVerificationTokens(email);
     } catch (emailError) {
-      console.error('[register] failed to send verification email:', emailError);
+      // Only token creation can land here; the send itself never throws.
+      console.error('[register] failed to issue verification token:', emailError);
     }
 
     return NextResponse.json(
-      { success: true, requiresVerification: true, user },
+      { success: true, requiresVerification: true, emailSent, user },
       { status: 201 }
     );
   } catch (error) {

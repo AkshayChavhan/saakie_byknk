@@ -46,6 +46,19 @@ export async function createVerificationToken(email: string): Promise<string> {
 }
 
 /**
+ * Drop every pending token for `email`.
+ *
+ * Called when a verification email FAILED to send. The token is created before
+ * the send, so leaving it behind makes pendingTokenAgeMs() report a link was
+ * just issued — and the resend endpoint's 60 s cooldown then silently skips the
+ * retry the customer just asked for, while answering 200. Clearing it means the
+ * next resend actually attempts a send.
+ */
+export async function deleteVerificationTokens(email: string): Promise<void> {
+  await prisma.verificationToken.deleteMany({ where: { identifier: email } });
+}
+
+/**
  * Look up a raw token from a confirmation link. Returns the email address it
  * verifies, or null when unknown/expired.
  */
