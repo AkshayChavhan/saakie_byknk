@@ -1,5 +1,10 @@
 # Saakie — Resend Email Setup
 
+> **Not in use on the `clerk-auth-no-merge` branch.** Clerk sends the
+> verification and password-reset emails there, and the files this guide links
+> to were removed. It is kept for the return path to Auth.js — see
+> "Going back to Auth.js" in [AUTHENTICATION.md](AUTHENTICATION.md).
+
 How to send **real signup-verification emails** through
 [Resend](https://resend.com) for `saakiebyknk.in`.
 

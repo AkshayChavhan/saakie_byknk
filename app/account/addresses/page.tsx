@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { useSession } from 'next-auth/react'
+import { useSession } from '@/lib/auth-client'
 import { ArrowLeft, Loader2, MapPin, Pencil, Plus, Trash2, User } from 'lucide-react'
 import { Header } from '@/components/layout/header'
 import { PhoneInput } from '@/components/ui/phone-input'

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { useSession } from 'next-auth/react'
+import { useSession } from '@/lib/auth-client'
 import { User, Package } from 'lucide-react'
 import { Header } from '@/components/layout/header'
 import { SareeLoader } from '@/components/ui/saree-loader'

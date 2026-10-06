@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Playfair_Display } from 'next/font/google'
 import { Suspense } from 'react'
+import { ClerkProvider } from '@clerk/nextjs'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
@@ -78,14 +79,23 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <NavigationProgress />
         </Suspense>
-        <Providers>
-          {children}
-          {/* One footer for the whole app, shown only on the routes
-              SiteFooter lists. Pages no longer render their own. */}
-          <SiteFooter>
-            <Footer />
-          </SiteFooter>
-        </Providers>
+        {/* Clerk session for the whole tree. The app's own code reads it
+            through lib/auth-client.ts (client) and auth.ts (server) only. */}
+        <ClerkProvider
+          signInUrl="/sign-in"
+          signUpUrl="/sign-up"
+          afterSignOutUrl="/"
+          appearance={{ variables: { colorPrimary: '#e11d48' } }}
+        >
+          <Providers>
+            {children}
+            {/* One footer for the whole app, shown only on the routes
+                SiteFooter lists. Pages no longer render their own. */}
+            <SiteFooter>
+              <Footer />
+            </SiteFooter>
+          </Providers>
+        </ClerkProvider>
         {/* Vercel Analytics (page views) + Speed Insights (Web Vitals).
             No-ops outside Vercel; no keys or cookie banner required. */}
         <Analytics />

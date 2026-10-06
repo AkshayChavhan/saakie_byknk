@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { ShoppingCart } from 'lucide-react'
-import { useSession } from 'next-auth/react'
+import { useSession } from '@/lib/auth-client'
 import { cartApi } from '@/lib/api'
 
 export function CartIcon() {

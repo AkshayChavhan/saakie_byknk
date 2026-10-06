@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useSession } from '@/lib/auth-client'
 import { Loader2, MapPin, CreditCard, Plus, ShieldCheck } from 'lucide-react'
 import { Header } from '@/components/layout/header'
 import { PaymentMethods } from '@/components/checkout/payment-methods'

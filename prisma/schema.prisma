@@ -10,8 +10,14 @@ datasource db {
 model User {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   email           String   @unique
-  // Hashed (bcrypt) credentials password. Nullable so future OAuth-only
-  // users (Google, magic-link) can exist without a password.
+  // Clerk user id (`user_…`) this account signs in as. Null until the account
+  // is first linked — see lib/server/clerk-users.ts. Deliberately NOT @unique:
+  // MongoDB's unique index counts a missing field as a value, so the index
+  // could not be built while more than one account is still unlinked.
+  clerkId         String?
+  // Unused while Clerk holds the credentials. Kept (with `emailVerified` and
+  // the VerificationToken model below) so the store can return to Auth.js:
+  // scripts/clerk-export-to-authjs.mjs refills this from a Clerk user export.
   password        String?
   emailVerified   DateTime?
   name            String?
@@ -28,6 +34,7 @@ model User {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  @@index([clerkId])
   @@map("users")
 }
 

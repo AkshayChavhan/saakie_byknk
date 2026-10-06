@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useSession } from '@/lib/auth-client'
 import { ArrowLeft, Settings, Truck, Loader2, Clock } from 'lucide-react'
 import { fetchApi } from '@/lib/api'
 import { useToast } from '@/components/ui/toast'
@@ -64,7 +64,7 @@ function Switch({
 export default function StoreSettingsPage() {
   const router = useRouter()
   const { data: session, status } = useSession()
-  // Role comes straight from the Auth.js session — no API round-trip. Middleware
+  // Role comes with the session (lib/auth-client.ts), already loaded. Middleware
   // only checks that you are signed in; the role gate lives here, as on /admin.
   const authorized = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN'
   const toast = useToast()

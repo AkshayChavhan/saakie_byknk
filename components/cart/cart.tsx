@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { ShoppingCart, Trash2 } from 'lucide-react'
-import { useSession } from 'next-auth/react'
+import { useSession } from '@/lib/auth-client'
 import { CartItem } from './cart-item'
 import { CartSummary } from './cart-summary'
 import { DeliveryAddress } from './delivery-address'

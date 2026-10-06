@@ -27,6 +27,10 @@ const nextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'images.pexels.com' },
       { protocol: 'https', hostname: 'saakie.vercel.app' },
+      // Profile photos Clerk hosts — a Google/GitHub sign-up's picture is
+      // copied onto the store user (lib/server/clerk-users.ts) and rendered
+      // with next/image in the header and on the account page.
+      { protocol: 'https', hostname: 'img.clerk.com' },
     ],
     // Allow SVG sources (e.g. /images/placeholder-category.svg) through the
     // image optimizer. Hardened so a served SVG can never execute scripts:

@@ -1,10 +1,5 @@
-import NextAuth from 'next-auth';
+import { clerkMiddleware } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { authConfig } from './auth.config';
-
-// Edge-safe Auth.js instance (authConfig has no Prisma/bcrypt). Used only to
-// read the session in middleware — never to run the Credentials provider.
-const { auth } = NextAuth(authConfig);
 
 /**
  * Page paths that are viewable while signed out. API routes are intentionally
@@ -26,9 +21,10 @@ const PUBLIC_PAGES = [
   '/terms-of-service',
   '/return-policy',
   '/disclaimer',
+  // Clerk's forms route their own steps beneath these (/sign-in/factor-one,
+  // /sign-up/verify-email-address, /sign-in/sso-callback …).
   '/sign-in',
   '/sign-up',
-  '/auth', // email-confirmation callback (/auth/confirm) — clicked while signed out
   '/offline', // service-worker offline fallback; must be reachable while signed out
 ];
 
@@ -42,9 +38,8 @@ function isAdminPage(pathname: string): boolean {
   return pathname === '/admin' || pathname.startsWith('/admin/');
 }
 
-export default auth((req) => {
+export default clerkMiddleware(async (auth, req) => {
   const { pathname } = req.nextUrl;
-  const isLoggedIn = !!req.auth?.user;
 
   // Never touch Next.js internals or static assets (CSS/JS/images/fonts).
   // The `config.matcher` below also excludes these, but guarding here too
@@ -58,11 +53,14 @@ export default auth((req) => {
   }
 
   // API routes handle their own auth (JSON responses). Never redirect them.
-  // Auth.js's own routes are excluded in `config.matcher` below, not here —
-  // by the time this line runs the wrapper has already touched the response.
+  // They still pass through this middleware: `auth()` in a route handler only
+  // works on requests clerkMiddleware has seen.
   if (pathname.startsWith('/api/')) {
     return NextResponse.next();
   }
+
+  const { userId } = await auth();
+  const isLoggedIn = !!userId;
 
   // Admin pages: must be signed in. Role is enforced inside the page/API.
   if (isAdminPage(pathname)) {
@@ -83,23 +81,11 @@ export default auth((req) => {
 });
 
 export const config = {
-  // `api/auth` is excluded so Auth.js handles its own routes exactly ONCE.
-  //
-  // `export default auth(...)` above builds a second Auth.js instance. When the
-  // matcher let it run on /api/auth/*, both it and the [...nextauth] route
-  // handler wrote session cookies onto the same response — a sign-out came back
-  // with the session-token Set-Cookie twice. Whichever lands last is the one the
-  // browser keeps, so a sign-out could be undone by the middleware re-issuing
-  // the session it had just read, and the user stayed signed in.
-  //
-  // Returning early for /api/ inside the handler does not help: the wrapper has
-  // already read the session and attached its cookies before the body runs. The
-  // exclusion has to be here, in the matcher.
-  //
-  // The `(?:/|$)` anchors the exclusion to a whole path segment, so a future
-  // /api/authors keeps its middleware instead of being swallowed by the prefix.
+  // Every page and every API route; only static assets are skipped. Nothing
+  // under /api may be excluded — a route handler calling `auth()` on a request
+  // this middleware never saw throws instead of reporting "signed out".
   //
   // Must be a plain string literal — Next.js parses this statically at build
   // time and cannot evaluate expressions (template tags, concatenation, etc).
-  matcher: ['/((?!api/auth(?:/|$)|_next/static|_next/image|favicon.ico|.+\\.[\\w]+$).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.+\\.[\\w]+$).*)'],
 };

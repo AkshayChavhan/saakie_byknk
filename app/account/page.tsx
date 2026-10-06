@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useSession, signOut } from 'next-auth/react'
+import { useSession, signOut, openAccountSecurity } from '@/lib/auth-client'
 import {
   User,
   Package,
@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   ShoppingBag,
   Pencil,
+  KeyRound,
   Camera,
   Star,
   Loader2,
@@ -280,6 +281,16 @@ export default function AccountPage() {
                 >
                   <Pencil size={15} />
                   <span className="hidden sm:inline">Edit</span>
+                </button>
+                {/* Password, connected Google/GitHub accounts, signed-in
+                    devices and account deletion live in Clerk's own panel. */}
+                <button
+                  onClick={openAccountSecurity}
+                  aria-label="Password and security"
+                  className="flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 transition-colors"
+                >
+                  <KeyRound size={15} />
+                  <span className="hidden sm:inline">Security</span>
                 </button>
                 <button
                   onClick={() => signOut({ callbackUrl: '/' })}

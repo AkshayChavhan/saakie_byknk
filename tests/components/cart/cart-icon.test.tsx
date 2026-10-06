@@ -2,9 +2,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { CartIcon } from '@/components/cart/cart-icon'
 
-// Mock Auth.js client session
+// Mock the client session seam
 const mockUseSession = vi.fn()
-vi.mock('next-auth/react', () => ({
+vi.mock('@/lib/auth-client', () => ({
   useSession: () => mockUseSession(),
 }))
 

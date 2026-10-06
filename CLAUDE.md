@@ -2,6 +2,11 @@
 
 ## Git & Code Management Rules (MANDATORY)
 
+### Branch Rule — `clerk-auth-no-merge`
+- This branch moves authentication from Auth.js to Clerk. **It must NEVER be merged into `main`**, and no pull request may target `main` from it.
+- `main` stays on Auth.js. The last Auth.js state is commit `dc30340` (local tag `authjs-before-clerk`).
+- The way back from Clerk to Auth.js is documented in `docs/AUTHENTICATION.md` → "Going back to Auth.js".
+
 ### Commit Rules
 - **NEVER commit code without explicit user permission** - Always ask before running `git commit`
 - **NEVER push code without explicit user permission** - Always ask before running `git push`
@@ -42,7 +47,7 @@ Types: feat, fix, docs, style, refactor, test, chore
 ---
 
 ## Project Overview
-A premium fashion e-commerce platform built with Next.js 15, TypeScript, Prisma, MongoDB, and Auth.js (NextAuth v5) credentials authentication with signup email verification. Features mobile-first design, comprehensive product management, user authentication, shopping cart, wishlist, order management, and a comprehensive admin dashboard with full CRUD operations.
+A premium fashion e-commerce platform built with Next.js 15, TypeScript, Prisma, MongoDB, and Clerk authentication (email + password, email code, Google/GitHub). Features mobile-first design, comprehensive product management, user authentication, shopping cart, wishlist, order management, and a comprehensive admin dashboard with full CRUD operations.
 
 ## Development Commands
 
@@ -64,7 +69,7 @@ A premium fashion e-commerce platform built with Next.js 15, TypeScript, Prisma,
 
 ```
 app/                    # Next.js 14 App Router
-├── (auth)/            # Authentication pages (sign-in, sign-up)
+├── (auth)/            # Clerk sign-in / sign-up pages (catch-all folders)
 ├── admin/             # Admin dashboard
 │   ├── page.tsx       # Dashboard overview with stats
 │   ├── users/         # User management
@@ -85,12 +90,10 @@ app/                    # Next.js 14 App Router
 │   ├── orders/        # Order API
 │   ├── products/      # Product API
 │   ├── users/         # User API
-│   ├── auth/          # Auth API (register, resend-verification, [...nextauth])
 │   └── webhooks/      # Webhook endpoints
+│       ├── clerk/     # Clerk user sync (created/updated/deleted)
 │       ├── razorpay/  # Razorpay payment webhooks
 │       └── stripe/    # Stripe payment webhooks
-├── auth/
-│   └── confirm/       # Email-confirmation link callback
 ├── cart/              # Shopping cart pages
 ├── categories/        # Category browsing pages
 ├── products/          # Product detail pages
@@ -113,8 +116,14 @@ lib/                  # Utility libraries
 ├── users.ts         # User management utilities (create, update, delete)
 ├── utils.ts         # Utility functions
 ├── shipping.ts      # Shared shipping maths — fee, threshold, admin toggle
+├── auth-client.ts   # Client auth seam — useSession / signOut (Clerk-backed)
 └── server/
-    └── settings.ts  # Store settings singleton (read + update)
+    ├── auth.ts        # requireAuth / requireAdmin (provider-agnostic)
+    ├── clerk-users.ts # Link Clerk users to store users
+    └── settings.ts    # Store settings singleton (read + update)
+
+auth.ts              # Server auth seam — auth() returns the store user id (Clerk-backed)
+middleware.ts        # clerkMiddleware + page protection
 
 prisma/              # Database schema and migrations
 └── schema.prisma    # Prisma schema file
@@ -125,10 +134,10 @@ types/               # TypeScript type definitions
 ## Database Schema (MongoDB via Prisma)
 
 ### Key Models
-- **User** - Customer accounts (email + bcrypt `password`, `emailVerified` stamp)
+- **User** - Customer accounts, linked to Clerk by `clerkId` (`password` / `emailVerified` are unused but kept for the return to Auth.js)
   - Added: `imageUrl`, `profileImageUrl`, `gender` fields
   - Roles: USER, ADMIN, SUPER_ADMIN
-- **VerificationToken** - Signup email-verification tokens (SHA-256 hash, 24 h TTL)
+- **VerificationToken** - Unused on this branch; kept for the return to Auth.js
 - **Product** - Fashion products with variants, colors, sizes, images
 - **Category** - Hierarchical product categories
 - **Cart/CartItem** - Shopping cart functionality
@@ -155,16 +164,11 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 ### Database
 - `DATABASE_URL` - MongoDB connection string (required)
 
-### Authentication (Auth.js / NextAuth v5)
-- `AUTH_SECRET` - Signs/encrypts the session JWT (required; `openssl rand -base64 32`)
-- `AUTH_URL` - Base URL for Auth.js (optional; auto-inferred on Vercel)
-
-### Email (SMTP — signup verification links)
-- `SMTP_HOST` - SMTP server, e.g. `smtp.resend.com` (unset in dev → links print to console)
-- `SMTP_PORT` - SMTP port (587)
-- `SMTP_USER` - SMTP username (literal `resend` for Resend)
-- `SMTP_PASS` - SMTP password (Resend API key)
-- `EMAIL_FROM` - From header; address must be on the verified sending domain (see docs/RESEND.md)
+### Authentication (Clerk)
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Clerk publishable key (required — the app does not start without it)
+- `CLERK_SECRET_KEY` - Clerk secret key (required)
+- `CLERK_WEBHOOK_SIGNING_SECRET` - Verifies `/api/webhooks/clerk` deliveries (required for the webhook only)
+- Clerk sends verification and reset emails itself; no SMTP variables are read
 
 ### Application
 - `NEXT_PUBLIC_APP_URL` - Application base URL (required)
@@ -187,8 +191,8 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - **Framework**: Next.js 15 (App Router)
 - **Language**: TypeScript
 - **Database**: MongoDB with Prisma ORM
-- **Authentication**: Auth.js (NextAuth v5) — Credentials provider, JWT sessions, signup email verification
-- **Email**: Nodemailer over SMTP (Resend in production)
+- **Authentication**: Clerk (`@clerk/nextjs` v7) — sign-in methods configured in the Clerk dashboard
+- **Email**: Sent by Clerk (verification, password reset, email codes)
 - **Styling**: Tailwind CSS
 - **UI Components**: Radix UI
 - **State Management**: TanStack Query (React Query)
@@ -244,20 +248,27 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - **Server-authoritative**: `/api/payments/create-intent` recomputes shipping from the database, so the client cannot talk the store into free delivery
 - Full details: `docs/STORE_SETTINGS.md`
 
-## Auth Flow (signup email verification)
+## Auth Flow (Clerk)
 
-- `POST /api/auth/register` creates the User (`emailVerified: null`) + Cart +
-  Wishlist, then emails a confirmation link (token stored as SHA-256 hash,
-  24 h TTL). No auto-login — the sign-up page shows "check your email".
-- `GET /auth/confirm?token=…` verifies the link, stamps `emailVerified`, and
-  redirects to `/sign-in?verified=1`.
-- `authorize()` in `auth.ts` refuses unverified accounts with a
-  `CredentialsSignin` subclass (`code: 'email_not_verified'`); the sign-in page
-  offers a rate-limited resend via `POST /api/auth/resend-verification`.
-- Full walkthrough: `docs/AUTHENTICATION.md`; email/Resend setup: `docs/RESEND.md`.
-- `scripts/backfill-email-verified.mjs` stamps accounts that predate the feature.
+- Clerk handles sign-up, sign-in, email verification, forgot password, email
+  code and Google/GitHub login on `/sign-in` and `/sign-up`.
+- Only two files know about Clerk: `auth.ts` (server, `auth()` → store user id)
+  and `lib/auth-client.ts` (client, `useSession()` / `signOut()`). API routes
+  keep using `requireAuth()`; components import `useSession` from
+  `@/lib/auth-client`. Do not import `@clerk/nextjs` anywhere else.
+- MongoDB `User` stays the main record. `linkClerkUser()` in
+  `lib/server/clerk-users.ts` links a Clerk user to a store user by `clerkId`,
+  then by **verified** email, or creates one with a cart and wishlist. It runs
+  on the first authenticated request and from the webhook.
+- Roles stay in MongoDB (`User.role`), read on every request.
+- Full walkthrough, setup and the return path: `docs/AUTHENTICATION.md`.
+- `scripts/clerk-import-users.mjs` copies existing accounts into Clerk with
+  their password hashes; `scripts/clerk-export-to-authjs.mjs` restores them.
 
 ## Webhook Integration
+
+### Auth Webhook
+- `POST /api/webhooks/clerk` — Clerk user events (signature-verified)
 
 ### Payment Webhooks
 - `POST /api/webhooks/razorpay` — Razorpay payment events (signature-verified)
@@ -268,7 +279,7 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 ### User Experience
 - Mobile-responsive design
 - Progressive Web App (PWA) capabilities
-- User authentication (Auth.js credentials + email verification)
+- User authentication (Clerk: password, email code, Google/GitHub)
 - Product catalog with advanced filtering
 - Shopping cart and wishlist functionality
 - Order tracking and management
@@ -287,7 +298,7 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - User management and role assignment
 
 ### Security & Performance
-- Auth.js credentials authentication with signup email verification
+- Clerk authentication with verified-email account linking
 - Role-based access control (RBAC)
 - Secure API endpoints with authentication
 - Payment-webhook signature verification
@@ -302,7 +313,7 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - Prisma for database operations
 - Path alias `@/*` maps to project root
 - MongoDB as primary database
-- Auth.js (auth.ts / auth.config.ts) handles all authentication flows
+- Clerk handles all authentication flows, behind auth.ts / lib/auth-client.ts
 - Middleware for admin route protection
 - Build process includes Prisma client generation
 
@@ -330,11 +341,11 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - **PATCH /api/admin/settings** - Update settings, e.g. `{ shippingEnabled: false }` (admin)
 
 ### Auth APIs
-- **POST /api/auth/register** - Email/password signup (sends verification email)
-- **POST /api/auth/resend-verification** - Re-send confirmation link (rate-limited)
-- **GET /auth/confirm** - Email-confirmation callback
+- Sign-up, sign-in and verification are served by Clerk — there are no `/api/auth/*` routes
+- **GET /api/users/profile** - The signed-in store user (also what `useSession()` loads)
 
 ### Webhook APIs
+- **POST /api/webhooks/clerk** - Clerk user sync
 - **POST /api/webhooks/razorpay** - Razorpay payment webhooks
 - **POST /api/webhooks/stripe** - Stripe payment webhooks
 
@@ -361,8 +372,8 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - ✅ Order management with status workflow
 - ✅ Category management with hierarchy
 - ✅ Payment webhook integration (Razorpay, Stripe)
-- ✅ Authentication and authorization (Auth.js credentials + JWT sessions)
-- ✅ Signup email verification (SMTP/Resend, hashed tokens, resend flow)
+- ✅ Authentication and authorization (Clerk sign-in + MongoDB roles)
+- ✅ Email verification, forgot password, email code and social login (via Clerk)
 - ✅ Database schema with all relationships (User fields updated)
 - ✅ API architecture with full CRUD operations
 - ✅ Responsive UI with Tailwind CSS
