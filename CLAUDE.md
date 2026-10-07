@@ -76,7 +76,8 @@ app/                    # Next.js 14 App Router
 │   ├── products/      # Product management
 │   ├── orders/        # Order management
 │   ├── categories/    # Category management
-│   └── settings/      # Store-wide switches (shipping fee on/off)
+│   ├── settings/      # Store-wide switches (shipping fee on/off)
+│   └── backup/        # Database backups (SUPER_ADMIN)
 ├── api/               # API routes
 │   ├── admin/         # Admin API endpoints
 │   │   ├── dashboard/ # Dashboard statistics
@@ -84,7 +85,8 @@ app/                    # Next.js 14 App Router
 │   │   ├── products/  # Product CRUD operations
 │   │   ├── orders/    # Order management
 │   │   ├── categories/ # Category CRUD operations
-│   │   └── settings/  # Store settings read/update (admin)
+│   │   ├── settings/  # Store settings read/update (admin)
+│   │   └── backup/    # Run a backup / list backup history (SUPER_ADMIN)
 │   ├── cart/          # Shopping cart API
 │   ├── categories/    # Category API
 │   ├── orders/        # Order API
@@ -118,12 +120,8 @@ lib/                  # Utility libraries
 ├── shipping.ts      # Shared shipping maths — fee, threshold, admin toggle
 ├── auth-client.ts   # Client auth seam — useSession / signOut (Clerk-backed)
 └── server/
-    ├── auth.ts        # requireAuth / requireAdmin (provider-agnostic)
-    ├── clerk-users.ts # Link Clerk users to store users
-    └── settings.ts    # Store settings singleton (read + update)
-
-auth.ts              # Server auth seam — auth() returns the store user id (Clerk-backed)
-middleware.ts        # clerkMiddleware + page protection
+    ├── settings.ts  # Store settings singleton (read + update)
+    └── backup.ts    # Whole-database snapshot copy to a separate cluster
 
 prisma/              # Database schema and migrations
 └── schema.prisma    # Prisma schema file
@@ -146,6 +144,7 @@ types/               # TypeScript type definitions
 - **Review** - Product reviews and ratings
 - **Address** - User shipping/billing addresses
 - **StoreSettings** - Store-wide admin switches, one document keyed `default` (`shippingEnabled`)
+- **BackupRun** - One row per backup run (snapshot stamp, status, per-collection counts); the authoritative manifest lives in the backup database
 
 ### User Roles & Permissions
 - **USER** (default) - Standard customer access
@@ -183,6 +182,9 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - `RAZORPAY_KEY_ID` - Razorpay key ID (optional - required for Razorpay payments)
 - `RAZORPAY_KEY_SECRET` - Razorpay key secret (optional - required for Razorpay payments)
 - `RAZORPAY_WEBHOOK_SECRET` - Razorpay webhook signature verification (optional - required for Razorpay webhooks)
+
+### Database Backups
+- `BACKUP_DATABASE_URL` - Connection string for a database on a **separate cluster**; required for `/admin/backup` (see docs/BACKUP.md)
 
 ### Instagram Integration
 - `INSTAGRAM_ACCESS_TOKEN` - Instagram Basic Display API long-lived access token (optional - required for Instagram feed display on /post page)
@@ -248,22 +250,27 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - **Server-authoritative**: `/api/payments/create-intent` recomputes shipping from the database, so the client cannot talk the store into free delivery
 - Full details: `docs/STORE_SETTINGS.md`
 
-## Auth Flow (Clerk)
+### Backups (`/admin/backup`) — SUPER_ADMIN only
+- **Back up now**: copies every collection to a separate backup database as a timestamped snapshot
+- **Snapshots, not a mirror**: the last 5 runs are kept, so corruption copied over one generation does not destroy the others
+- **Self-describing**: a `_backup_runs` manifest is written into the backup database, so a restore works even if the live database is gone
+- **Downloads a copy too**: each run also downloads `saakie-backup-<snapshot>.json` to the admin's computer (canonical Extended JSON, so ObjectIds/Dates restore intact); past snapshots have a Download button
+- **Refuses to run against the live database** (host + database name compared), and redacts credentials from every message
+- **Restore is a CLI script**, not a button: `node scripts/restore-backup.mjs`
+- Full details: `docs/BACKUP.md`
 
-- Clerk handles sign-up, sign-in, email verification, forgot password, email
-  code and Google/GitHub login on `/sign-in` and `/sign-up`.
-- Only two files know about Clerk: `auth.ts` (server, `auth()` → store user id)
-  and `lib/auth-client.ts` (client, `useSession()` / `signOut()`). API routes
-  keep using `requireAuth()`; components import `useSession` from
-  `@/lib/auth-client`. Do not import `@clerk/nextjs` anywhere else.
-- MongoDB `User` stays the main record. `linkClerkUser()` in
-  `lib/server/clerk-users.ts` links a Clerk user to a store user by `clerkId`,
-  then by **verified** email, or creates one with a cart and wishlist. It runs
-  on the first authenticated request and from the webhook.
-- Roles stay in MongoDB (`User.role`), read on every request.
-- Full walkthrough, setup and the return path: `docs/AUTHENTICATION.md`.
-- `scripts/clerk-import-users.mjs` copies existing accounts into Clerk with
-  their password hashes; `scripts/clerk-export-to-authjs.mjs` restores them.
+## Auth Flow (signup email verification)
+
+- `POST /api/auth/register` creates the User (`emailVerified: null`) + Cart +
+  Wishlist, then emails a confirmation link (token stored as SHA-256 hash,
+  24 h TTL). No auto-login — the sign-up page shows "check your email".
+- `GET /auth/confirm?token=…` verifies the link, stamps `emailVerified`, and
+  redirects to `/sign-in?verified=1`.
+- `authorize()` in `auth.ts` refuses unverified accounts with a
+  `CredentialsSignin` subclass (`code: 'email_not_verified'`); the sign-in page
+  offers a rate-limited resend via `POST /api/auth/resend-verification`.
+- Full walkthrough: `docs/AUTHENTICATION.md`; email/Resend setup: `docs/RESEND.md`.
+- `scripts/backfill-email-verified.mjs` stamps accounts that predate the feature.
 
 ## Webhook Integration
 
@@ -340,6 +347,11 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - **GET /api/admin/settings** - Full store settings (admin)
 - **PATCH /api/admin/settings** - Update settings, e.g. `{ shippingEnabled: false }` (admin)
 
+### Backup APIs
+- **GET /api/admin/backup** - Backup history + whether a destination is configured (SUPER_ADMIN)
+- **POST /api/admin/backup** - Run a backup now (SUPER_ADMIN)
+- **GET /api/admin/backup/[snapshot]/download** - Download a snapshot as a JSON file (SUPER_ADMIN)
+
 ### Auth APIs
 - Sign-up, sign-in and verification are served by Clerk — there are no `/api/auth/*` routes
 - **GET /api/users/profile** - The signed-in store user (also what `useSession()` loads)
@@ -380,3 +392,4 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - ✅ Build process optimization
 - ✅ Schema-aligned product creation with dimensions support
 - ✅ Store settings with an admin shipping-fee toggle (off ⇒ free shipping on every order)
+- ✅ On-demand database backups to a separate cluster, with snapshot retention, a downloaded file copy, and a CLI restore

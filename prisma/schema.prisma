@@ -245,6 +245,47 @@ model StoreSettings {
   @@map("store_settings")
 }
 
+// One row per backup run, for the admin Backups page. The authoritative
+// record lives in the BACKUP database's `_backup_runs` manifest — if this
+// database is the one that got lost, that manifest is what tells you which
+// snapshots exist. This model is the convenient local mirror of it.
+model BackupRun {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  // Snapshot stamp, e.g. `20260927T101500Z`. Collections in the backup
+  // database are named `<snapshot>__<collection>`.
+  snapshot    String       @unique
+  status      BackupStatus @default(RUNNING)
+  // Who pressed the button. The email is denormalised so the audit trail
+  // survives the account being deleted.
+  triggeredById    String? @db.ObjectId
+  triggeredByEmail String?
+  // Name of the destination database. Never the connection string.
+  targetDatabase   String?
+  // Per-collection document counts: { products: 42, orders: 7, ... }
+  collections      Json?
+  totalCollections Int      @default(0)
+  totalDocuments   Int      @default(0)
+  durationMs       Int?
+  // Failure message, already stripped of credentials.
+  error       String?
+  startedAt   DateTime  @default(now())
+  finishedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([startedAt])
+  @@index([status])
+  @@map("backup_runs")
+}
+
+enum BackupStatus {
+  RUNNING
+  SUCCESS
+  // Finished, but at least one collection did not copy cleanly.
+  PARTIAL
+  FAILED
+}
+
 model Order {
   id              String        @id @default(auto()) @map("_id") @db.ObjectId
   orderNumber     String        @unique
