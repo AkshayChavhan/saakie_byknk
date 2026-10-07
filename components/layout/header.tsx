@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'rea
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useSession } from '@/lib/auth-client'
 import { useQuery } from '@tanstack/react-query'
 import { Search, Heart, User, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -369,9 +369,9 @@ export function Header() {
   const isSignedIn = status === 'authenticated'
   const role = session?.user?.role
   const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN'
-  // Set by the `session` callback in auth.config.ts from `token.picture`, which
-  // the account page refreshes via `update()` the moment a new photo is saved —
-  // so this follows an upload without a re-login.
+  // The store profile's photo (lib/auth-client.ts), which the account page
+  // refreshes via `update()` the moment a new one is saved — so this follows
+  // an upload without a reload.
   const avatarUrl = session?.user?.image
   const menuRef = useRef<HTMLDivElement>(null)
 

@@ -1,78 +1,62 @@
-import NextAuth, { CredentialsSignin } from 'next-auth';
-import Credentials from 'next-auth/providers/credentials';
-import bcrypt from 'bcryptjs';
-import prisma from '@/lib/prisma';
-import { authConfig } from './auth.config';
+import 'server-only';
+import { auth as clerkAuth, clerkClient } from '@clerk/nextjs/server';
+import {
+  findLinkedUserId,
+  identityFromUser,
+  linkClerkUser,
+} from '@/lib/server/clerk-users';
 
-// Correct password but unconfirmed email. The subclass `code` reaches the
-// client as `SignInResponse.code`, letting the sign-in page offer a resend
-// instead of the generic "invalid email or password".
-class EmailNotVerifiedError extends CredentialsSignin {
-  code = 'email_not_verified';
+/**
+ * Server-side session, backed by Clerk.
+ *
+ * This file is the server half of the auth seam (the client half is
+ * lib/auth-client.ts). It keeps the exact contract the Auth.js version had —
+ * `auth()` resolves to `{ user: { id } }` with the STORE user's id, or null —
+ * so `requireAuth()` / `optionalAuth()` in lib/server/auth.ts and every route
+ * built on them are untouched by the choice of provider. Going back to Auth.js
+ * means restoring this file from the `authjs-before-clerk` tag; see
+ * docs/AUTHENTICATION.md.
+ */
+export interface Session {
+  user: { id: string };
+}
+
+// Clerk id → store user id. The link never changes once made, so a warm
+// server instance can skip the lookup and keep `requireAuth()` at the single
+// user query it has always cost. Short-lived so a relinked account catches up.
+const LINK_TTL_MS = 5 * 60 * 1000;
+const LINK_CACHE_MAX = 5000;
+const linkCache = new Map<string, { id: string; expires: number }>();
+
+function remember(clerkId: string, id: string) {
+  if (linkCache.size >= LINK_CACHE_MAX) linkCache.clear();
+  linkCache.set(clerkId, { id, expires: Date.now() + LINK_TTL_MS });
 }
 
 /**
- * Full Auth.js configuration (Node runtime).
+ * The signed-in user's session, or null when signed out.
  *
- * Spreads the edge-safe `authConfig` and adds the Credentials provider, whose
- * `authorize()` uses Prisma + bcrypt — neither of which is edge-safe, so they
- * must NOT leak into `auth.config.ts`.
- *
- * Future providers (Google OAuth, magic-link) are added to the `providers`
- * array below. Magic-link additionally needs the Prisma adapter and the
- * Auth.js adapter models in `schema.prisma`.
+ * Requires `clerkMiddleware()` to have run on the request (middleware.ts
+ * matches every page and API route). The first request from a Clerk user the
+ * store has not seen links them to their existing account by verified email,
+ * or creates one — so sign-up works even before the Clerk webhook is wired.
  */
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  ...authConfig,
-  providers: [
-    Credentials({
-      credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
-      },
-      async authorize(credentials) {
-        const email =
-          typeof credentials?.email === 'string'
-            ? credentials.email.trim().toLowerCase()
-            : '';
-        const password =
-          typeof credentials?.password === 'string' ? credentials.password : '';
+export async function auth(): Promise<Session | null> {
+  const { userId: clerkId } = await clerkAuth();
+  if (!clerkId) return null;
 
-        if (!email || !password) return null;
+  const cached = linkCache.get(clerkId);
+  if (cached && cached.expires > Date.now()) return { user: { id: cached.id } };
 
-        const user = await prisma.user.findUnique({
-          where: { email },
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            imageUrl: true,
-            role: true,
-            password: true,
-            emailVerified: true,
-          },
-        });
+  let id = await findLinkedUserId(clerkId);
+  if (!id) {
+    const client = await clerkClient();
+    const clerkUser = await client.users.getUser(clerkId);
+    id = await linkClerkUser(identityFromUser(clerkUser));
+  }
+  // Signed in to Clerk but without a verified email: no store account yet.
+  if (!id) return null;
 
-        // No user, or an OAuth-only user with no password set.
-        if (!user || !user.password) return null;
-
-        const valid = await bcrypt.compare(password, user.password);
-        if (!valid) return null;
-
-        // Only after the password checks out — revealing verification status
-        // to a wrong-password attempt would leak that the account exists.
-        // Pre-existing accounts are stamped by scripts/backfill-email-verified.mjs.
-        if (!user.emailVerified) throw new EmailNotVerifiedError();
-
-        // Returned object becomes the `user` arg of the `jwt` callback.
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.imageUrl,
-          role: user.role,
-        };
-      },
-    }),
-  ],
-});
+  remember(clerkId, id);
+  return { user: { id } };
+}

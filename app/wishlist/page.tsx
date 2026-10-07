@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useSession } from 'next-auth/react'
+import { useSession } from '@/lib/auth-client'
 import { Heart, ShoppingCart, Trash2, ArrowRight, Package } from 'lucide-react'
 import { Header } from '@/components/layout/header'
 import { formatPrice } from '@/lib/utils'

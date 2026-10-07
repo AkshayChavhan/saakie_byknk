@@ -1,249 +1,221 @@
-# Authentication Flow
+# Authentication (Clerk)
 
-The app uses **Auth.js (NextAuth v5)** with the **Credentials provider** for
-email + password login, plus **signup email verification**. Sessions are **JWTs
-stored in a browser cookie** — there is **no session table in the database**.
+> **Branch note.** This describes the `clerk-auth-no-merge` branch, which is
+> **not to be merged into `main`**. `main` still runs Auth.js. The last Auth.js
+> state is commit `dc30340` (local tag `authjs-before-clerk`).
 
-> **Key point:** No session token is saved in the DB. The database stores the
-> user (with a bcrypt password hash) and, transiently, hashed email-verification
-> tokens. The session "token" is a signed/encrypted JWT that lives in an
-> httpOnly cookie in the browser.
+Sign-in is handled by [Clerk](https://clerk.com). The store's own MongoDB
+`users` collection is still the main record: it keeps every user's id, role,
+cart, wishlist, orders and addresses. Clerk only answers "who is this?".
 
----
+## What Clerk does and what the store does
 
-## 1. Signup flow (with email verification)
-
-```
-User fills /sign-up form
-        │
-        ▼
-app/(auth)/sign-up/page.tsx  →  handleSubmit()
-        │  fetch POST /api/auth/register  { name, email, password }
-        ▼
-app/api/auth/register/route.ts  →  POST()
-        │  1. validate email regex + password length ≥ 8
-        │  2. prisma.user.findUnique({ email })   ── already exists? → 409
-        │  3. bcrypt.hash(password, 12)           ── hash the password
-        │  4. prisma.user.create({ email, name, password: hash, role: 'USER' })
-        │       └── emailVerified starts as null → account cannot sign in yet
-        │  5. prisma.cart.create()  +  prisma.wishlist.create()
-        │  6. createVerificationToken(email)      ── lib/server/verification.ts
-        │       raw 32-byte token → SHA-256 hash stored in `verification_tokens`
-        │       (24 h expiry; previous tokens for the address replaced)
-        │  7. sendVerificationEmail()             ── lib/server/email.ts
-        │       nodemailer → SMTP (Resend) → inbox
-        │       (send failure is logged, NOT fatal — resend covers it)
-        ▼
-   201 { success: true, requiresVerification: true, user }
-        │
-        ▼  (back in sign-up page)
-   "Check your email" screen — NO auto-login. The user must click the
-   emailed link before they can sign in. A "Resend email" button calls
-   POST /api/auth/resend-verification.
-```
-
-**Stored in the DB:** the user document (`password` as a **bcrypt hash**,
-`emailVerified: null`) and one `verification_tokens` document holding the
-**SHA-256 hash** of the link token — never the raw token, so a DB leak cannot
-be replayed into working links.
-
----
-
-## 2. Email confirmation flow
-
-```
-User clicks the emailed link
-        │
-        ▼
-GET /auth/confirm?token=<raw>          app/auth/confirm/route.ts
-        │  1. verifyToken(raw)              ── lib/server/verification.ts
-        │       SHA-256(raw) → prisma.verificationToken.findUnique
-        │       unknown or expired? → redirect /sign-in?error=confirmation_failed
-        │  2. prisma.user.updateMany({ email }, { emailVerified: now })
-        ▼
-   redirect → /sign-in?verified=1   (green "email confirmed" banner)
-```
-
-Design notes:
-
-- The link stays **valid until it expires (24 h)** — it is *not* single-use.
-  Corporate mail scanners (Outlook SafeLinks etc.) prefetch links before the
-  human clicks; a single-use token would be burned by the scanner. Verifying an
-  email is idempotent and low-privilege, so multi-use within the TTL is the
-  safer trade-off.
-- Issuing a new token (signup or resend) replaces any previous tokens for the
-  address; expired rows are cleared opportunistically.
-- `/auth/confirm` is listed under the public `'/auth'` prefix in
-  `middleware.ts` so the link works while signed out.
-
----
-
-## 3. Login flow
-
-```
-signIn('credentials', { email, password })   [next-auth/react]
-        │
-        ▼
-POST /api/auth/callback/credentials
-        │  handled by app/api/auth/[...nextauth]/route.ts
-        │  (re-exports `handlers` from auth.ts)
-        ▼
-auth.ts  →  Credentials provider  →  authorize({ email, password })
-        │  1. prisma.user.findUnique({ email })   ── includes password hash
-        │  2. bcrypt.compare(password, user.password)   ── verify
-        │     invalid? return null  → login rejected (generic error)
-        │  3. user.emailVerified null?  →  throw EmailNotVerifiedError
-        │       (CredentialsSignin subclass, code: 'email_not_verified' —
-        │        checked ONLY after the password matches, so a wrong-password
-        │        attempt cannot probe verification status)
-        │  4. verified?  return { id, email, name, image, role }
-        ▼
-auth.config.ts  →  callbacks.jwt({ token, user })
-        │  on first login (`user` is set):
-        │    token.id   = user.id
-        │    token.role = user.role          ←── role baked into the token
-        ▼
-   JWT is signed + encrypted with AUTH_SECRET
-        │
-        ▼
-   Set-Cookie: authjs.session-token=<encrypted JWT>
-   ───────────────────────────────────────────────
-   This cookie IS the session. It lives in the BROWSER.
-   Nothing is written to the database.
-```
-
-On the client, `signIn(..., { redirect: false })` returns
-`{ error, code, ... }`. The sign-in page treats `code === 'email_not_verified'`
-specially: it shows "your email has not been confirmed yet" plus a **resend
-button** instead of the generic "invalid email or password".
-
-The "token" is a **JWT stored as an httpOnly cookie**, not a DB row.
-`AUTH_SECRET` is the key used to sign/encrypt it.
-
----
-
-## 4. Resending the verification email
-
-`POST /api/auth/resend-verification { email }`
-(app/api/auth/resend-verification/route.ts)
-
-- Rate-limited: **5 requests / 15 min per IP** (`lib/server/rate-limit.ts`)
-  plus a **60 s per-email cooldown** on freshly issued tokens.
-- Always answers with the **same generic success body**, whether or not an
-  account exists — the endpoint cannot be used to probe which emails are
-  registered.
-- Only actually sends when the account exists **and** is still unverified.
-- Reachable from the sign-up "check your email" screen and from the sign-in
-  page after an `email_not_verified` error or a failed confirmation link.
-
----
-
-## 5. Using the session on later requests
-
-The browser automatically sends the session cookie on every same-origin
-request. Two consumers:
-
-### Client side — `useSession()`
-
-```
-components/layout/header.tsx, app/admin/page.tsx, etc.
-  const { data: session } = useSession()
-  session.user.role   ←── read straight from the JWT, no DB hit, no API call
-```
-
-### Server side — `auth()` in API routes
-
-```
-Any protected route, e.g. app/api/cart/route.ts
-        │
-        ▼
-lib/server/auth.ts  →  requireAuth()
-        │  1. session = await auth()        ── decrypts the cookie JWT
-        │  2. userId  = session.user.id
-        │  3. prisma.user.findUnique({ id: userId })   ── fetch fresh user row
-        │  4. return AuthedUser   (or a 401 NextResponse)
-        ▼
-   route proceeds
-   (requireAdmin() further checks role for /api/admin/* routes)
-```
-
----
-
-## Why no session token is stored in the DB
-
-| | JWT strategy (what we use) | DB-session strategy (alternative) |
-|---|---|---|
-| Where the session lives | Encrypted cookie in browser | A `Session` row in MongoDB |
-| DB lookup for the session | None | Yes, every request |
-| Extra tables needed | `VerificationToken` only (email verification) | `Session`, `Account`, `VerificationToken` |
-| Why this choice | Auth.js v5's **Credentials provider requires the JWT strategy** — DB sessions are not supported with it |
-
-The DB stays minimal — the `users` collection plus the small
-`verification_tokens` collection. The `VerificationToken` model is shaped like
-the Auth.js adapter's, so when Google login or magic links are added later the
-adapter can take it over (a comment marks the spot in `prisma/schema.prisma`).
-
----
-
-## One-line summary
-
-```
-SIGNUP → /api/auth/register → bcrypt.hash → user (unverified) + emailed link
-CONFIRM→ /auth/confirm?token → SHA-256 lookup → emailVerified stamped
-LOGIN  → authorize() → bcrypt.compare → emailVerified gate → signed JWT cookie
-```
-
-The DB stores the **user + password hash** (+ hashed verification tokens).
-The **session token is a cookie**, never persisted server-side.
-
----
-
-## Key files
-
-| File | Role |
+| Clerk | The store |
 |---|---|
-| `auth.config.ts` | Edge-safe config — `pages`, `session` strategy, `jwt`/`session` callbacks. Imported by middleware. No Prisma/bcrypt. |
-| `auth.ts` | Full Node config — Credentials provider with bcrypt + Prisma, `EmailNotVerifiedError` gate. Exports `handlers`, `auth`, `signIn`, `signOut`. |
-| `app/api/auth/[...nextauth]/route.ts` | Auth.js HTTP handlers (sign-in, callback, session, csrf, …). |
-| `app/api/auth/register/route.ts` | Email/password signup — hashes the password, creates User + Cart + Wishlist, issues the verification token, sends the email. |
-| `app/api/auth/resend-verification/route.ts` | Re-sends the confirmation link (rate-limited, enumeration-safe). |
-| `app/auth/confirm/route.ts` | Email-confirmation callback — verifies the token, stamps `emailVerified`, redirects to `/sign-in`. |
-| `lib/server/verification.ts` | Token create/verify helpers (SHA-256 at rest, 24 h TTL, link building). |
-| `lib/server/email.ts` | Nodemailer SMTP sender. No SMTP configured → dev logs the link to the console instead. |
-| `middleware.ts` | Route protection — redirects unauthenticated users; gates `/admin`; `'/auth'` prefix public for the confirm link. |
-| `lib/server/auth.ts` | `requireAuth()` / `optionalAuth()` / `requireAdmin()` / `requireSuperAdmin()` for API routes. |
-| `types/next-auth.d.ts` | Adds `id` and `role` to the session/JWT TypeScript types. |
-| `prisma/schema.prisma` | `User` model — `password` (bcrypt hash), `emailVerified`; `VerificationToken` model. |
-| `scripts/backfill-email-verified.mjs` | One-time migration: stamps `emailVerified` on accounts created before this feature (already run on the main DB). |
+| Sign-up, sign-in, sign-out | The `User` document and its id |
+| Email + password, email code (OTP), Google / GitHub | Roles: `USER`, `ADMIN`, `SUPER_ADMIN` |
+| Email verification, forgot password | Profile: name, photo, phone |
+| New-device email check | Cart, wishlist, orders, addresses, reviews |
+| Change password, delete account | Deciding who may see what (`requireAdmin()` etc.) |
+
+Which sign-in methods appear on the form is set in the **Clerk dashboard**, not
+in code.
+
+## The two files that know about Clerk
+
+Everything else in the app talks to these two and does not know which provider
+is behind them. This is what keeps the way back to Auth.js short.
+
+| File | Side | Contract |
+|---|---|---|
+| [`auth.ts`](../auth.ts) | Server | `auth()` → `{ user: { id } }` (the **store** user id) or `null` |
+| [`lib/auth-client.ts`](../lib/auth-client.ts) | Client | `useSession()` → `{ data, status, update }`, `signOut()` — same shapes as `next-auth/react` |
+
+- API routes keep using `requireAuth()` / `requireAdmin()` from
+  [`lib/server/auth.ts`](../lib/server/auth.ts), which is unchanged.
+- Components import `useSession` from `@/lib/auth-client`.
+- [`middleware.ts`](../middleware.ts) runs `clerkMiddleware` on every page and
+  API route. Signed-out visitors are redirected from protected pages to
+  `/sign-in?callbackUrl=…`, and from `/admin` to `/`.
+
+## How a Clerk user becomes a store user
+
+Handled by `linkClerkUser()` in
+[`lib/server/clerk-users.ts`](../lib/server/clerk-users.ts), which runs on the
+first authenticated request (inside `auth()`) and again from the webhook:
+
+1. A store user already has this `clerkId` → use it.
+2. A store user has the same email → link it. This is how accounts that
+   existed before Clerk keep their orders and their role.
+3. Nobody has that email → create the user, with a cart and a wishlist.
+
+Steps 2 and 3 only happen when Clerk has **verified** the email address.
+Linking by email hands over an existing account, so an unverified address is
+refused.
+
+Because step 3 runs on the first request, sign-up works even if the webhook is
+not configured.
+
+## Setup
+
+### 1. Clerk dashboard
+
+1. Create an application at <https://dashboard.clerk.com>.
+2. **User & authentication**: turn on Email address, Password, Email
+   verification code, and the social connections you want (Google, GitHub —
+   up to three on the free plan).
+3. Copy the API keys into `.env.local` (below).
+
+### 2. Environment variables
+
+```bash
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+CLERK_WEBHOOK_SIGNING_SECRET=whsec_...   # only needed for the webhook
+```
+
+The app does not start without the first two — every page returns an error
+until they are set. `AUTH_SECRET` and the `SMTP_*` / `EMAIL_FROM` variables are
+no longer read; Clerk sends the verification and reset emails itself.
+
+### 3. Database
+
+`User.clerkId` is new. It is an optional field, so existing documents need no
+change, but the lookup index should be created once:
+
+```bash
+npm run prisma:push
+```
+
+### 4. Webhook (recommended)
+
+Clerk dashboard → **Webhooks** → add endpoint
+`https://<your-domain>/api/webhooks/clerk`, subscribe to `user.created`,
+`user.updated`, `user.deleted`, and copy the signing secret into
+`CLERK_WEBHOOK_SIGNING_SECRET`.
+
+| Event | Effect in the store |
+|---|---|
+| `user.created` | Same as the first request: link or create the store user |
+| `user.updated` | Follow an email change; fill a blank name or photo (never overwrite one) |
+| `user.deleted` | Clear `clerkId`. The store user and its orders are kept |
+
+For local testing, expose the dev server with `npm run ngrok`.
+
+### 5. Move existing customers across
+
+```bash
+node scripts/clerk-import-users.mjs           # dry run: counts only
+node scripts/clerk-import-users.mjs --apply   # create them in Clerk
+```
+
+Each account is created in Clerk with its existing bcrypt password hash, so
+customers sign in with the password they already have. Accounts whose email was
+never confirmed are skipped; those people sign up again and are linked by
+email. The Clerk instance that receives them is whichever `CLERK_SECRET_KEY`
+points at — run it once per instance.
+
+### 6. Going to production
+
+A production Clerk instance needs a domain you own:
+
+1. In the dashboard, create the production instance and add the DNS records it
+   lists (can take up to 48 hours).
+2. Create your own Google and GitHub OAuth credentials and enter them in Clerk
+   — the shared development credentials do not work in production.
+3. Put the `pk_live_` / `sk_live_` keys and the production webhook secret in
+   the hosting environment.
+4. Run the import script again with the `sk_live_` key.
 
 ## Roles
 
-`USER` (default for new signups) · `ADMIN` · `SUPER_ADMIN`. The role is carried
-in the JWT (`session.user.role`). To promote a user, update the `role` field
-directly in MongoDB:
+Roles stay in MongoDB (`User.role`). `requireAdmin()` / `requireSuperAdmin()`
+read the role from the database on every request, so a role change in
+`/admin/users` applies immediately and nothing needs syncing to Clerk.
 
-```js
-db.users.updateOne({ email: 'you@example.com' }, { $set: { role: 'SUPER_ADMIN' } })
-```
+## Account deletion
 
-## Environment
+- **Admin deletes a user** (`DELETE /api/admin/users/[id]`): the store user is
+  removed, then the Clerk user, so the person cannot sign straight back in.
+- **Customer deletes their own account** (Account → Security): Clerk removes
+  the sign-in and the webhook clears `clerkId`. The store user and order
+  history are kept. Erasing those too is a business decision that has not been
+  made here.
 
-- `AUTH_SECRET` — required. Signs/encrypts the session JWT. Generate with
-  `openssl rand -base64 32`. Set a real value in Vercel; the value in
-  `.env` / `.env.local` is for local dev only.
-- `AUTH_URL` — optional. Auto-inferred on Vercel.
-- `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `EMAIL_FROM` —
-  verification-email delivery over SMTP (Resend in production — see
-  [RESEND.md](RESEND.md)). With `SMTP_HOST` unset, development prints the
-  verification link to the server console instead of sending mail.
-- `NEXT_PUBLIC_APP_URL` — the origin baked into emailed confirmation links.
-  Must match where the app actually runs (`http://localhost:3001` locally,
-  `https://saakiebyknk.in` in production).
+## Free-plan limits worth knowing
 
-## Future providers
+- 50,000 monthly retained users per app
+- Sessions fixed at 7 days
+- Up to 3 social providers
+- "Secured by Clerk" branding on the forms
+- No SMS codes, no MFA, no user bans
 
-Google OAuth and magic-link sign-in can be added later by dropping a provider
-into the `providers` array in `auth.ts`. Extension points are marked with
-comments in `auth.ts`, `auth.config.ts`, and the sign-in / sign-up pages.
-Magic-link additionally needs the Auth.js adapter models in `schema.prisma`
-(the existing `VerificationToken` model is already adapter-shaped).
+## Going back to Auth.js
+
+The migration was built to be reversible. MongoDB ids never changed, and the
+`password`, `emailVerified` and `VerificationToken` fields were kept.
+
+1. **Export users from Clerk.** Dashboard → Settings → User exports → Export
+   users. The CSV includes hashed passwords. Test this early on a development
+   instance: it is not confirmed that the export is available on the free plan.
+
+2. **Restore the Auth.js code** from commit `dc30340`:
+
+   ```bash
+   git rm -r "app/(auth)" app/api/webhooks/clerk lib/server/clerk-users.ts \
+     components/auth/clerk-appearance.ts tests/lib/clerk-users.test.ts
+   git checkout dc30340 -- auth.ts auth.config.ts middleware.ts \
+     types/next-auth.d.ts "app/(auth)" app/api/auth app/auth \
+     lib/server/email.ts lib/server/verification.ts components/auth \
+     components/providers.tsx app/layout.tsx \
+     tests/setup.tsx tests/middleware-matcher.test.ts
+   ```
+
+3. **Point the client seam back.** Replace the body of `lib/auth-client.ts`
+   with `export { useSession, signOut } from 'next-auth/react'`, and remove the
+   Security button (`openAccountSecurity`) from `app/account/page.tsx`.
+
+4. **Remove the Clerk call** (`deleteClerkUser`) from
+   `app/api/admin/users/[id]/route.ts`.
+
+5. **Swap the packages:**
+
+   ```bash
+   pnpm remove @clerk/nextjs
+   pnpm add next-auth@5.0.0-beta.32 nodemailer@^9.0.5
+   pnpm add -D @types/nodemailer@^8.0.1
+   ```
+
+6. **Swap the environment variables:** remove the three Clerk ones; set
+   `AUTH_SECRET` and the `SMTP_*` / `EMAIL_FROM` set (see `docs/RESEND.md`).
+
+7. **Put the passwords back:**
+
+   ```bash
+   node scripts/clerk-export-to-authjs.mjs export.csv                    # dry run
+   node scripts/clerk-export-to-authjs.mjs export.csv --apply --unlink
+   ```
+
+What going back still costs:
+
+- Everyone is signed out once.
+- Customers who only ever used Google, GitHub or the email code have no
+  password to restore, and Auth.js here has no "set a password" flow.
+- Forgot password, social login, email code and change password disappear
+  unless they are built on Auth.js.
+
+## File map
+
+| Path | Purpose |
+|---|---|
+| `auth.ts` | Server seam: Clerk session → store user id |
+| `lib/auth-client.ts` | Client seam: `useSession`, `signOut`, `openAccountSecurity` |
+| `lib/server/clerk-users.ts` | Link / create / sync / unlink store users |
+| `lib/server/auth.ts` | `requireAuth`, `requireAdmin`, … (provider-agnostic) |
+| `middleware.ts` | `clerkMiddleware` + page protection |
+| `app/(auth)/sign-in/[[...sign-in]]/page.tsx` | Clerk `<SignIn />` in the branded shell |
+| `app/(auth)/sign-up/[[...sign-up]]/page.tsx` | Clerk `<SignUp />` in the branded shell |
+| `components/auth/clerk-appearance.ts` | Form styling, `callbackUrl` validation |
+| `app/api/webhooks/clerk/route.ts` | Clerk → store user sync |
+| `scripts/clerk-import-users.mjs` | Existing customers → Clerk |
+| `scripts/clerk-export-to-authjs.mjs` | Clerk passwords → store (return path) |

@@ -15,7 +15,7 @@ export const createMockUser = (overrides = {}) => ({
 })
 
 /**
- * Mock Auth.js session shape. `requireAuth()`/`optionalAuth()` read
+ * Mock session shape (auth.ts). `requireAuth()`/`optionalAuth()` read
  * `session.user.id`, so tests resolve `auth()` with this.
  */
 export const createMockSession = (overrides: { id?: string; role?: string } = {}) => ({

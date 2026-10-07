@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useSession } from 'next-auth/react'
+import { useSession } from '@/lib/auth-client'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -135,7 +135,7 @@ export default function AdminDashboard() {
     }
   }, [])
 
-  // Role comes straight from the Auth.js session — no API round-trip.
+  // Role comes with the session (lib/auth-client.ts), already loaded.
   useEffect(() => {
     if (status === 'loading') return
     if (authorized) {

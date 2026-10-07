@@ -13,7 +13,7 @@ import {
   ProductListParams,
 } from '@/lib/api';
 
-// Protected endpoints authenticate via the Auth.js session cookie, which the
+// Protected endpoints authenticate via the session cookie, which the
 // browser sends automatically on same-origin requests — no token plumbing.
 
 // ============================================

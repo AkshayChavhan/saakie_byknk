@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ShoppingCart, Check } from 'lucide-react'
-import { useSession } from 'next-auth/react'
+import { useSession } from '@/lib/auth-client'
 import { cartApi } from '@/lib/api'
 import { useToast } from '@/components/ui/toast'
 

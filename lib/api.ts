@@ -1,6 +1,6 @@
 // API client for same-origin Next.js routes.
 // Endpoints are relative paths (e.g. "/api/products"); the browser resolves
-// them against the current origin. Auth.js session cookies are sent
+// them against the current origin. The session cookie is sent
 // automatically on same-origin requests, so route handlers authenticate via
 // `requireAuth()` with no token plumbing needed.
 
@@ -21,7 +21,7 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}): Pro
 }
 
 /**
- * Base fetch wrapper for same-origin Next.js API calls. The Auth.js session
+ * Base fetch wrapper for same-origin Next.js API calls. The session
  * cookie is sent automatically (`credentials: 'same-origin'`), so protected
  * routes work without an Authorization header.
  */

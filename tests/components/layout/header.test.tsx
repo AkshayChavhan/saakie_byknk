@@ -3,9 +3,9 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Header } from '@/components/layout/header'
 
-// Mock Auth.js client session
+// Mock the client session seam
 const mockUseSession = vi.fn()
-vi.mock('next-auth/react', () => ({
+vi.mock('@/lib/auth-client', () => ({
   useSession: () => mockUseSession(),
   signOut: vi.fn(),
 }))

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth, requireAdmin, requireSuperAdmin } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { deleteClerkUser } from '@/lib/server/clerk-users';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -81,7 +82,28 @@ export async function DELETE(
       return NextResponse.json({ error: 'Cannot delete yourself' }, { status: 400 });
     }
 
+    const target = await prisma.user.findUnique({
+      where: { id },
+      select: { clerkId: true },
+    });
+
     await prisma.user.delete({ where: { id } });
+
+    // The store account is gone; take the sign-in with it, or the person could
+    // sign straight back in and be given a fresh account. Store first, so a
+    // refused delete (the user still has reviews, say) leaves both sides intact.
+    if (target?.clerkId) {
+      try {
+        await deleteClerkUser(target.clerkId);
+      } catch (error) {
+        console.error(`[admin] store user ${id} deleted but Clerk user ${target.clerkId} was not:`, error);
+        return NextResponse.json({
+          message: 'User deleted successfully',
+          warning: 'The sign-in account could not be removed from Clerk. Delete it in the Clerk dashboard.',
+        });
+      }
+    }
+
     return NextResponse.json({ message: 'User deleted successfully' });
   } catch (error) {
     return apiError(error);

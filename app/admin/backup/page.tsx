@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useSession } from '@/lib/auth-client'
 import {
   ArrowLeft,
   DatabaseBackup,

@@ -35,29 +35,25 @@ vi.mock('next/link', () => ({
   },
 }))
 
-// Mock Auth.js client hooks (next-auth/react)
-vi.mock('next-auth/react', () => ({
+// Mock the client session seam (lib/auth-client.ts, Clerk-backed)
+vi.mock('@/lib/auth-client', () => ({
   useSession: () => ({
     data: null,
     status: 'unauthenticated',
+    update: vi.fn(),
   }),
-  signIn: vi.fn(),
   signOut: vi.fn(),
-  SessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  openAccountSecurity: vi.fn(),
 }))
 
-// Mock the Auth.js server instance (`auth()` used by route handlers / server components)
+// Mock the server session seam (`auth()` used by route handlers / server components)
 vi.mock('@/auth', () => ({
   auth: vi.fn(() => Promise.resolve(null)),
-  signIn: vi.fn(),
-  signOut: vi.fn(),
-  handlers: { GET: vi.fn(), POST: vi.fn() },
 }))
 
 // Mock environment variables
 process.env.DATABASE_URL = 'mongodb://localhost:27017/test'
 process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000'
-process.env.AUTH_SECRET = 'test-secret'
 
 // Global fetch mock
 global.fetch = vi.fn()
