@@ -27,6 +27,9 @@ export const clerkAuthAppearance = {
     cardBox: 'w-full max-w-none shadow-none',
     card: 'bg-transparent shadow-none border-0 p-0',
     footer: 'bg-transparent',
+    // The six verification-code boxes take no colour from the variables above
+    // and vanish against the dark column without an explicit border.
+    otpCodeFieldInput: 'border border-gray-600 bg-gray-800 text-gray-50',
   },
 } as const
 
