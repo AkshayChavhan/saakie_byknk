@@ -2,9 +2,9 @@
 
 ## Git & Code Management Rules (MANDATORY)
 
-### Branch Rule — `clerk-auth-no-merge`
-- This branch moves authentication from Auth.js to Clerk. **It must NEVER be merged into `main`**, and no pull request may target `main` from it.
-- `main` stays on Auth.js. The last Auth.js state is commit `dc30340` (local tag `authjs-before-clerk`).
+### Authentication — Clerk is live on `main`
+- `main` runs Clerk. It arrived via PR #73 (and #74) from `clerk-auth-no-merge`.
+- The last Auth.js state is commit `dc30340`, tagged `authjs-before-clerk`.
 - The way back from Clerk to Auth.js is documented in `docs/AUTHENTICATION.md` → "Going back to Auth.js".
 
 ### Commit Rules

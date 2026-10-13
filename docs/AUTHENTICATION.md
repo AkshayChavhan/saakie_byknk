@@ -1,8 +1,8 @@
 # Authentication (Clerk)
 
-> **Branch note.** This describes the `clerk-auth-no-merge` branch, which is
-> **not to be merged into `main`**. `main` still runs Auth.js. The last Auth.js
-> state is commit `dc30340` (local tag `authjs-before-clerk`).
+> **Clerk is live on `main`**, merged via PR #73. The last Auth.js state is
+> commit `dc30340`, tagged `authjs-before-clerk`; the way back is "Going back
+> to Auth.js" at the end of this document.
 
 Sign-in is handled by [Clerk](https://clerk.com). The store's own MongoDB
 `users` collection is still the main record: it keeps every user's id, role,
