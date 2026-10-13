@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, Playfair_Display } from 'next/font/google'
+import { Public_Sans, Playfair_Display } from 'next/font/google'
 import { Suspense } from 'react'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Analytics } from '@vercel/analytics/next'
@@ -10,7 +10,20 @@ import { NavigationProgress } from '@/components/ui/navigation-progress'
 import { Footer } from '@/components/layout/footer'
 import { SiteFooter } from '@/components/layout/site-footer'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+// Body typeface. Amazon sets its own stack in Amazon Ember, which is
+// proprietary to Amazon and cannot be licensed for this site — their own
+// fallback is plain Arial. Public Sans is the closest free match: humanist
+// like Ember, with the same large x-height and open apertures, and a variable
+// axis that covers the 200/400/500/700 weights Amazon actually loads.
+//
+// Exposed only as a CSS variable. `font-sans` in tailwind.config.js points at
+// it, and `body` picks it up via @apply in globals.css, so the stack is
+// declared in exactly one place.
+const publicSans = Public_Sans({
+  subsets: ['latin'],
+  variable: '--font-public-sans',
+  display: 'swap',
+})
 
 // Editorial serif used for headings — gives the storefront its premium,
 // saree-boutique feel. Exposed as a CSS variable so any component can opt in
@@ -71,8 +84,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
-      <body className={inter.className}>
+    <html lang="en" className={`${publicSans.variable} ${playfair.variable}`}>
+      <body>
         {/* Top-of-page navigation progress bar. Suspense is required because it
             reads useSearchParams; without it Next would opt the whole tree into
             client rendering. */}

@@ -31,8 +31,11 @@
   }
 
   body {
-    @apply bg-white text-gray-900;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    /* `font-sans` resolves to the stack in tailwind.config.js, which is the one
+       place the body typeface is declared. This used to hard-code a system
+       stack here as well, which quietly contradicted the font the <body> class
+       was already applying. */
+    @apply bg-white text-gray-900 font-sans;
     font-feature-settings: "kern" 1;
     text-rendering: optimizeLegibility;
   }
