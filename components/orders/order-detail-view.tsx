@@ -81,9 +81,16 @@ function AddressBlock({ title, address }: { title: string; address: OrderAddress
 export function OrderDetailView({
   order,
   confirmation = false,
+  showActions = true,
 }: {
   order: OrderDetail
   confirmation?: boolean
+  /**
+   * The "my account" / "continue shopping" links under the card. Customer
+   * screens keep them; the admin order page turns them off and supplies its
+   * own controls beside the card instead.
+   */
+  showActions?: boolean
 }) {
   const sameBilling =
     !order.billingAddress ||
@@ -242,6 +249,7 @@ export function OrderDetailView({
       </div>
 
       {/* Actions */}
+      {showActions && (
       <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
         {confirmation ? (
           <>
@@ -267,6 +275,7 @@ export function OrderDetailView({
           </Link>
         )}
       </div>
+      )}
     </div>
   )
 }
