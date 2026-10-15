@@ -25,8 +25,8 @@ export default async function SignInPage({
   return (
     <AuthShell
       eyebrow="Welcome back"
-      title="Sign in to your account"
-      subtitle="Step back into a world of timeless weaves and curated elegance."
+      title=""
+      subtitle=""
       panelQuote="Drape yourself in heritage — every weave tells a story."
     >
       <SignIn
