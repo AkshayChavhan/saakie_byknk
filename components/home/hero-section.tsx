@@ -92,6 +92,14 @@ export function HeroSection({ slides: incoming }: HeroSectionProps) {
     )
   }
 
+  // Every slide used to mount its full-viewport image at once, so all of
+  // them downloaded on page load and competed with the first (the LCP
+  // image). Only the visible slide and the one after it carry an image now;
+  // the rest stay in the DOM without one until the carousel reaches them.
+  const nextIndex = (currentSlide + 1) % slides.length
+  const shouldRenderImage = (index: number) =>
+    index === currentSlide || index === nextIndex
+
   return (
     <section className="relative h-[400px] sm:h-[500px] lg:h-[600px] overflow-hidden">
       {slides.map((slide, index) => (
@@ -104,15 +112,20 @@ export function HeroSection({ slides: incoming }: HeroSectionProps) {
           }`}
         >
           {/* Background Image */}
-          <div className="absolute inset-0">
-            <Image
-              src={slide.image}
-              alt={slide.title}
-              fill
-              sizes="100vw"
-              className="object-cover"
-              priority={index === 0}
-            />
+          <div className="absolute inset-0 bg-gray-900">
+            {shouldRenderImage(index) && (
+              <Image
+                src={slide.image}
+                alt={slide.title}
+                fill
+                sizes="100vw"
+                className="object-cover"
+                // Preload only the first slide while it is the one on screen;
+                // the upcoming slide is fetched lazily, never ahead of it.
+                priority={index === 0 && currentSlide === 0}
+                loading={index === currentSlide ? undefined : 'lazy'}
+              />
+            )}
             <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/20 pointer-events-none" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
           </div>
