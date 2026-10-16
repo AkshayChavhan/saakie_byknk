@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { apiError } from '@/lib/server/errors';
+import { cached, TAG } from '@/lib/server/cache';
 import { getSubtreeProductCounts } from '@/lib/server/category-counts';
 
 export const runtime = 'nodejs';
 export const revalidate = 60;
 
-export async function GET() {
-  try {
+/**
+ * Category cards for the storefront grid. Cached under the categories and
+ * products tags: a category edit or a new product photo invalidates it, so
+ * the per-category image lookups below run once per change, not per visit.
+ */
+const loadCategoryCards = cached(
+  async () => {
     // Only top-level categories on the public storefront — sub-categories
     // are surfaced from within their parent's page (/categories/[slug]).
     const [categories, subtreeCounts] = await Promise.all([
@@ -66,7 +72,7 @@ export async function GET() {
         .map((product) => product.images[0]?.url)
         .find(Boolean);
 
-    const formattedCategories = categories.map((category) => ({
+    return categories.map((category) => ({
       id: category.id,
       name: category.name,
       slug: category.slug,
@@ -78,8 +84,14 @@ export async function GET() {
       // list is usually empty, which is what made every card read "0 Products".
       count: subtreeCounts.get(category.id) ?? 0,
     }));
+  },
+  'category-cards',
+  { tags: [TAG.categories, TAG.products] }
+);
 
-    return NextResponse.json(formattedCategories);
+export async function GET() {
+  try {
+    return NextResponse.json(await loadCategoryCards());
   } catch (error) {
     return apiError(error);
   }

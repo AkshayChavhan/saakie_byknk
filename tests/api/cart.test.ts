@@ -20,6 +20,7 @@ const mockDb = {
   cartItem: {
     create: vi.fn(),
     update: vi.fn(),
+    upsert: vi.fn(),
     deleteMany: vi.fn(),
   },
   product: {
@@ -124,7 +125,7 @@ describe('Cart API', () => {
       const { POST } = await import('@/app/api/cart/route')
       const request = new NextRequest('http://localhost:3000/api/cart', {
         method: 'POST',
-        body: JSON.stringify({ productId: 'prod_123' }),
+        body: JSON.stringify({ productId: '507f1f77bcf86cd799439011' }),
       })
       const response = await POST(request)
 
@@ -144,7 +145,8 @@ describe('Cart API', () => {
 
       expect(response.status).toBe(400)
       const data = await response.json()
-      expect(data.error).toBe('Product ID is required')
+      expect(data.error.code).toBe('VALIDATION_ERROR')
+      expect(data.error.message).toContain('productId')
     })
 
     it('returns 400 when quantity is less than 1', async () => {
@@ -154,13 +156,13 @@ describe('Cart API', () => {
       const { POST } = await import('@/app/api/cart/route')
       const request = new NextRequest('http://localhost:3000/api/cart', {
         method: 'POST',
-        body: JSON.stringify({ productId: 'prod_123', quantity: 0 }),
+        body: JSON.stringify({ productId: '507f1f77bcf86cd799439011', quantity: 0 }),
       })
       const response = await POST(request)
 
       expect(response.status).toBe(400)
       const data = await response.json()
-      expect(data.error).toBe('Quantity must be at least 1')
+      expect(data.error.message).toBe('quantity: Quantity must be at least 1')
     })
 
     it('returns 404 when product not found', async () => {
@@ -171,7 +173,7 @@ describe('Cart API', () => {
       const { POST } = await import('@/app/api/cart/route')
       const request = new NextRequest('http://localhost:3000/api/cart', {
         method: 'POST',
-        body: JSON.stringify({ productId: 'prod_123' }),
+        body: JSON.stringify({ productId: '507f1f77bcf86cd799439011' }),
       })
       const response = await POST(request)
 
@@ -190,7 +192,7 @@ describe('Cart API', () => {
       const { POST } = await import('@/app/api/cart/route')
       const request = new NextRequest('http://localhost:3000/api/cart', {
         method: 'POST',
-        body: JSON.stringify({ productId: 'prod_123' }),
+        body: JSON.stringify({ productId: '507f1f77bcf86cd799439011' }),
       })
       const response = await POST(request)
 
@@ -209,7 +211,7 @@ describe('Cart API', () => {
       const { POST } = await import('@/app/api/cart/route')
       const request = new NextRequest('http://localhost:3000/api/cart', {
         method: 'POST',
-        body: JSON.stringify({ productId: 'prod_123', quantity: 5 }),
+        body: JSON.stringify({ productId: '507f1f77bcf86cd799439011', quantity: 5 }),
       })
       const response = await POST(request)
 
@@ -232,26 +234,29 @@ describe('Cart API', () => {
       mockDb.cart.findUnique
         .mockResolvedValueOnce(cart)
         .mockResolvedValueOnce(updatedCart)
-      mockDb.cartItem.create.mockResolvedValue({})
+      mockDb.cartItem.upsert.mockResolvedValue({})
 
       const { POST } = await import('@/app/api/cart/route')
       const request = new NextRequest('http://localhost:3000/api/cart', {
         method: 'POST',
-        body: JSON.stringify({ productId: 'prod_123', quantity: 1 }),
+        body: JSON.stringify({ productId: '507f1f77bcf86cd799439011', quantity: 1 }),
       })
       const response = await POST(request)
-      const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(mockDb.cartItem.create).toHaveBeenCalled()
+      expect(mockDb.cartItem.upsert).toHaveBeenCalledWith({
+        where: { cartId_productId: { cartId: 'cart_123', productId: '507f1f77bcf86cd799439011' } },
+        create: { cartId: 'cart_123', productId: '507f1f77bcf86cd799439011', quantity: 1, price: 5999 },
+        update: { quantity: { increment: 1 }, price: 5999 },
+      })
     })
 
     it('updates existing item quantity', async () => {
       const user = createMockUser()
-      const product = createMockProduct({ stock: 10, price: 5999, id: 'prod_123' })
+      const product = createMockProduct({ stock: 10, price: 5999, id: '507f1f77bcf86cd799439011' })
       const existingItem = createMockCartItem({
         id: 'item_123',
-        productId: 'prod_123',
+        productId: '507f1f77bcf86cd799439011',
         quantity: 2,
       })
       const cart = createMockCart({ items: [existingItem] })
@@ -265,19 +270,61 @@ describe('Cart API', () => {
       mockDb.cart.findUnique
         .mockResolvedValueOnce(cart)
         .mockResolvedValueOnce(updatedCart)
-      mockDb.cartItem.update.mockResolvedValue({})
+      mockDb.cartItem.upsert.mockResolvedValue({})
 
       const { POST } = await import('@/app/api/cart/route')
       const request = new NextRequest('http://localhost:3000/api/cart', {
         method: 'POST',
-        body: JSON.stringify({ productId: 'prod_123', quantity: 1 }),
+        body: JSON.stringify({ productId: '507f1f77bcf86cd799439011', quantity: 1 }),
       })
       await POST(request)
 
-      expect(mockDb.cartItem.update).toHaveBeenCalledWith({
-        where: { id: 'item_123' },
-        data: { quantity: 3, price: 5999 },
+      // Merged into the existing line through the unique (cartId, productId)
+      // key rather than a read-then-update that two requests could race.
+      expect(mockDb.cartItem.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { cartId_productId: { cartId: 'cart_123', productId: '507f1f77bcf86cd799439011' } },
+          update: { quantity: { increment: 1 }, price: 5999 },
+        })
+      )
+    })
+
+    it('rejects when the existing line plus the new quantity exceeds stock', async () => {
+      const product = createMockProduct({ stock: 3, id: '507f1f77bcf86cd799439011' })
+      const cart = createMockCart({
+        items: [createMockCartItem({ productId: '507f1f77bcf86cd799439011', quantity: 2 })],
       })
+
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
+      mockDb.user.findUnique.mockResolvedValue(createMockUser())
+      mockDb.product.findUnique.mockResolvedValue(product)
+      mockDb.cart.findUnique.mockResolvedValueOnce(cart)
+
+      const { POST } = await import('@/app/api/cart/route')
+      const request = new NextRequest('http://localhost:3000/api/cart', {
+        method: 'POST',
+        body: JSON.stringify({ productId: '507f1f77bcf86cd799439011', quantity: 2 }),
+      })
+      const response = await POST(request)
+
+      expect(response.status).toBe(400)
+      expect(mockDb.cartItem.upsert).not.toHaveBeenCalled()
+    })
+
+    it('rejects a non-integer or oversized quantity', async () => {
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
+      mockDb.user.findUnique.mockResolvedValue(createMockUser())
+
+      const { POST } = await import('@/app/api/cart/route')
+      for (const quantity of [1.5, '2', 999]) {
+        const request = new NextRequest('http://localhost:3000/api/cart', {
+          method: 'POST',
+          body: JSON.stringify({ productId: '507f1f77bcf86cd799439011', quantity }),
+        })
+        const response = await POST(request)
+        expect(response.status).toBe(400)
+      }
+      expect(mockDb.product.findUnique).not.toHaveBeenCalled()
     })
 
     it('creates cart if does not exist when adding item', async () => {
@@ -295,12 +342,12 @@ describe('Cart API', () => {
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(updatedCart)
       mockDb.cart.create.mockResolvedValue(newCart)
-      mockDb.cartItem.create.mockResolvedValue({})
+      mockDb.cartItem.upsert.mockResolvedValue({})
 
       const { POST } = await import('@/app/api/cart/route')
       const request = new NextRequest('http://localhost:3000/api/cart', {
         method: 'POST',
-        body: JSON.stringify({ productId: 'prod_123' }),
+        body: JSON.stringify({ productId: '507f1f77bcf86cd799439011' }),
       })
       await POST(request)
 

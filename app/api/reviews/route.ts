@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { isUniqueViolation } from '@/lib/server/prisma-errors';
 import {
   getReviewEligibility,
   type ReviewEligibilityReason,
@@ -64,18 +65,31 @@ export async function POST(request: Request) {
       );
     }
 
-    const review = await prisma.review.create({
-      data: {
-        userId: r.id,
-        productId,
-        rating,
-        title,
-        comment,
-        // Guaranteed: only paid purchasers reach this point.
-        isVerified: true,
-        status: 'PENDING',
-      },
-    });
+    let review;
+    try {
+      review = await prisma.review.create({
+        data: {
+          userId: r.id,
+          productId,
+          rating,
+          title,
+          comment,
+          // Guaranteed: only paid purchasers reach this point.
+          isVerified: true,
+          status: 'PENDING',
+        },
+      });
+    } catch (error) {
+      // The eligibility check is racy under a double submit; the unique index
+      // on userId+productId is the real guarantee of one review per product.
+      if (isUniqueViolation(error)) {
+        return NextResponse.json(
+          { error: 'You have already reviewed this product', reason: 'already_reviewed' },
+          { status: 409 }
+        );
+      }
+      throw error;
+    }
 
     return NextResponse.json(
       {

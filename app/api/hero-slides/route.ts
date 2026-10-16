@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { apiError } from '@/lib/server/errors';
+import { cached, TAG } from '@/lib/server/cache';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,21 +12,31 @@ export const dynamic = 'force-dynamic';
  * Primary source: admin-managed `HeroSlide` rows. If none exist, fall back to
  * slides derived from real store products, so the homepage hero is never
  * empty before an admin has configured any slides.
+ *
+ * Every homepage view used to run this against the database. Cached until an
+ * admin saves a slide (hero-slides tag) or a product changes (the fallback is
+ * built from products).
  */
-export async function GET() {
-  try {
+const loadHeroSlides = cached(
+  async () => {
     const heroSlides = await prisma.heroSlide.findMany({
       where: { isActive: true },
       orderBy: { order: 'asc' },
     });
 
-    if (heroSlides.length > 0) {
-      // `hero-section.tsx` maps `ctaText`/`ctaLink`/`subtitle`/`description`/
-      // `image` directly off these rows.
-      return NextResponse.json(heroSlides);
-    }
+    // `hero-section.tsx` maps `ctaText`/`ctaLink`/`subtitle`/`description`/
+    // `image` directly off these rows.
+    if (heroSlides.length > 0) return heroSlides;
 
-    return NextResponse.json(await productDerivedSlides());
+    return productDerivedSlides();
+  },
+  'hero-slides',
+  { tags: [TAG.heroSlides, TAG.products] }
+);
+
+export async function GET() {
+  try {
+    return NextResponse.json(await loadHeroSlides());
   } catch (error) {
     return apiError(error);
   }
@@ -47,7 +58,7 @@ async function productDerivedSlides() {
       isFeatured: true,
       images: { select: { url: true }, take: 1 },
       category: { select: { name: true } },
-      _count: { select: { orderItems: true } },
+      salesCount: true,
     },
     take: 5,
     orderBy: { createdAt: 'desc' },
@@ -65,7 +76,7 @@ async function productDerivedSlides() {
         isFeatured: true,
         images: { select: { url: true }, take: 1 },
         category: { select: { name: true } },
-        _count: { select: { orderItems: true } },
+        salesCount: true,
       },
       take: 5,
       orderBy: { createdAt: 'desc' },
@@ -79,7 +90,7 @@ async function productDerivedSlides() {
       const discount = onSale
         ? Math.round(((p.comparePrice! - p.price) / p.comparePrice!) * 100)
         : null;
-      const isBestseller = p._count.orderItems > 10;
+      const isBestseller = p.salesCount > 10;
 
       const type = onSale
         ? 'sale'

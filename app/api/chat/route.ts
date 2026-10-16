@@ -11,7 +11,8 @@ import {
 import { retrieveContext } from '@/lib/ai/retrieval';
 import { apiError } from '@/lib/server/errors';
 import { optionalAuth } from '@/lib/server/auth';
-import { rateLimit, clientIp } from '@/lib/server/rate-limit';
+import { checkRateLimit, clientIp } from '@/lib/server/rate-limit';
+import { MAX_CHAT_MESSAGE_CHARS } from '@/lib/server/validation';
 import type { RecommendedProduct } from '@/types/chat';
 
 export const runtime = 'nodejs';
@@ -99,7 +100,7 @@ export async function POST(request: Request) {
     // IP for anonymous visitors (the chat bubble is shown to everyone).
     const user = await optionalAuth();
     const rateKey = user ? `chat:user:${user.id}` : `chat:ip:${clientIp(request)}`;
-    const limit = rateLimit(rateKey, CHAT_RATE_LIMIT, CHAT_RATE_WINDOW_MS, Date.now());
+    const limit = await checkRateLimit(rateKey, CHAT_RATE_LIMIT, CHAT_RATE_WINDOW_MS);
     if (!limit.allowed) {
       return NextResponse.json(
         { error: 'Too many requests. Please slow down and try again shortly.' },
@@ -128,7 +129,8 @@ export async function POST(request: Request) {
       .slice(-MAX_HISTORY)
       .map((m) => ({
         role: m.role as 'user' | 'assistant',
-        content: m.content,
+        // Every character here is billed on every turn; cap it.
+        content: m.content.slice(0, MAX_CHAT_MESSAGE_CHARS),
       }));
 
     if (history.length === 0) {

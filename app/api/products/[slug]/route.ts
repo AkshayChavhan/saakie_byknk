@@ -37,16 +37,9 @@ export async function GET(
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
-    // Average rating over approved reviews only.
-    const approvedRatings = await prisma.review.findMany({
-      where: { productId: product.id, status: 'APPROVED' },
-      select: { rating: true },
-    });
-    const avgRating =
-      approvedRatings.length > 0
-        ? approvedRatings.reduce((sum, r) => sum + r.rating, 0) /
-          approvedRatings.length
-        : 0;
+    // Average over approved reviews, maintained on the product by review
+    // moderation (lib/server/reviews.ts) rather than recomputed per view.
+    const avgRating = product.rating;
 
     // Related products: other active products in the same category.
     const related = await prisma.product.findMany({
@@ -78,8 +71,11 @@ export async function GET(
       ),
     }));
 
+    // Internal numbers stay on the server.
+    const { costPrice: _costPrice, lowStockAlert: _lowStockAlert, ...publicProduct } = product;
+
     return NextResponse.json({
-      ...product,
+      ...publicProduct,
       // Gallery images are the full-resolution shots, so they are the ones most
       // worth lifting — watermark every one before it leaves the server.
       images: product.images.map((image) => ({

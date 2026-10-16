@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { apiError } from '@/lib/server/errors';
+import { parseLimit, parsePage } from '@/lib/server/validation';
 import { watermarkImageUrl } from '@/lib/image-watermark';
 import { getCategoryScopeIds } from '@/lib/server/category-counts';
 
@@ -18,11 +19,8 @@ export async function GET(request: Request) {
     const inStock = searchParams.get('inStock');
     const colors = searchParams.get('colors');
     const sale = searchParams.get('sale');
-    const page = searchParams.get('page') ?? '1';
-    const limit = searchParams.get('limit') ?? '12';
-
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
+    const pageNum = parsePage(searchParams.get('page'));
+    const limitNum = parseLimit(searchParams.get('limit'), 12);
     const minPriceNum = parseInt(minPrice);
     const maxPriceNum = parseInt(maxPrice);
 
@@ -88,66 +86,51 @@ export async function GET(request: Request) {
       case 'price-high':
         orderBy = { price: 'desc' };
         break;
+      // `salesCount` and `rating` are maintained on the product (by payment
+      // settlement and review moderation), so these sort on an indexed field
+      // instead of counting a relation across every matching product.
       case 'popular':
-        orderBy = { orderItems: { _count: 'desc' } };
+        orderBy = [{ salesCount: 'desc' }, { createdAt: 'desc' }];
         break;
       case 'rating':
-        orderBy = { reviews: { _count: 'desc' } };
+        orderBy = [{ rating: 'desc' }, { createdAt: 'desc' }];
         break;
       case 'newest':
       default:
         orderBy = { createdAt: 'desc' };
     }
 
-    const totalCount = await prisma.product.count({ where });
-
-    const products = await prisma.product.findMany({
-      where,
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        price: true,
-        comparePrice: true,
-        stock: true,
-        createdAt: true,
-        images: { select: { url: true }, take: 1 },
-        colors: { select: { hexCode: true } },
-        category: { select: { name: true, slug: true } },
-        // Approved only — the schema notes that unapproved reviews are never
-        // shown publicly, and the detail endpoint already counts this way.
-        _count: {
-          select: {
-            reviews: { where: { status: 'APPROVED' } },
-            orderItems: true,
+    // The page and its total are independent; run them together.
+    const [totalCount, products] = await Promise.all([
+      prisma.product.count({ where }),
+      prisma.product.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          price: true,
+          comparePrice: true,
+          stock: true,
+          createdAt: true,
+          rating: true,
+          salesCount: true,
+          images: { select: { url: true }, take: 1 },
+          colors: { select: { hexCode: true } },
+          category: { select: { name: true, slug: true } },
+          // Approved only — the schema notes that unapproved reviews are never
+          // shown publicly, and the detail endpoint already counts this way.
+          _count: {
+            select: {
+              reviews: { where: { status: 'APPROVED' } },
+            },
           },
         },
-      },
-      skip: (pageNum - 1) * limitNum,
-      take: limitNum,
-      orderBy,
-    });
-
-    // Real average rating per product, over approved reviews only. One grouped
-    // query for the whole page rather than a round trip per product, and it
-    // mirrors app/api/products/[slug]/route.ts so a card and the product page
-    // it links to can never show different numbers.
-    const avgRatingByProduct = new Map<string, number>();
-    if (products.length > 0) {
-      const grouped = await prisma.review.groupBy({
-        by: ['productId'],
-        where: {
-          productId: { in: products.map((p) => p.id) },
-          status: 'APPROVED',
-        },
-        _avg: { rating: true },
-      });
-      for (const row of grouped) {
-        if (row._avg.rating !== null) {
-          avgRatingByProduct.set(row.productId, row._avg.rating);
-        }
-      }
-    }
+        skip: (pageNum - 1) * limitNum,
+        take: limitNum,
+        orderBy,
+      }),
+    ]);
 
     const formattedProducts = products.map((product) => ({
       id: product.id,
@@ -157,9 +140,10 @@ export async function GET(request: Request) {
       // Pass through as-is. `null` means "not on sale" and the UI must not
       // render a discount badge — never substitute a derived reference price.
       comparePrice: product.comparePrice,
-      // Rounded to one decimal, which is the precision the UI renders.
-      rating:
-        Math.round((avgRatingByProduct.get(product.id) ?? 0) * 10) / 10,
+      // Maintained on the product by review moderation, so a card and the
+      // product page it links to read the same number. Rounded to one
+      // decimal, which is the precision the UI renders.
+      rating: Math.round(product.rating * 10) / 10,
       reviews: product._count.reviews,
       image: watermarkImageUrl(
         product.images[0]?.url || '/images/placeholder-product.svg'
@@ -170,7 +154,7 @@ export async function GET(request: Request) {
       isNew:
         new Date(product.createdAt).getTime() >
         Date.now() - 30 * 24 * 60 * 60 * 1000,
-      isBestseller: product._count.orderItems > 10,
+      isBestseller: product.salesCount > 10,
       inStock: product.stock > 0,
     }));
 

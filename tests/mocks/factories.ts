@@ -43,6 +43,8 @@ export const createMockProduct = (overrides = {}) => ({
   careInstructions: 'Dry clean only',
   isActive: true,
   isFeatured: true,
+  rating: 0,
+  salesCount: 0,
   categoryId: 'cat_123',
   dimensions: null,
   weight: null,

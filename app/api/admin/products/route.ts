@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth, requireAdmin } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { invalidate, TAG } from '@/lib/server/cache';
+import { parseLimit, parsePage, productCreateSchema, validateBody } from '@/lib/server/validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -14,8 +16,8 @@ export async function GET(request: Request) {
     if (admin) return admin;
 
     const { searchParams } = new URL(request.url);
-    const pageNum = parseInt(searchParams.get('page') ?? '1');
-    const limitNum = parseInt(searchParams.get('limit') ?? '20');
+    const pageNum = parsePage(searchParams.get('page'));
+    const limitNum = parseLimit(searchParams.get('limit'), 20);
     const search = searchParams.get('search');
     const category = searchParams.get('category');
 
@@ -64,6 +66,8 @@ export async function POST(request: Request) {
     const admin = requireAdmin(r);
     if (admin) return admin;
 
+    const parsed = validateBody(productCreateSchema, await request.json().catch(() => null));
+    if (parsed instanceof NextResponse) return parsed;
     const {
       name,
       slug,
@@ -75,13 +79,9 @@ export async function POST(request: Request) {
       images,
       colors,
       sizes,
-      isActive = true,
-      isFeatured = false,
-    } = await request.json();
-
-    if (!name || !slug || !price || !categoryId) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-    }
+      isActive,
+      isFeatured,
+    } = parsed;
 
     const existingProduct = await prisma.product.findUnique({ where: { slug } });
     if (existingProduct) {
@@ -132,6 +132,7 @@ export async function POST(request: Request) {
       },
     });
 
+    invalidate(TAG.products, TAG.categories);
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
     return apiError(error);

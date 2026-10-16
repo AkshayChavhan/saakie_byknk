@@ -1,11 +1,23 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import prisma from '@/lib/prisma';
+import {
+  findOrderForGateway,
+  settleFailedPayment,
+  settlePaidOrder,
+  settleRefund,
+} from '@/lib/server/payments';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
+/**
+ * Razorpay payment events. Razorpay redelivers any event that does not get a
+ * 2xx, so every branch is idempotent (see lib/server/payments.ts) and an
+ * event that refers to an order we do not have is acknowledged, not errored —
+ * a 500 there would just make Razorpay retry it until it gives up and
+ * disables the webhook.
+ */
 export async function POST(request: Request) {
   try {
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
@@ -26,83 +38,69 @@ export async function POST(request: Request) {
       .update(rawBody)
       .digest('hex');
 
-    if (signature !== expectedSignature) {
+    const sigBuf = Buffer.from(signature);
+    const expBuf = Buffer.from(expectedSignature);
+    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
       console.error('Razorpay webhook signature verification failed');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
 
     const body = JSON.parse(rawBody);
-    const event = body.event;
-    const payload = body.payload;
+    const event: string = body.event;
+    const payload = body.payload ?? {};
 
     console.log(`Razorpay webhook received: ${event}`);
 
     switch (event) {
       case 'payment.captured': {
-        const payment = payload.payment.entity;
-        const orderId = payment.notes?.orderId;
+        const payment = payload.payment?.entity ?? {};
+        const order = await findOrderForGateway({
+          gatewayOrderId: payment.order_id,
+          orderId: payment.notes?.orderId,
+        });
+        if (!order) {
+          console.warn(`Razorpay payment ${payment.id} matched no order`);
+          break;
+        }
 
-        if (orderId) {
-          const order = await prisma.order.update({
-            where: { id: orderId },
-            data: {
-              status: 'CONFIRMED',
-              paymentStatus: 'PAID',
-              paymentId: payment.id,
-              // Capture can land after the customer gave up and cleared the
-              // order away. Money changed hands, so put it back on their list
-              // rather than leaving a paid order they cannot see.
-              customerHiddenAt: null,
-            },
-          });
-
-          if (order.userId) {
-            await prisma.cartItem.deleteMany({
-              where: { cart: { userId: order.userId } },
-            });
+        const result = await settlePaidOrder({ orderId: order.id, paymentId: payment.id });
+        if (result.applied) {
+          console.log(`Order ${result.orderNumber} payment captured`);
+          if (result.oversold.length > 0) {
+            console.error(
+              `[payments] order ${result.orderNumber} oversold product(s): ${result.oversold.join(', ')}`
+            );
           }
-
-          const orderItems = await prisma.orderItem.findMany({
-            where: { orderId: order.id },
-          });
-
-          for (const item of orderItems) {
-            await prisma.product.update({
-              where: { id: item.productId },
-              data: { stock: { decrement: item.quantity } },
-            });
-          }
-
-          console.log(`Order ${order.orderNumber} payment captured`);
+        } else {
+          console.log(`Order ${order.id} already settled; capture ignored`);
         }
         break;
       }
 
       case 'payment.failed': {
-        const payment = payload.payment.entity;
-        const orderId = payment.notes?.orderId;
-        if (orderId) {
-          await prisma.order.update({
-            where: { id: orderId },
-            data: { status: 'CANCELLED', paymentStatus: 'FAILED' },
-          });
-          console.log(`Order ${orderId} payment failed`);
+        const payment = payload.payment?.entity ?? {};
+        const order = await findOrderForGateway({
+          gatewayOrderId: payment.order_id,
+          orderId: payment.notes?.orderId,
+        });
+        if (order) {
+          const result = await settleFailedPayment(order.id);
+          console.log(
+            result.applied
+              ? `Order ${order.id} payment failed`
+              : `Order ${order.id} not pending; failure ignored`
+          );
         }
         break;
       }
 
       case 'refund.created': {
-        const refund = payload.refund.entity;
-        const paymentId = refund.payment_id;
-        const order = await prisma.order.findFirst({ where: { paymentId } });
-
-        if (order) {
-          await prisma.order.update({
-            where: { id: order.id },
-            data: { status: 'REFUNDED', paymentStatus: 'REFUNDED' },
-          });
-          console.log(`Order ${order.orderNumber} refunded`);
-        }
+        const refund = payload.refund?.entity ?? {};
+        const result = await settleRefund({
+          paymentId: refund.payment_id,
+          amountMinor: typeof refund.amount === 'number' ? refund.amount : null,
+        });
+        if (result.applied) console.log(`Order ${result.orderNumber} refund recorded`);
         break;
       }
 

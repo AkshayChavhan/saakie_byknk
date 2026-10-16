@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth, requireAdmin } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { invalidate, TAG } from '@/lib/server/cache';
+import { categoryUpdateSchema, validateBody } from '@/lib/server/validation';
 import { deleteImage } from '@/lib/cloudinary';
 
 export const runtime = 'nodejs';
@@ -46,7 +48,9 @@ export async function PATCH(
     const admin = requireAdmin(r);
     if (admin) return admin;
     const { id } = await context.params;
-    const { name, slug, description, image, parentId, isActive } = await request.json();
+    const parsed = validateBody(categoryUpdateSchema, await request.json().catch(() => null));
+    if (parsed instanceof NextResponse) return parsed;
+    const { name, slug, description, image, parentId, isActive } = parsed;
 
     if (parentId && parentId === id) {
       return NextResponse.json(
@@ -85,6 +89,7 @@ export async function PATCH(
       },
     });
 
+    invalidate(TAG.categories);
     return NextResponse.json(category);
   } catch (error) {
     return apiError(error);
@@ -141,6 +146,7 @@ export async function DELETE(
 
     await prisma.category.delete({ where: { id } });
 
+    invalidate(TAG.categories);
     return NextResponse.json({ message: 'Category deleted successfully' });
   } catch (error) {
     return apiError(error);

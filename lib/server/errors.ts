@@ -28,7 +28,10 @@ export function apiError(err: unknown): NextResponse {
     );
   }
 
-  const message = err instanceof Error ? err.message : 'Internal server error';
+  // Unexpected errors carry Prisma query text, validation detail and the
+  // like. That belongs in the server log, not in the response body.
+  const isDev = process.env.NODE_ENV === 'development';
+  const message = isDev && err instanceof Error ? err.message : 'Internal server error';
   const stack = err instanceof Error ? err.stack : undefined;
 
   console.error('API Error:', err);
@@ -39,7 +42,7 @@ export function apiError(err: unknown): NextResponse {
       error: {
         message,
         code: 'SERVER_ERROR',
-        ...(process.env.NODE_ENV === 'development' && stack ? { stack } : {}),
+        ...(isDev && stack ? { stack } : {}),
       },
     },
     { status: 500 }

@@ -2,25 +2,11 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { cartAddSchema, validateBody } from '@/lib/server/validation';
+import { cartInclude, cartTotals as totals } from '@/lib/server/cart';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-const cartInclude = {
-  items: {
-    include: {
-      product: {
-        include: { images: true, colors: true, sizes: true },
-      },
-    },
-  },
-} as const;
-
-function totals(cart: { items: { price: number; quantity: number }[] }) {
-  const subtotal = cart.items.reduce((t, i) => t + i.price * i.quantity, 0);
-  const itemCount = cart.items.reduce((c, i) => c + i.quantity, 0);
-  return { subtotal, itemCount };
-}
 
 export async function GET() {
   try {
@@ -50,14 +36,9 @@ export async function POST(request: Request) {
     const r = await requireAuth();
     if (r instanceof NextResponse) return r;
 
-    const { productId, quantity = 1 } = await request.json();
-
-    if (!productId) {
-      return NextResponse.json({ error: 'Product ID is required' }, { status: 400 });
-    }
-    if (quantity < 1) {
-      return NextResponse.json({ error: 'Quantity must be at least 1' }, { status: 400 });
-    }
+    const parsed = validateBody(cartAddSchema, await request.json().catch(() => null));
+    if (parsed instanceof NextResponse) return parsed;
+    const { productId, quantity } = parsed;
 
     const product = await prisma.product.findUnique({
       where: { id: productId },
@@ -90,29 +71,22 @@ export async function POST(request: Request) {
     }
 
     const existingItem = cart.items.find((i) => i.productId === productId);
-
-    if (existingItem) {
-      const newQuantity = existingItem.quantity + quantity;
-      if (product.stock < newQuantity) {
-        return NextResponse.json(
-          { error: `Only ${product.stock} items available in stock` },
-          { status: 400 }
-        );
-      }
-      await prisma.cartItem.update({
-        where: { id: existingItem.id },
-        data: { quantity: newQuantity, price: product.price },
-      });
-    } else {
-      await prisma.cartItem.create({
-        data: {
-          cartId: cart.id,
-          productId,
-          quantity,
-          price: product.price,
-        },
-      });
+    const newQuantity = (existingItem?.quantity ?? 0) + quantity;
+    if (product.stock < newQuantity) {
+      return NextResponse.json(
+        { error: `Only ${product.stock} items available in stock` },
+        { status: 400 }
+      );
     }
+
+    // One line per product per cart (unique on cartId+productId). An upsert
+    // makes two simultaneous adds merge into that line instead of racing the
+    // read above and creating a duplicate.
+    await prisma.cartItem.upsert({
+      where: { cartId_productId: { cartId: cart.id, productId } },
+      create: { cartId: cart.id, productId, quantity, price: product.price },
+      update: { quantity: { increment: quantity }, price: product.price },
+    });
 
     const updatedCart = await prisma.cart.findUnique({
       where: { userId: r.id },

@@ -104,6 +104,10 @@ export const cartApi = {
   get: () =>
     apiFetch<any>('/api/cart'),
 
+  /** Units in the cart, for the header badge — far cheaper than `get()`. */
+  count: () =>
+    apiFetch<{ itemCount: number }>('/api/cart/count'),
+
   addItem: (data: { productId: string; quantity: number; colorId?: string; sizeId?: string }) =>
     apiFetch<any>('/api/cart', {
       method: 'POST',

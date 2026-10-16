@@ -80,8 +80,9 @@ describe('Featured Products API', () => {
       )
     })
 
-    it('reports a rating when the product has reviews', async () => {
+    it('reports the rating maintained on the product, rounded to one decimal', async () => {
       const product = createMockProduct({
+        rating: 4.25,
         _count: { reviews: 3 },
       })
       mockPrisma.product.findMany.mockResolvedValue([product])
@@ -90,14 +91,13 @@ describe('Featured Products API', () => {
       const response = await GET()
       const data = await response.json()
 
-      // The route surfaces a flat 4.5 when any reviews exist (no averaging).
-      expect(data[0].rating).toBe(4.5)
+      expect(data[0].rating).toBe(4.3)
       expect(data[0].reviews).toBe(3)
     })
 
     it('returns 0 rating when no reviews', async () => {
       const product = createMockProduct({
-        reviews: [],
+        rating: 0,
         _count: { reviews: 0 },
       })
       mockPrisma.product.findMany.mockResolvedValue([product])

@@ -2,9 +2,9 @@
 
 ## Git & Code Management Rules (MANDATORY)
 
-### Branch Rule — `clerk-auth-no-merge`
-- This branch moves authentication from Auth.js to Clerk. **It must NEVER be merged into `main`**, and no pull request may target `main` from it.
-- `main` stays on Auth.js. The last Auth.js state is commit `dc30340` (local tag `authjs-before-clerk`).
+### Authentication — Clerk is live on `main`
+- `main` runs Clerk. It arrived via PR #73 (and #74) from `clerk-auth-no-merge`.
+- The last Auth.js state is commit `dc30340`, tagged `authjs-before-clerk`.
 - The way back from Clerk to Auth.js is documented in `docs/AUTHENTICATION.md` → "Going back to Auth.js".
 
 ### Commit Rules
@@ -186,6 +186,10 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 ### Database Backups
 - `BACKUP_DATABASE_URL` - Connection string for a database on a **separate cluster**; required for `/admin/backup` (see docs/BACKUP.md)
 
+### Rate Limiting
+- `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` - Optional. When set, `checkRateLimit()` counts across all serverless instances; otherwise it falls back to per-instance memory (see docs/RELIABILITY.md)
+- `instrumentation.ts` validates the environment at server start (`lib/server/env.ts`): required variables throw in production, optional integrations only warn
+
 ### Instagram Integration
 - `INSTAGRAM_ACCESS_TOKEN` - Instagram Basic Display API long-lived access token (optional - required for Instagram feed display on /post page)
 
@@ -271,6 +275,22 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
   offers a rate-limited resend via `POST /api/auth/resend-verification`.
 - Full walkthrough: `docs/AUTHENTICATION.md`; email/Resend setup: `docs/RESEND.md`.
 - `scripts/backfill-email-verified.mjs` stamps accounts that predate the feature.
+
+## Payment Settlement
+
+- `lib/server/payments.ts` is the only place a payment outcome is applied to an order. `POST /api/payments/confirm` and both payment webhooks call it, so whichever arrives first clears the cart lines and decrements stock, and every later call is a no-op.
+- `Order.gatewayOrderId` (Razorpay `order_…` / Stripe `pi_…`) is stamped at create-intent; the confirm route requires the signed Razorpay order id to match it, so a signature cannot be replayed against a different order.
+- Stock decrements are guarded (`stock >= quantity`); an oversold product is floored at 0 and flagged in `Order.notes` as `OVERSOLD`.
+- Unique indexes: `CartItem(cartId, productId)`, `WishlistItem(wishlistId, productId)`, `Review(userId, productId)`. Before `npm run prisma:push` on an existing database run `node scripts/dedupe-before-unique-indexes.mjs` (add `--apply` to fix).
+- Full details: `docs/RELIABILITY.md`
+
+## Performance Conventions
+
+- Reads that rarely change (categories, nav tree, hero slides, banners, featured products, settings) go through `cached()` in `lib/server/cache.ts` with a tag; the admin write that changes them calls `invalidate(TAG.x)`. Never add a time-only `revalidate` for admin-managed data.
+- `Product.salesCount` (payment settlement) and `Product.rating` (review moderation via `syncProductRating`) are maintained fields. Sort and badge on them; do not count `orderItems` or average `reviews` per request. Backfill: `node scripts/backfill-product-stats.mjs --apply`.
+- The header badge uses `GET /api/cart/count`; cart and wishlist responses use a `select`, not `include`.
+- Relation fields are indexed in `prisma/schema.prisma` (Prisma does not do this on MongoDB). Add an `@@index` when adding a relation or a new filter/sort field.
+- Full details: `docs/PERFORMANCE.md`
 
 ## Webhook Integration
 
