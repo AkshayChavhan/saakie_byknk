@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useSession, signOut, openAccountSecurity } from '@/lib/auth-client'
+import { useSession, useProfile, signOut, openAccountSecurity } from '@/lib/auth-client'
 import {
   User,
   Package,
@@ -112,17 +112,21 @@ export default function AccountPage() {
 
   const compressing = imageCompression?.busy === true
 
+  // The profile comes from the query useSession() already ran for the
+  // header, so this page costs no second /api/users/profile request.
+  const { data: sharedProfile } = useProfile()
+  useEffect(() => {
+    if (!sharedProfile) return
+    setProfile(sharedProfile)
+    setForm({ name: sharedProfile.name || '', phone: sharedProfile.phone || '' })
+  }, [sharedProfile])
+
   const loadAll = useCallback(async () => {
     try {
-      const [prof, ords, revs] = await Promise.all([
-        userApi.getProfile().catch(() => null),
+      const [ords, revs] = await Promise.all([
         orderApi.list().catch(() => []),
         reviewApi.mine().catch(() => []),
       ])
-      if (prof) {
-        setProfile(prof)
-        setForm({ name: prof.name || '', phone: prof.phone || '' })
-      }
       setOrders(Array.isArray(ords) ? ords : [])
       setReviews(Array.isArray(revs) ? revs : [])
     } catch (error) {
@@ -228,7 +232,7 @@ export default function AccountPage() {
       const updated: Profile = await userApi.updateProfile(fd)
       setProfile(updated)
       // Reflect name/image in the active session immediately (no re-login).
-      await update({ name: updated.name, image: updated.imageUrl })
+      await update({ name: updated.name, image: updated.imageUrl, phone: updated.phone })
       setEditing(false)
       setFile(null)
       setPreviewUrl(null)

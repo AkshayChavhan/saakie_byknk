@@ -52,3 +52,15 @@ export async function getCartItemCount(userId: string): Promise<number> {
   });
   return agg._sum.quantity ?? 0;
 }
+
+/**
+ * The signed-in user's cart with totals, in the shape `GET /api/cart`
+ * returns, for pages that render on the server. Creates the cart row on
+ * first use, as the API does.
+ */
+export async function loadCart(userId: string) {
+  const cart =
+    (await prisma.cart.findUnique({ where: { userId }, include: cartInclude })) ??
+    (await prisma.cart.create({ data: { userId }, include: cartInclude }));
+  return { ...cart, ...cartTotals(cart) };
+}

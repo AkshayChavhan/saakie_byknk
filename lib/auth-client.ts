@@ -33,15 +33,40 @@ export interface Session {
 
 export type SessionStatus = 'loading' | 'authenticated' | 'unauthenticated'
 
-interface Profile {
+export interface Profile {
   id: string
   name: string | null
   email: string | null
+  phone: string | null
   imageUrl: string | null
   role: string
 }
 
 const profileKey = (clerkId: string | null | undefined) => ['session-user', clerkId ?? null]
+
+async function fetchProfile(): Promise<Profile> {
+  const response = await fetch('/api/users/profile', { credentials: 'same-origin' })
+  if (!response.ok) throw new Error(`Profile request failed (${response.status})`)
+  return response.json()
+}
+
+/**
+ * The signed-in store user's full profile (name, email, phone, photo, role).
+ *
+ * Same query as `useSession()` uses, so a page that shows the profile (the
+ * account page) reads it from the cache the header already filled instead
+ * of requesting /api/users/profile a second time.
+ */
+export function useProfile() {
+  const { isLoaded, isSignedIn, userId } = useAuth()
+  return useQuery<Profile>({
+    queryKey: profileKey(userId),
+    queryFn: fetchProfile,
+    enabled: isLoaded && !!isSignedIn,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  })
+}
 
 // The Clerk instance of whichever component last rendered `useSession()`, so
 // `signOut()` can stay a plain function like the next-auth one it replaces.
@@ -50,7 +75,7 @@ let activeClerk: ReturnType<typeof useClerk> | null = null
 export function useSession(): {
   data: Session | null
   status: SessionStatus
-  update: (patch?: { name?: string | null; image?: string | null }) => Promise<void>
+  update: (patch?: { name?: string | null; image?: string | null; phone?: string | null }) => Promise<void>
 } {
   const { isLoaded, isSignedIn, userId } = useAuth()
   const { user: clerkUser } = useUser()
@@ -62,11 +87,7 @@ export function useSession(): {
   // a brand-new Clerk user to a store account on their first page load.
   const profile = useQuery<Profile>({
     queryKey: profileKey(userId),
-    queryFn: async () => {
-      const response = await fetch('/api/users/profile', { credentials: 'same-origin' })
-      if (!response.ok) throw new Error(`Profile request failed (${response.status})`)
-      return response.json()
-    },
+    queryFn: fetchProfile,
     enabled: isLoaded && !!isSignedIn,
     staleTime: 5 * 60 * 1000,
     retry: 1,
@@ -75,7 +96,7 @@ export function useSession(): {
   // Mirrors next-auth's `update()`: fold a profile edit into the live session
   // so the header follows a new name or photo without a reload.
   const update = useCallback(
-    async (patch?: { name?: string | null; image?: string | null }) => {
+    async (patch?: { name?: string | null; image?: string | null; phone?: string | null }) => {
       if (!patch) {
         await queryClient.invalidateQueries({ queryKey: profileKey(userId) })
         return
@@ -86,6 +107,7 @@ export function useSession(): {
               ...current,
               name: patch.name !== undefined ? patch.name : current.name,
               imageUrl: patch.image !== undefined ? patch.image : current.imageUrl,
+              phone: patch.phone !== undefined ? patch.phone : current.phone,
             }
           : current
       )
