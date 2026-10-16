@@ -1,14 +1,15 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getCategorySeo } from '@/lib/server/seo'
+import { loadCategoryDetail } from '@/lib/server/categories'
 import { CategoryView } from './category-view'
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 /**
  * Server wrapper for the category page. The interactive listing/filtering UI
- * lives in the 'use client' CategoryView component; this server component adds
- * per-category SEO metadata.
+ * lives in the 'use client' CategoryView component; this server component
+ * loads the category once (metadata and body share it through React cache)
+ * and hands it to the client, so the listing request can start immediately.
  */
 export async function generateMetadata({
   params,
@@ -16,7 +17,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
   const { slug } = await params
-  const category = await getCategorySeo(slug)
+  const category = await loadCategoryDetail(slug)
 
   if (!category) {
     return {
@@ -53,8 +54,8 @@ export default async function CategoryPage({
 }) {
   const { slug } = await params
   // Cached, so this reuses the query generateMetadata already ran.
-  const category = await getCategorySeo(slug)
+  const category = await loadCategoryDetail(slug)
   if (!category) notFound()
 
-  return <CategoryView />
+  return <CategoryView initialCategory={category} />
 }

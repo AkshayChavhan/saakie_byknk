@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -9,6 +9,7 @@ import { Header } from '@/components/layout/header'
 import { RatingBadge } from '@/components/ui/rating-badge'
 import { formatPrice } from '@/lib/utils'
 import { fetchApi } from '@/lib/api'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
 
 interface Product {
   id: string
@@ -213,14 +214,24 @@ function ProductCard({
   )
 }
 
-export function CategoryView() {
+interface CategoryViewProps {
+  /** The category as loaded by the server page; the view starts from it. */
+  initialCategory?: Category | null
+}
+
+export function CategoryView({ initialCategory = null }: CategoryViewProps) {
   const params = useParams()
   const slug = params.slug as string
   
-  const [category, setCategory] = useState<Category | null>(null)
+  const [category, setCategory] = useState<Category | null>(initialCategory)
   const [products, setProducts] = useState<Product[]>([])
+  // `loading` covers the first listing only; later filter changes set
+  // `refreshing` and keep the current products on screen (dimmed), so the
+  // filter inputs are never unmounted mid-typing.
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const requestRef = useRef<AbortController | null>(null)
   
   // Filter and Sort State
   const [sortBy, setSortBy] = useState<SortOption>('newest')
@@ -236,18 +247,19 @@ export function CategoryView() {
   }>({ min: null, max: null })
   const [selectedColors, setSelectedColors] = useState<string[]>([])
   const [inStockOnly, setInStockOnly] = useState(false)
+  // Typing a price used to send a request per keystroke; wait for a pause.
+  const debouncedPriceRange = useDebouncedValue(priceRange, 300)
   
   const fetchCategoryAndProducts = useCallback(async () => {
-    try {
-      setLoading(true)
+    // A newer filter change supersedes any request still in flight.
+    requestRef.current?.abort()
+    const controller = new AbortController()
+    requestRef.current = controller
+    const { signal } = controller
 
-      // Fetch category details from backend API
-      const categoryRes = await fetchApi(`/api/categories/${slug}`)
-      if (!categoryRes.ok) {
-        throw new Error('Category not found')
-      }
-      const categoryData = await categoryRes.json()
-      setCategory(categoryData)
+    try {
+      if (category && category.slug === slug) setRefreshing(true)
+      else setLoading(true)
 
       // Build query params for products
       const queryParams = new URLSearchParams({
@@ -259,30 +271,48 @@ export function CategoryView() {
 
       // Only sent once the shopper actually sets a bound, so the API falls back
       // to its own open-ended defaults rather than a cap we invented.
-      if (priceRange.min !== null) queryParams.set('minPrice', priceRange.min.toString())
-      if (priceRange.max !== null) queryParams.set('maxPrice', priceRange.max.toString())
+      if (debouncedPriceRange.min !== null) queryParams.set('minPrice', debouncedPriceRange.min.toString())
+      if (debouncedPriceRange.max !== null) queryParams.set('maxPrice', debouncedPriceRange.max.toString())
 
       if (selectedColors.length > 0) {
         queryParams.append('colors', selectedColors.join(','))
       }
 
-      // Fetch products from backend API
-      const productsRes = await fetchApi(`/api/products?${queryParams}`)
+      // The category arrives from the server page; it is only fetched here
+      // when the view is reached without it. Either way the listing request
+      // does not wait for it.
+      const needCategory = !category || category.slug !== slug
+      const [categoryRes, productsRes] = await Promise.all([
+        needCategory ? fetchApi(`/api/categories/${slug}`, { signal }) : null,
+        fetchApi(`/api/products?${queryParams}`, { signal }),
+      ])
+
+      if (categoryRes) {
+        if (!categoryRes.ok) throw new Error('Category not found')
+        setCategory(await categoryRes.json())
+      }
       if (!productsRes.ok) {
         throw new Error('Failed to fetch products')
       }
       const productsData = await productsRes.json()
       setProducts(productsData.products || [])
-
+      setError(null)
     } catch (err) {
+      if (signal.aborted) return
       setError(err instanceof Error ? err.message : 'Failed to load category')
     } finally {
-      setLoading(false)
+      if (!signal.aborted) {
+        setLoading(false)
+        setRefreshing(false)
+      }
     }
-  }, [slug, sortBy, priceRange, selectedColors, inStockOnly])
+    // `category` is read, not depended on: a category update must not refetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug, sortBy, debouncedPriceRange, selectedColors, inStockOnly])
 
   useEffect(() => {
     fetchCategoryAndProducts()
+    return () => requestRef.current?.abort()
   }, [fetchCategoryAndProducts])
 
   // Derived from the same fetch the listing below uses, so the two can never
@@ -401,7 +431,11 @@ export function CategoryView() {
           governs the flat listing it sits with.
         */}
         {category.children && category.children.length > 0 && subCategoryGroups.length > 0 && (
-          <section className="mb-10" aria-label={`Products in ${category.name} by sub-category`}>
+          <section
+            className={`mb-10 transition-opacity ${refreshing ? 'opacity-60 pointer-events-none' : ''}`}
+            aria-busy={refreshing}
+            aria-label={`Products in ${category.name} by sub-category`}
+          >
             {subCategoryGroups.map((group) => (
               <div key={group.slug} className="mb-8 last:mb-0">
                 <div className="mb-4 flex items-baseline justify-between gap-4 border-b border-gray-200 pb-2">
@@ -533,10 +567,12 @@ export function CategoryView() {
         
         {/* Products Grid/List */}
         {products.length > 0 ? (
-          <div className={viewMode === 'grid' 
-            ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" 
-            : "space-y-4"
-          }>
+          <div
+            className={`${viewMode === 'grid'
+              ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6'
+              : 'space-y-4'} transition-opacity ${refreshing ? 'opacity-60 pointer-events-none' : ''}`}
+            aria-busy={refreshing}
+          >
             {products.map((product) => (
               <ProductCard key={product.id} product={product} viewMode={viewMode} />
             ))}
