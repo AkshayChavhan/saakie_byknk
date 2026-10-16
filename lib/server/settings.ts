@@ -1,6 +1,7 @@
 import 'server-only'
 import prisma from '@/lib/prisma'
 import { DEFAULT_SHIPPING_SETTINGS, type ShippingSettings } from '@/lib/shipping'
+import { cached, invalidate, TAG } from '@/lib/server/cache'
 
 /** The `key` of the one document in `store_settings`. */
 export const SETTINGS_KEY = 'default'
@@ -30,10 +31,14 @@ const fromRow = (row: Row): StoreSettings => ({
  * saved something, so a fresh database behaves exactly as the hard-coded
  * rules did before the settings existed.
  */
-export async function getStoreSettings(): Promise<StoreSettings> {
-  const row = await prisma.storeSettings.findUnique({ where: { key: SETTINGS_KEY } })
-  return row ? fromRow(row) : DEFAULT_STORE_SETTINGS
-}
+export const getStoreSettings = cached(
+  async (): Promise<StoreSettings> => {
+    const row = await prisma.storeSettings.findUnique({ where: { key: SETTINGS_KEY } })
+    return row ? fromRow(row) : DEFAULT_STORE_SETTINGS
+  },
+  'store-settings',
+  { tags: [TAG.settings], revalidate: 60 }
+)
 
 /** Apply an admin change, creating the document on the first save. */
 export async function updateStoreSettings(patch: StoreSettingsPatch): Promise<StoreSettings> {
@@ -42,5 +47,7 @@ export async function updateStoreSettings(patch: StoreSettingsPatch): Promise<St
     create: { key: SETTINGS_KEY, ...patch },
     update: patch,
   })
+  // The next cart/checkout load must see the change, not a 60 s old copy.
+  invalidate(TAG.settings)
   return fromRow(row)
 }

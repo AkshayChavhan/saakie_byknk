@@ -4,6 +4,7 @@ import { uploadImage } from '@/lib/cloudinary';
 import { validateImageFile } from '@/lib/upload';
 import { requireAuth, requireAdmin } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { invalidate, TAG } from '@/lib/server/cache';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -80,6 +81,7 @@ export async function POST(request: Request) {
       },
     });
 
+    invalidate(TAG.categories);
     return NextResponse.json(category, { status: 201 });
   } catch (error) {
     return apiError(error);

@@ -61,13 +61,16 @@ export async function POST(request: Request) {
 
     // Ensure the chosen addresses belong to this user — otherwise an attacker
     // could attach (and later read back) another user's address by id.
-    const badAddress = await verifyAddressOwnership(r.id, [shippingAddressId, billingAddressId]);
+    // Three independent reads; one round trip instead of three in a row.
+    const [badAddress, cart, settings] = await Promise.all([
+      verifyAddressOwnership(r.id, [shippingAddressId, billingAddressId]),
+      prisma.cart.findUnique({
+        where: { userId: r.id },
+        include: { items: { include: { product: true } } },
+      }),
+      getStoreSettings(),
+    ]);
     if (badAddress) return badAddress;
-
-    const cart = await prisma.cart.findUnique({
-      where: { userId: r.id },
-      include: { items: { include: { product: true } } },
-    });
 
     if (!cart || cart.items.length === 0) {
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
@@ -95,7 +98,6 @@ export async function POST(request: Request) {
     // Shipping is an admin switch (/admin/settings): off ⇒ free for everyone.
     // This is the amount actually charged, so it is always recomputed here
     // rather than trusted from the client.
-    const settings = await getStoreSettings();
     const itemCount = cart.items.reduce((n, item) => n + item.quantity, 0);
     const shipping = calculateShipping(subtotal, itemCount, settings);
     const total = subtotal + tax + shipping;

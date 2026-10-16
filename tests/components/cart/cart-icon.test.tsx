@@ -121,7 +121,8 @@ describe('CartIcon component', () => {
     render(<CartIcon />)
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/cart', expect.any(Object))
+      // The badge asks for the count only, never the whole cart.
+      expect(global.fetch).toHaveBeenCalledWith('/api/cart/count', expect.any(Object))
     })
   })
 

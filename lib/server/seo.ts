@@ -37,24 +37,15 @@ export const getProductSeo = cache(async (slug: string): Promise<ProductSeo | nu
       stock: true,
       images: { select: { url: true }, take: 1 },
       category: { select: { name: true } },
-      reviews: {
-        where: { status: 'APPROVED' },
-        select: { rating: true },
-      },
+      rating: true,
+      _count: { select: { reviews: { where: { status: 'APPROVED' } } } },
     },
   });
 
   if (!product) return null;
 
-  const reviewCount = product.reviews.length;
-  const ratingValue =
-    reviewCount > 0
-      ? Number(
-          (
-            product.reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount
-          ).toFixed(1)
-        )
-      : null;
+  const reviewCount = product._count.reviews;
+  const ratingValue = reviewCount > 0 ? Number(product.rating.toFixed(1)) : null;
 
   return {
     name: product.name,

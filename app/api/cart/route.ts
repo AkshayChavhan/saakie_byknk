@@ -3,25 +3,10 @@ import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
 import { cartAddSchema, validateBody } from '@/lib/server/validation';
+import { cartInclude, cartTotals as totals } from '@/lib/server/cart';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-const cartInclude = {
-  items: {
-    include: {
-      product: {
-        include: { images: true, colors: true, sizes: true },
-      },
-    },
-  },
-} as const;
-
-function totals(cart: { items: { price: number; quantity: number }[] }) {
-  const subtotal = cart.items.reduce((t, i) => t + i.price * i.quantity, 0);
-  const itemCount = cart.items.reduce((c, i) => c + i.quantity, 0);
-  return { subtotal, itemCount };
-}
 
 export async function GET() {
   try {

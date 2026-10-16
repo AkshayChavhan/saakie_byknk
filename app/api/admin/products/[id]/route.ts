@@ -4,6 +4,7 @@ import { uploadImage, deleteFromCloudinary } from '@/lib/cloudinary';
 import { validateImageFile } from '@/lib/upload';
 import { requireAuth, requireAdmin } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { invalidate, TAG } from '@/lib/server/cache';
 import { productUpdateSchema, validateBody } from '@/lib/server/validation';
 
 export const runtime = 'nodejs';
@@ -99,6 +100,7 @@ export async function PATCH(
         data: productData,
         include: { category: true, images: true, colors: true, sizes: true },
       });
+      invalidate(TAG.products, TAG.categories);
       return NextResponse.json(product);
     }
 
@@ -342,6 +344,7 @@ export async function PATCH(
       include: { category: true, images: true, colors: true, sizes: true },
     });
 
+    invalidate(TAG.products, TAG.categories);
     return NextResponse.json(product);
   } catch (error) {
     return apiError(error);
@@ -363,10 +366,12 @@ export async function DELETE(
 
     if (orderCount > 0) {
       await prisma.product.update({ where: { id }, data: { isActive: false } });
+      invalidate(TAG.products, TAG.categories);
       return NextResponse.json({ message: 'Product deactivated (has orders)' });
     }
 
     await prisma.product.delete({ where: { id } });
+    invalidate(TAG.products, TAG.categories);
     return NextResponse.json({ message: 'Product deleted successfully' });
   } catch (error) {
     return apiError(error);

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth, requireAdmin } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { invalidate, TAG } from '@/lib/server/cache';
 import { categoryUpdateSchema, validateBody } from '@/lib/server/validation';
 import { deleteImage } from '@/lib/cloudinary';
 
@@ -88,6 +89,7 @@ export async function PATCH(
       },
     });
 
+    invalidate(TAG.categories);
     return NextResponse.json(category);
   } catch (error) {
     return apiError(error);
@@ -144,6 +146,7 @@ export async function DELETE(
 
     await prisma.category.delete({ where: { id } });
 
+    invalidate(TAG.categories);
     return NextResponse.json({ message: 'Category deleted successfully' });
   } catch (error) {
     return apiError(error);

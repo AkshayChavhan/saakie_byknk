@@ -284,6 +284,14 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - Unique indexes: `CartItem(cartId, productId)`, `WishlistItem(wishlistId, productId)`, `Review(userId, productId)`. Before `npm run prisma:push` on an existing database run `node scripts/dedupe-before-unique-indexes.mjs` (add `--apply` to fix).
 - Full details: `docs/RELIABILITY.md`
 
+## Performance Conventions
+
+- Reads that rarely change (categories, nav tree, hero slides, banners, featured products, settings) go through `cached()` in `lib/server/cache.ts` with a tag; the admin write that changes them calls `invalidate(TAG.x)`. Never add a time-only `revalidate` for admin-managed data.
+- `Product.salesCount` (payment settlement) and `Product.rating` (review moderation via `syncProductRating`) are maintained fields. Sort and badge on them; do not count `orderItems` or average `reviews` per request. Backfill: `node scripts/backfill-product-stats.mjs --apply`.
+- The header badge uses `GET /api/cart/count`; cart and wishlist responses use a `select`, not `include`.
+- Relation fields are indexed in `prisma/schema.prisma` (Prisma does not do this on MongoDB). Add an `@@index` when adding a relation or a new filter/sort field.
+- Full details: `docs/PERFORMANCE.md`
+
 ## Webhook Integration
 
 ### Auth Webhook

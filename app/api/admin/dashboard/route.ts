@@ -6,6 +6,11 @@ import { apiError } from '@/lib/server/errors';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+/**
+ * Dashboard statistics. Every number is an aggregate the database computes;
+ * nothing loads order rows just to add them up in JavaScript, and the eleven
+ * reads run as one batch.
+ */
 export async function GET() {
   try {
     const r = await requireAuth();
@@ -22,9 +27,10 @@ export async function GET() {
       totalOrders,
       pendingOrders,
       lowStockProducts,
-      monthlyOrders,
+      monthlyRevenue,
+      totalRevenue,
       newUsersThisMonth,
-      activeUsers,
+      activeUsersRaw,
       topProducts,
       recentOrders,
     ] = await Promise.all([
@@ -33,27 +39,36 @@ export async function GET() {
       prisma.order.count(),
       prisma.order.count({ where: { status: 'PENDING' } }),
       prisma.product.count({ where: { stock: { lte: 10 }, isActive: true } }),
-      prisma.order.findMany({
-        where: {
-          createdAt: { gte: startOfMonth },
-          paymentStatus: 'PAID',
-        },
-        select: { total: true },
+      prisma.order.aggregate({
+        where: { createdAt: { gte: startOfMonth }, paymentStatus: 'PAID' },
+        _sum: { total: true },
+      }),
+      prisma.order.aggregate({
+        where: { paymentStatus: 'PAID' },
+        _sum: { total: true },
       }),
       prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
-      // Active users = users who have placed at least one order.
-      prisma.user.count({ where: { orders: { some: {} } } }),
-      // Top products = best sellers by number of order items.
+      // Active users = distinct customers with at least one order. Counted in
+      // the database rather than through a relation filter over every user.
+      prisma.order.aggregateRaw({
+        pipeline: [
+          { $match: { userId: { $ne: null } } },
+          { $group: { _id: '$userId' } },
+          { $count: 'n' },
+        ],
+      }),
+      // Top products = best sellers by units sold. `salesCount` is maintained
+      // by payment settlement, so this is an indexed sort, not a join.
       prisma.product.findMany({
         take: 5,
-        orderBy: { orderItems: { _count: 'desc' } },
+        orderBy: { salesCount: 'desc' },
         select: {
           id: true,
           name: true,
           price: true,
           stock: true,
+          salesCount: true,
           images: { select: { url: true }, take: 1 },
-          _count: { select: { orderItems: true } },
         },
       }),
       prisma.order.findMany({
@@ -65,26 +80,24 @@ export async function GET() {
       }),
     ]);
 
-    const totalRevenue = await prisma.order.aggregate({
-      where: { paymentStatus: 'PAID' },
-      _sum: { total: true },
-    });
-
-    const monthlyRevenue = monthlyOrders.reduce((sum, order) => sum + order.total, 0);
+    const activeUsers = Number(
+      (activeUsersRaw as unknown as Array<{ n?: number }> | null)?.[0]?.n ?? 0
+    );
 
     // Flat response — the admin dashboard page reads every field off the
-    // top level (`setStats(data)`).
+    // top level (`setStats(data)`). `_count.orderItems` is kept for the
+    // existing "units sold" column.
     return NextResponse.json({
       totalUsers,
       totalProducts,
       totalOrders,
       totalRevenue: totalRevenue._sum.total || 0,
-      monthlyRevenue,
+      monthlyRevenue: monthlyRevenue._sum.total || 0,
       pendingOrders,
       lowStockProducts,
       newUsersThisMonth,
       activeUsers,
-      topProducts,
+      topProducts: topProducts.map((p) => ({ ...p, _count: { orderItems: p.salesCount } })),
       recentOrders,
     });
   } catch (error) {

@@ -17,6 +17,7 @@ const mockPrisma = {
   order: {
     count: vi.fn(),
     aggregate: vi.fn(),
+    aggregateRaw: vi.fn(),
     findMany: vi.fn(),
   },
   product: {
@@ -32,26 +33,34 @@ vi.mock('@/lib/prisma', () => ({
 
 /**
  * Wire up the full set of Prisma calls the route's `Promise.all` makes, so a
- * dashboard request resolves. Order matters only for the two `findMany`/`count`
- * calls that are distinguished by call order:
+ * dashboard request resolves. Order matters only for the calls distinguished
+ * by call order:
  *  - order.count: [0] total, [1] pending
  *  - product.count: [0] total active, [1] low stock
- *  - order.findMany: [0] monthlyOrders ({total}), [1] recentOrders
- *  - user.count: total, newThisMonth, activeUsers (all return the same here)
+ *  - order.aggregate: [0] monthly revenue, [1] total revenue
+ *  - user.count: total, newThisMonth (both return the same here)
  */
 function mockDashboardData({
-  monthlyOrders = [{ total: 0 }],
+  monthlyRevenue = 0,
   topProducts = [],
   recentOrders = [],
   totalRevenue = 0,
+  activeUsers = 0,
+}: {
+  monthlyRevenue?: number | null
+  topProducts?: unknown[]
+  recentOrders?: unknown[]
+  totalRevenue?: number | null
+  activeUsers?: number
 } = {}) {
   mockPrisma.user.count.mockResolvedValue(0)
   mockPrisma.order.count.mockResolvedValue(0)
   mockPrisma.product.count.mockResolvedValue(0)
-  mockPrisma.order.aggregate.mockResolvedValue({ _sum: { total: totalRevenue } })
-  mockPrisma.order.findMany
-    .mockResolvedValueOnce(monthlyOrders) // monthlyOrders (select: { total })
-    .mockResolvedValueOnce(recentOrders) // recentOrders
+  mockPrisma.order.aggregate
+    .mockResolvedValueOnce({ _sum: { total: monthlyRevenue } })
+    .mockResolvedValueOnce({ _sum: { total: totalRevenue } })
+  mockPrisma.order.aggregateRaw.mockResolvedValue(activeUsers > 0 ? [{ n: activeUsers }] : [])
+  mockPrisma.order.findMany.mockResolvedValue(recentOrders)
   mockPrisma.product.findMany.mockResolvedValue(topProducts)
 }
 
@@ -107,13 +116,14 @@ describe('Admin Dashboard API', () => {
       mockPrisma.product.count
         .mockResolvedValueOnce(200) // total products
         .mockResolvedValueOnce(10) // low stock products
-      mockPrisma.order.aggregate.mockResolvedValue({ _sum: { total: 500000 } })
-      // monthlyRevenue is summed from monthlyOrders (a findMany of { total }).
-      mockPrisma.order.findMany
-        .mockResolvedValueOnce([{ total: 30000 }, { total: 20000 }]) // monthlyOrders → 50000
-        .mockResolvedValueOnce([createMockOrder()]) // recentOrders
+      // Both revenue figures are database sums, never rows added up in JS.
+      mockPrisma.order.aggregate
+        .mockResolvedValueOnce({ _sum: { total: 50000 } }) // this month
+        .mockResolvedValueOnce({ _sum: { total: 500000 } }) // all time
+      mockPrisma.order.aggregateRaw.mockResolvedValue([{ n: 42 }])
+      mockPrisma.order.findMany.mockResolvedValue([createMockOrder()])
       mockPrisma.product.findMany.mockResolvedValue([
-        createMockProduct({ _count: { orderItems: 20 } }),
+        createMockProduct({ salesCount: 20 }),
       ])
 
       const { GET } = await import('@/app/api/admin/dashboard/route')
@@ -127,6 +137,10 @@ describe('Admin Dashboard API', () => {
       expect(data.totalRevenue).toBe(500000)
       expect(data.monthlyRevenue).toBe(50000)
       expect(data.pendingOrders).toBe(5)
+      expect(data.activeUsers).toBe(42)
+      // The "units sold" column keeps its shape, fed from salesCount.
+      expect(data.topProducts[0]._count.orderItems).toBe(20)
+      expect(mockPrisma.order.findMany).toHaveBeenCalledTimes(1)
     })
 
     it('returns dashboard statistics for SUPER_ADMIN user', async () => {
@@ -141,7 +155,7 @@ describe('Admin Dashboard API', () => {
 
     it('returns zero revenue when no paid orders', async () => {
       signInAs('ADMIN')
-      mockDashboardData({ monthlyOrders: [], totalRevenue: null })
+      mockDashboardData({ monthlyRevenue: null, totalRevenue: null })
 
       const { GET } = await import('@/app/api/admin/dashboard/route')
       const response = await GET()

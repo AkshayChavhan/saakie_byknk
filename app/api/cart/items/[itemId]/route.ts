@@ -3,17 +3,10 @@ import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
 import { cartQuantitySchema, validateBody } from '@/lib/server/validation';
+import { cartInclude } from '@/lib/server/cart';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-const cartInclude = {
-  items: {
-    include: {
-      product: { include: { images: true, colors: true, sizes: true } },
-    },
-  },
-} as const;
 
 export async function PATCH(
   request: Request,

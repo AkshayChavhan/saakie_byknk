@@ -74,6 +74,8 @@ model Category {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  @@index([parentId])
+  @@index([isActive, parentId])
   @@map("categories")
 }
 
@@ -118,6 +120,11 @@ model Product {
   updatedAt     DateTime @updatedAt
 
   @@index([categoryId])
+  // Storefront listings: active products by newest, and the featured strip.
+  @@index([isActive, createdAt])
+  @@index([isActive, isFeatured, createdAt])
+  @@index([isActive, salesCount])
+  @@index([isActive, rating])
   @@map("products")
 }
 
@@ -129,6 +136,7 @@ model Color {
   product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
   variants  Variant[]
 
+  @@index([productId])
   @@map("colors")
 }
 
@@ -139,6 +147,7 @@ model Size {
   product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
   variants  Variant[]
 
+  @@index([productId])
   @@map("sizes")
 }
 
@@ -155,6 +164,7 @@ model Image {
   productId String  @db.ObjectId
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
+  @@index([productId])
   @@map("images")
 }
 
@@ -171,6 +181,7 @@ model Variant {
   stock     Int     @default(0)
   image     String?
 
+  @@index([productId])
   @@map("variants")
 }
 
@@ -208,6 +219,7 @@ model CartItem {
   // One line per product per cart. The add-to-cart route upserts against this,
   // so two concurrent adds merge instead of creating a duplicate line.
   @@unique([cartId, productId])
+  @@index([productId])
   @@map("cart_items")
 }
 
@@ -231,6 +243,7 @@ model WishlistItem {
   addedAt    DateTime @default(now())
 
   @@unique([wishlistId, productId])
+  @@index([productId])
   @@map("wishlist_items")
 }
 
@@ -346,6 +359,8 @@ model OrderItem {
   price     Float
   total     Float
 
+  @@index([orderId])
+  @@index([productId])
   @@map("order_items")
 }
 
@@ -368,6 +383,7 @@ model Address {
   orders         Order[]
   billingOrders  Order[] @relation("BillingAddress")
 
+  @@index([userId])
   @@map("addresses")
 }
 
@@ -391,7 +407,7 @@ model Review {
   // One review per customer per product; the eligibility check enforces the
   // same rule, this makes it hold under concurrent submissions too.
   @@unique([userId, productId])
-  @@index([productId])
+  @@index([productId, status])
   @@index([userId])
   @@map("reviews")
 }

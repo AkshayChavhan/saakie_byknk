@@ -89,7 +89,7 @@ describe('Hero Slides API', () => {
 
     it('marks a high-selling product as a bestseller slide', async () => {
       mockPrisma.product.findMany.mockResolvedValue([
-        product({ price: 500, comparePrice: null, _count: { reviews: 0, orderItems: 11 } }),
+        product({ price: 500, comparePrice: null, salesCount: 11 }),
       ])
 
       const { GET } = await import('@/app/api/hero-slides/route')

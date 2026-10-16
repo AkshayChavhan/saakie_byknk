@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { cached, TAG } from '@/lib/server/cache';
 
 /**
  * The active category tree, keyed parent id -> child ids.
@@ -6,7 +7,7 @@ import prisma from '@/lib/prisma';
  * Only active categories take part: an inactive category is hidden from the
  * storefront, so its products must not be rolled up into an ancestor's total.
  */
-async function loadActiveTree() {
+const loadActiveTree = cached(async function loadActiveTree() {
   const categories = await prisma.category.findMany({
     where: { isActive: true },
     select: { id: true, parentId: true },
@@ -20,8 +21,8 @@ async function loadActiveTree() {
     else childIds.set(parentId, [id]);
   }
 
-  return { childIds, ids: categories.map((category) => category.id) };
-}
+  return { childIds: Array.from(childIds.entries()), ids: categories.map((category) => category.id) };
+}, 'category-tree', { tags: [TAG.categories] });
 
 /**
  * A category id plus every descendant id, at any depth.
@@ -55,29 +56,38 @@ function collectSubtree(rootId: string, childIds: Map<string, string[]>) {
  * no recursive query through Prisma, so the rollup happens here — two round
  * trips, however many categories exist.
  */
-export async function getSubtreeProductCounts(): Promise<Map<string, number>> {
-  const [tree, grouped] = await Promise.all([
-    loadActiveTree(),
-    prisma.product.groupBy({
-      by: ['categoryId'],
-      where: { isActive: true },
-      _count: { _all: true },
-    }),
-  ]);
+const loadSubtreeProductCounts = cached(
+  async (): Promise<Array<[string, number]>> => {
+    const [tree, grouped] = await Promise.all([
+      loadActiveTree(),
+      prisma.product.groupBy({
+        by: ['categoryId'],
+        where: { isActive: true },
+        _count: { _all: true },
+      }),
+    ]);
 
-  // groupBy emits no row at all for a category with no products, so a missing
-  // entry means zero rather than "unknown".
-  const direct = new Map(grouped.map((row) => [row.categoryId, row._count._all]));
+    // groupBy emits no row at all for a category with no products, so a missing
+    // entry means zero rather than "unknown".
+    const direct = new Map(grouped.map((row) => [row.categoryId, row._count._all]));
+    const childIds = new Map(tree.childIds);
 
-  return new Map(
-    tree.ids.map((id) => [
+    return tree.ids.map((id) => [
       id,
-      collectSubtree(id, tree.childIds).reduce(
+      collectSubtree(id, childIds).reduce(
         (total, subtreeId) => total + (direct.get(subtreeId) ?? 0),
         0
       ),
-    ])
-  );
+    ]);
+  },
+  'category-subtree-counts',
+  // Products come and go more often than categories, so both tags apply.
+  { tags: [TAG.categories, TAG.products] }
+);
+
+export async function getSubtreeProductCounts(): Promise<Map<string, number>> {
+  // The cache stores plain JSON; rebuild the Map on the way out.
+  return new Map(await loadSubtreeProductCounts());
 }
 
 /**
@@ -87,5 +97,5 @@ export async function getSubtreeProductCounts(): Promise<Map<string, number>> {
  */
 export async function getCategoryScopeIds(rootId: string): Promise<string[]> {
   const { childIds } = await loadActiveTree();
-  return collectSubtree(rootId, childIds);
+  return collectSubtree(rootId, new Map(childIds));
 }

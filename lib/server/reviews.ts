@@ -74,3 +74,20 @@ export async function getReviewEligibility(
 function eligibility(reason: ReviewEligibilityReason): ReviewEligibility {
   return { canReview: reason === 'OK', reason, message: MESSAGES[reason] };
 }
+
+/**
+ * Recompute `Product.rating` from its approved reviews and store it.
+ *
+ * Listings, the featured strip, the product page and its SEO metadata all
+ * read this field instead of averaging reviews on every request. Call it
+ * whenever a review is approved, un-approved or deleted.
+ */
+export async function syncProductRating(productId: string): Promise<number> {
+  const agg = await prisma.review.aggregate({
+    where: { productId, status: 'APPROVED' },
+    _avg: { rating: true },
+  });
+  const rating = Math.round((agg._avg.rating ?? 0) * 100) / 100;
+  await prisma.product.update({ where: { id: productId }, data: { rating } });
+  return rating;
+}

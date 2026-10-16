@@ -169,8 +169,8 @@ describe('POST /api/payments/create-intent', () => {
 
       expect(response.status).toBe(400)
       expect((await response.json()).error.code).toBe('INVALID_ADDRESS')
-      // Must bail before reading the cart or writing an order.
-      expect(mockPrisma.cart.findUnique).not.toHaveBeenCalled()
+      // The address check, cart read and settings read run together (one
+      // round trip instead of three); the order write must still never happen.
       expect(mockPrisma.order.create).not.toHaveBeenCalled()
     })
 

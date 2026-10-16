@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth, requireAdmin } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { syncProductRating } from '@/lib/server/reviews';
+import { invalidate, TAG } from '@/lib/server/cache';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -52,6 +54,12 @@ export async function PATCH(
       },
     });
 
+    // Only approved reviews count toward the product's rating.
+    if (data.status !== undefined && data.status !== review.status) {
+      await syncProductRating(review.productId);
+      invalidate(TAG.products);
+    }
+
     return NextResponse.json(updated);
   } catch (error) {
     return apiError(error);
@@ -75,6 +83,11 @@ export async function DELETE(
     }
 
     await prisma.review.delete({ where: { id } });
+
+    if (review.status === 'APPROVED') {
+      await syncProductRating(review.productId);
+      invalidate(TAG.products);
+    }
 
     return NextResponse.json({ message: 'Review deleted successfully' });
   } catch (error) {

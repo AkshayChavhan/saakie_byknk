@@ -14,8 +14,8 @@ export function CartIcon() {
 
   const fetchCartCount = useCallback(async () => {
     try {
-      const cart = await cartApi.get()
-      setItemCount(cart.itemCount || 0)
+      const { itemCount } = await cartApi.count()
+      setItemCount(itemCount || 0)
     } catch (error) {
       console.error('Failed to fetch cart count:', error)
     } finally {

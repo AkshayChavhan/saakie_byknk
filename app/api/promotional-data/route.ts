@@ -1,19 +1,20 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { apiError } from '@/lib/server/errors';
+import { cached, TAG } from '@/lib/server/cache';
 
 export const runtime = 'nodejs';
 export const revalidate = 60;
 
-export async function GET() {
-  try {
+const loadPromotionalData = cached(
+  async () => {
     const promotionalData = await prisma.promotionalBanner.findMany({
       where: { isActive: true },
       orderBy: { order: 'asc' },
     });
 
     if (promotionalData.length === 0) {
-      return NextResponse.json({
+      return {
         banners: [
           {
             id: '1',
@@ -37,10 +38,18 @@ export async function GET() {
           { id: '2', title: 'Easy Returns', description: '7 days return policy', icon: 'refresh' },
           { id: '3', title: 'Secure Payment', description: '100% secure checkout', icon: 'shield' },
         ],
-      });
+      };
     }
 
-    return NextResponse.json({ banners: promotionalData });
+    return { banners: promotionalData };
+  },
+  'promotional-data',
+  { tags: [TAG.promos] }
+);
+
+export async function GET() {
+  try {
+    return NextResponse.json(await loadPromotionalData());
   } catch (error) {
     return apiError(error);
   }
