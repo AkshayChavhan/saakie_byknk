@@ -1,17 +1,22 @@
 import 'server-only';
 
 /**
- * Minimal in-memory fixed-window rate limiter.
+ * Fixed-window rate limiter with two backends.
  *
- * Intended for protecting expensive endpoints (e.g. the AI chat route, which
- * relays to a paid LLM) from a single client running them in a loop —
- * "denial-of-wallet". It is deliberately dependency-free.
+ *  - Upstash Redis (REST), when `UPSTASH_REDIS_REST_URL` and
+ *    `UPSTASH_REDIS_REST_TOKEN` are set. Counters are shared by every
+ *    serverless instance, so the limit is a real global limit.
+ *  - In-process memory otherwise. Each instance keeps its own counters and
+ *    they reset on cold start, so this only throttles a client hammering one
+ *    instance. Fine for local development; weak in production.
  *
- * Caveats (acceptable for the cost-abuse use case, not for hard security):
- *  - State lives in the Node process memory, so each serverless instance has
- *    its own counters. It throttles a hammering client hitting one instance,
- *    not a distributed flood. For strict global limits, move to Redis/Upstash.
- *  - Counters reset on cold start.
+ * Use `checkRateLimit` from route handlers — it picks the backend. The
+ * synchronous `rateLimit` is the in-memory primitive and stays exported for
+ * tests and for callers that must not await.
+ *
+ * Intended for protecting expensive or sensitive endpoints (the AI chat route,
+ * payment confirmation, review submission) from one client running them in a
+ * loop. It is not a substitute for a WAF against a distributed flood.
  */
 
 interface Bucket {
@@ -70,4 +75,64 @@ export function clientIp(request: Request): string {
   const xff = request.headers.get('x-forwarded-for');
   if (xff) return xff.split(',')[0].trim();
   return request.headers.get('x-real-ip')?.trim() || 'unknown';
+}
+
+const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
+const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+/** True when a shared (cross-instance) limiter backend is configured. */
+export function hasSharedRateLimiter(): boolean {
+  return Boolean(UPSTASH_URL && UPSTASH_TOKEN);
+}
+
+/**
+ * INCR the window counter and set its expiry on first hit, in one pipeline
+ * round trip. Returns the count after increment, or null if Upstash could not
+ * be reached — the caller then falls back to the in-memory limiter rather
+ * than failing open or closed on a network blip.
+ */
+async function upstashHit(key: string, windowMs: number): Promise<number | null> {
+  if (!UPSTASH_URL || !UPSTASH_TOKEN) return null;
+  try {
+    const res = await fetch(`${UPSTASH_URL}/pipeline`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${UPSTASH_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify([
+        ['INCR', key],
+        ['PEXPIRE', key, String(windowMs), 'NX'],
+      ]),
+      signal: AbortSignal.timeout(2_000),
+    });
+    if (!res.ok) return null;
+    const rows = (await res.json()) as Array<{ result?: unknown; error?: string }>;
+    const count = rows?.[0]?.result;
+    return typeof count === 'number' ? count : null;
+  } catch (error) {
+    console.warn('[rate-limit] Upstash unreachable, using in-memory limiter:', error);
+    return null;
+  }
+}
+
+/**
+ * Record one hit for `key` and report whether it is within `limit` per
+ * `windowMs`, using the shared backend when configured.
+ */
+export async function checkRateLimit(
+  key: string,
+  limit: number,
+  windowMs: number
+): Promise<RateLimitResult> {
+  const now = Date.now();
+  const windowKey = `rl:${key}:${Math.floor(now / windowMs)}`;
+  const count = await upstashHit(windowKey, windowMs);
+  if (count === null) return rateLimit(key, limit, windowMs, now);
+
+  if (count > limit) {
+    const windowEnd = (Math.floor(now / windowMs) + 1) * windowMs;
+    return { allowed: false, retryAfter: Math.max(1, Math.ceil((windowEnd - now) / 1000)) };
+  }
+  return { allowed: true, retryAfter: 0 };
 }

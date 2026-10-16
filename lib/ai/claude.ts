@@ -24,6 +24,12 @@ export const anthropic =
   globalForAnthropic.anthropic ??
   new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
+    // /api/chat runs under a 30s function limit and may make several calls in
+    // one request. The SDK defaults (10 min, 2 retries) would let one slow
+    // call eat the whole budget and get cut off mid-stream instead of failing
+    // cleanly.
+    timeout: 20_000,
+    maxRetries: 1,
   });
 
 if (process.env.NODE_ENV !== 'production') globalForAnthropic.anthropic = anthropic;

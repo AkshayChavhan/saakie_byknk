@@ -31,6 +31,22 @@ function gatewayError(gateway: string): NextResponse | null {
   return null;
 }
 
+/**
+ * Run the gateway call for a freshly created order. If the gateway refuses,
+ * the PENDING order row is removed again so a failed attempt (or a retried
+ * click) does not leave an orphan order the customer can never pay for.
+ */
+async function withGatewayOrder<T>(orderId: string, call: () => Promise<T>): Promise<T> {
+  try {
+    return await call();
+  } catch (error) {
+    await prisma.order.delete({ where: { id: orderId } }).catch((cleanupError) => {
+      console.error(`[payments] could not remove unpaid order ${orderId}:`, cleanupError);
+    });
+    throw error;
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const r = await requireAuth();
@@ -115,13 +131,20 @@ export async function POST(request: Request) {
     });
 
     if (gateway === 'stripe' && stripe) {
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(total * 100),
-        currency: 'inr',
-        metadata: {
-          orderId: order.id,
-          orderNumber: order.orderNumber,
-        },
+      const stripeClient = stripe;
+      const paymentIntent = await withGatewayOrder(order.id, () =>
+        stripeClient.paymentIntents.create({
+          amount: Math.round(total * 100),
+          currency: 'inr',
+          metadata: {
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+          },
+        })
+      );
+      await prisma.order.update({
+        where: { id: order.id },
+        data: { gatewayOrderId: paymentIntent.id },
       });
 
       return NextResponse.json({
@@ -137,11 +160,21 @@ export async function POST(request: Request) {
     }
 
     if (gateway === 'razorpay' && razorpay) {
-      const razorpayOrder = await razorpay.orders.create({
-        amount: Math.round(total * 100),
-        currency: 'INR',
-        receipt: order.orderNumber,
-        notes: { orderId: order.id },
+      const razorpayClient = razorpay;
+      const razorpayOrder = await withGatewayOrder(order.id, () =>
+        razorpayClient.orders.create({
+          amount: Math.round(total * 100),
+          currency: 'INR',
+          receipt: order.orderNumber,
+          notes: { orderId: order.id },
+        })
+      );
+      // The confirm route and the webhook tie the payment back to this store
+      // order through the Razorpay order id, so a signature can never be
+      // replayed against a different order.
+      await prisma.order.update({
+        where: { id: order.id },
+        data: { gatewayOrderId: razorpayOrder.id },
       });
 
       return NextResponse.json({

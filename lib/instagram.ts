@@ -31,6 +31,9 @@ export interface InstagramResponse {
 }
 
 const INSTAGRAM_API_URL = 'https://graph.instagram.com'
+// Instagram occasionally hangs; a stuck fetch would otherwise hold the
+// request open until the function times out.
+const INSTAGRAM_TIMEOUT_MS = 8_000
 
 /**
  * Fetches Instagram media from the Basic Display API
@@ -46,7 +49,8 @@ export async function fetchInstagramMedia(
     const url = `${INSTAGRAM_API_URL}/me/media?fields=${fields}&limit=${limit}&access_token=${accessToken}`
 
     const response = await fetch(url, {
-      next: { revalidate: 3600 } // Cache for 1 hour
+      next: { revalidate: 3600 }, // Cache for 1 hour
+      signal: AbortSignal.timeout(INSTAGRAM_TIMEOUT_MS),
     })
 
     if (!response.ok) {
@@ -75,7 +79,8 @@ export async function fetchInstagramUser(
     const url = `${INSTAGRAM_API_URL}/me?fields=${fields}&access_token=${accessToken}`
 
     const response = await fetch(url, {
-      next: { revalidate: 3600 } // Cache for 1 hour
+      next: { revalidate: 3600 }, // Cache for 1 hour
+      signal: AbortSignal.timeout(INSTAGRAM_TIMEOUT_MS),
     })
 
     if (!response.ok) {
@@ -102,7 +107,7 @@ export async function refreshInstagramToken(
   try {
     const url = `${INSTAGRAM_API_URL}/refresh_access_token?grant_type=ig_refresh_token&access_token=${accessToken}`
 
-    const response = await fetch(url)
+    const response = await fetch(url, { signal: AbortSignal.timeout(INSTAGRAM_TIMEOUT_MS) })
 
     if (!response.ok) {
       const error = await response.json()

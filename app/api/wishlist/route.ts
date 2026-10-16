@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { validateBody, wishlistAddSchema } from '@/lib/server/validation';
+import { isUniqueViolation } from '@/lib/server/prisma-errors';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -44,11 +46,9 @@ export async function POST(request: Request) {
     const r = await requireAuth();
     if (r instanceof NextResponse) return r;
 
-    const { productId } = await request.json();
-
-    if (!productId) {
-      return NextResponse.json({ error: 'Product ID is required' }, { status: 400 });
-    }
+    const parsed = validateBody(wishlistAddSchema, await request.json().catch(() => null));
+    if (parsed instanceof NextResponse) return parsed;
+    const { productId } = parsed;
 
     const product = await prisma.product.findUnique({ where: { id: productId } });
     if (!product) {
@@ -68,9 +68,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Product already in wishlist' }, { status: 400 });
     }
 
-    const item = await prisma.wishlistItem.create({
-      data: { wishlistId: wishlist.id, productId },
-    });
+    // The pre-check above is racy; the unique index on wishlistId+productId
+    // is what actually guarantees one entry, so treat its violation as the
+    // same "already there" answer.
+    let item;
+    try {
+      item = await prisma.wishlistItem.create({
+        data: { wishlistId: wishlist.id, productId },
+      });
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        return NextResponse.json({ error: 'Product already in wishlist' }, { status: 400 });
+      }
+      throw error;
+    }
 
     // The client toggles optimistically and doesn't use the full wishlist here,
     // so skip the extra hydrated re-fetch (saves a slow round-trip).

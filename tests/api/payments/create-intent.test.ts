@@ -21,7 +21,7 @@ vi.mock('@/auth', () => ({
 const mockPrisma = {
   user: { findUnique: vi.fn() },
   cart: { findUnique: vi.fn() },
-  order: { create: vi.fn() },
+  order: { create: vi.fn(), update: vi.fn(), delete: vi.fn() },
   address: { count: vi.fn() },
   // The shipping fee is an admin switch; unset here means "use the defaults".
   storeSettings: { findUnique: vi.fn().mockResolvedValue(null), upsert: vi.fn() },
@@ -416,6 +416,24 @@ describe('POST /api/payments/create-intent', () => {
 
       expect(response.status).toBe(500)
       expect((await response.json()).success).toBe(false)
+    })
+
+    it('removes the PENDING order again when the gateway call fails', async () => {
+      mockRazorpayCreateOrder.mockRejectedValue(new Error('Razorpay is down'))
+
+      await post(RAZORPAY_BODY)
+
+      // Otherwise every failed or retried attempt leaves an unpaid order
+      // behind that no gateway will ever settle.
+      expect(mockPrisma.order.delete).toHaveBeenCalledWith({ where: { id: 'order_new' } })
+    })
+
+    it('stamps the gateway order id on the store order', async () => {
+      await post(RAZORPAY_BODY)
+      expect(mockPrisma.order.update).toHaveBeenCalledWith({
+        where: { id: 'order_new' },
+        data: { gatewayOrderId: 'order_RZP123' },
+      })
     })
   })
 })

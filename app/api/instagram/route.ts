@@ -48,7 +48,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json(
-      { error: 'Failed to fetch Instagram data', message: errorMessage },
+      { error: 'Failed to fetch Instagram data' },
       { status: 500 }
     )
   }

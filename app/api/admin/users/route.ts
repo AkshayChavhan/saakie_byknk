@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth, requireAdmin } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { parseLimit, parsePage } from '@/lib/server/validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -14,8 +15,8 @@ export async function GET(request: Request) {
     if (admin) return admin;
 
     const { searchParams } = new URL(request.url);
-    const pageNum = parseInt(searchParams.get('page') ?? '1');
-    const limitNum = parseInt(searchParams.get('limit') ?? '20');
+    const pageNum = parsePage(searchParams.get('page'));
+    const limitNum = parseLimit(searchParams.get('limit'), 20);
     const search = searchParams.get('search');
 
     const where: any = {};

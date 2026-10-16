@@ -4,6 +4,7 @@ import { uploadImage, deleteFromCloudinary } from '@/lib/cloudinary';
 import { validateImageFile } from '@/lib/upload';
 import { requireAuth, requireAdmin } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { productUpdateSchema, validateBody } from '@/lib/server/validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -76,8 +77,22 @@ export async function PATCH(
 
     // --- JSON path: simple scalar updates (toggles) ---
     if (!contentType.includes('multipart/form-data')) {
-      const updateData = await request.json();
-      const { images: _i, colors: _c, sizes: _s, ...productData } = updateData;
+      // Allow-listed scalars only: the body used to be spread straight into
+      // `update`, which let a request reach relations through nested writes.
+      const productData = validateBody(
+        productUpdateSchema,
+        await request.json().catch(() => null)
+      );
+      if (productData instanceof NextResponse) return productData;
+      if (productData.slug && productData.slug !== existing.slug) {
+        const slugClash = await prisma.product.findUnique({ where: { slug: productData.slug } });
+        if (slugClash) {
+          return NextResponse.json(
+            { error: 'Another product already uses this slug' },
+            { status: 400 }
+          );
+        }
+      }
 
       const product = await prisma.product.update({
         where: { id },
@@ -187,8 +202,17 @@ export async function PATCH(
     const parsedColors = typeof colors === 'string' ? JSON.parse(colors) : colors;
     const parsedSizes = typeof sizes === 'string' ? JSON.parse(sizes) : sizes;
 
-    // Apply everything in a transaction.
-    await prisma.$transaction(async (tx) => {
+    // Apply everything in a transaction. Cloudinary is not called inside it:
+    // the interactive transaction has a 5s budget, and a remote delete cannot
+    // be rolled back if a later step fails. Removed images are deleted from
+    // Cloudinary only after the commit; a failed commit cleans up the fresh
+    // uploads instead.
+    const removedPublicIds = existing.images
+      .filter((img) => removedImageIds.includes(img.id) && img.publicId)
+      .map((img) => img.publicId as string);
+
+    try {
+      await prisma.$transaction(async (tx) => {
       // Scalar fields.
       await tx.product.update({
         where: { id },
@@ -223,14 +247,11 @@ export async function PATCH(
         },
       });
 
-      // Remove images (Cloudinary + DB).
-      for (const img of existing.images) {
-        if (removedImageIds.includes(img.id)) {
-          if (img.publicId) {
-            await deleteFromCloudinary(img.publicId).catch(() => {});
-          }
-          await tx.image.delete({ where: { id: img.id } });
-        }
+      // Remove images from the DB (Cloudinary after commit).
+      if (removedImageIds.length > 0) {
+        await tx.image.deleteMany({
+          where: { productId: id, id: { in: removedImageIds } },
+        });
       }
 
       // Add new images.
@@ -303,7 +324,18 @@ export async function PATCH(
           });
         }
       }
-    });
+      });
+    } catch (error) {
+      await Promise.all(
+        uploaded.map((img) => deleteFromCloudinary(img.publicId).catch(() => {}))
+      );
+      throw error;
+    }
+
+    // Best effort: a leftover file in Cloudinary costs storage, not correctness.
+    await Promise.all(
+      removedPublicIds.map((publicId) => deleteFromCloudinary(publicId).catch(() => {}))
+    );
 
     const product = await prisma.product.findUnique({
       where: { id },

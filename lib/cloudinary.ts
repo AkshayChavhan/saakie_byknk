@@ -66,6 +66,8 @@ export const uploadImage = async (
           { quality: 'auto:best' },
           { fetch_format: 'auto' },
         ],
+        // Fail the upload rather than hold the admin request open for ever.
+        timeout: 60_000,
       },
       (error, result) => {
         if (error) {

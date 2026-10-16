@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { cartQuantitySchema, validateBody } from '@/lib/server/validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,11 +23,9 @@ export async function PATCH(
     const r = await requireAuth();
     if (r instanceof NextResponse) return r;
     const { itemId } = await context.params;
-    const { quantity } = await request.json();
-
-    if (quantity < 1) {
-      return NextResponse.json({ error: 'Quantity must be at least 1' }, { status: 400 });
-    }
+    const parsed = validateBody(cartQuantitySchema, await request.json().catch(() => null));
+    if (parsed instanceof NextResponse) return parsed;
+    const { quantity } = parsed;
 
     const cartItem = await prisma.cartItem.findFirst({
       where: { id: itemId, cart: { userId: r.id } },

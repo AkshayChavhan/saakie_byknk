@@ -26,7 +26,7 @@ export async function PUT(
     // one that does not exist.
     const address = await prisma.address.findFirst({
       where: { id, userId: r.id },
-      select: { id: true },
+      select: { id: true, isDefault: true, country: true },
     });
     if (!address) {
       return NextResponse.json({ error: 'Address not found' }, { status: 404 });
@@ -71,10 +71,29 @@ export async function PUT(
     const parsedPhone = splitPhone(phone);
     const canonicalPhone = formatPhone(parsedPhone.country, parsedPhone.national);
 
-    await prisma.address.update({
-      where: { id: address.id },
-      data: { name, phone: canonicalPhone, addressLine1, addressLine2, city, district, state, pincode },
+    const fields = { name, phone: canonicalPhone, addressLine1, addressLine2, city, district, state, pincode };
+
+    // Orders point at the address row they were shipped to, so editing a row
+    // an order references would rewrite that order's history. Mirror what
+    // DELETE does: keep the old row for the orders (detached from the account)
+    // and give the customer a fresh row with the new details.
+    const referencedByOrders = await prisma.order.count({
+      where: { OR: [{ shippingAddressId: address.id }, { billingAddressId: address.id }] },
     });
+
+    if (referencedByOrders > 0) {
+      await prisma.$transaction(async (tx) => {
+        await tx.address.update({
+          where: { id: address.id },
+          data: { userId: null, isDefault: false },
+        });
+        await tx.address.create({
+          data: { ...fields, userId: r.id, country: address.country, isDefault: address.isDefault },
+        });
+      });
+    } else {
+      await prisma.address.update({ where: { id: address.id }, data: fields });
+    }
 
     // The full list back, default first — the caller renders straight from it.
     const addresses = await prisma.address.findMany({

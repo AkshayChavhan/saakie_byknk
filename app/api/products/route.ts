@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { apiError } from '@/lib/server/errors';
+import { parseLimit, parsePage } from '@/lib/server/validation';
 import { watermarkImageUrl } from '@/lib/image-watermark';
 import { getCategoryScopeIds } from '@/lib/server/category-counts';
 
@@ -18,11 +19,8 @@ export async function GET(request: Request) {
     const inStock = searchParams.get('inStock');
     const colors = searchParams.get('colors');
     const sale = searchParams.get('sale');
-    const page = searchParams.get('page') ?? '1';
-    const limit = searchParams.get('limit') ?? '12';
-
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
+    const pageNum = parsePage(searchParams.get('page'));
+    const limitNum = parseLimit(searchParams.get('limit'), 12);
     const minPriceNum = parseInt(minPrice);
     const maxPriceNum = parseInt(maxPrice);
 
