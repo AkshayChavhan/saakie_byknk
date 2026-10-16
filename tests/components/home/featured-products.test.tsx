@@ -1,303 +1,82 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { describe, it, expect } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { FeaturedProducts } from '@/components/home/featured-products'
 
+/**
+ * Prop-driven: the home page loads the products on the server. No fetch, no
+ * loading state.
+ */
+const products = [
+  {
+    id: 'prod_1',
+    slug: 'silk-saree',
+    name: 'Silk Saree',
+    price: 5999,
+    comparePrice: 7999,
+    rating: 4.5,
+    reviews: 20,
+    image: 'https://example.com/saree.jpg',
+    colors: ['#FF0000', '#00FF00'],
+    isNew: true,
+    isBestseller: false,
+  },
+  {
+    id: 'prod_2',
+    slug: 'cotton-saree',
+    name: 'Cotton Saree',
+    price: 2999,
+    comparePrice: null,
+    rating: 4.2,
+    reviews: 15,
+    image: 'https://example.com/cotton.jpg',
+    colors: ['#0000FF'],
+    isNew: false,
+    isBestseller: true,
+  },
+]
+
 describe('FeaturedProducts component', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    global.fetch = vi.fn()
+  it('renders the products it is given, synchronously', () => {
+    render(<FeaturedProducts products={products} />)
+
+    expect(screen.getByText('Silk Saree')).toBeInTheDocument()
+    expect(screen.getByText('Cotton Saree')).toBeInTheDocument()
+    expect(document.querySelector('.saree-drape-outer')).not.toBeInTheDocument()
   })
 
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
-
-  const mockProducts = [
-    {
-      id: 'prod_1',
-      slug: 'silk-saree',
-      name: 'Silk Saree',
-      price: 5999,
-      comparePrice: 7999,
-      rating: 4.5,
-      reviews: 20,
-      image: 'https://example.com/saree.jpg',
-      colors: ['#FF0000', '#00FF00'],
-      isNew: true,
-      isBestseller: false,
-    },
-    {
-      id: 'prod_2',
-      slug: 'cotton-saree',
-      name: 'Cotton Saree',
-      price: 2999,
-      comparePrice: 3999,
-      rating: 4.2,
-      reviews: 15,
-      image: 'https://example.com/cotton.jpg',
-      colors: ['#0000FF'],
-      isNew: false,
-      isBestseller: true,
-    },
-  ]
-
-  it('shows loading skeleton initially', () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockImplementation(
-      () => new Promise(() => {}) // Never resolves
-    )
-
-    render(<FeaturedProducts />)
-
-    // The initial state renders the SareeLoader animation while data loads.
-    expect(document.querySelector('.saree-drape-outer')).toBeInTheDocument()
-  })
-
-  it('renders products after successful fetch', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(mockProducts),
-    })
-
-    render(<FeaturedProducts />)
-
-    await waitFor(() => {
-      expect(screen.getByText('Silk Saree')).toBeInTheDocument()
-      expect(screen.getByText('Cotton Saree')).toBeInTheDocument()
-    })
-  })
-
-  it('displays section title', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve([]),
-    })
-
-    render(<FeaturedProducts />)
-
-    expect(screen.getByText('Featured Products')).toBeInTheDocument()
-    expect(screen.getByText('Handpicked sarees for the discerning woman')).toBeInTheDocument()
-  })
-
-  it('displays View All link', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve([]),
-    })
-
-    render(<FeaturedProducts />)
-
-    const viewAllLink = screen.getByText(/View All Products/i)
-    expect(viewAllLink).toHaveAttribute('href', '/products')
-  })
-
-  it('shows error state when fetch fails', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: false,
-      status: 500,
-    })
-
-    render(<FeaturedProducts />)
-
-    await waitFor(() => {
-      expect(screen.getByText('Failed to load featured products')).toBeInTheDocument()
-    })
-  })
-
-  it('shows Try Again button on error', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: false,
-      status: 500,
-    })
-
-    render(<FeaturedProducts />)
-
-    await waitFor(() => {
-      expect(screen.getByText('Try Again')).toBeInTheDocument()
-    })
-  })
-
-  it('retries fetch when Try Again is clicked', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce({ ok: false, status: 500 })
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockProducts) })
-
-    render(<FeaturedProducts />)
-
-    await waitFor(() => {
-      expect(screen.getByText('Try Again')).toBeInTheDocument()
-    })
-
-    fireEvent.click(screen.getByText('Try Again'))
-
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(2)
-    })
-  })
-
-  it('hides the whole section when no products are featured', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve([]),
-    })
-
-    const { container } = render(<FeaturedProducts />)
-
-    await waitFor(() => {
-      expect(screen.queryByText('Featured Products')).not.toBeInTheDocument()
-    })
-    expect(screen.queryByText(/View All Products/i)).not.toBeInTheDocument()
+  it('renders nothing at all when no products are featured', () => {
+    const { container } = render(<FeaturedProducts products={[]} />)
     expect(container).toBeEmptyDOMElement()
   })
 
-  it('displays NEW badge for new products', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(mockProducts),
-    })
+  it('shows the discount only for a genuine markdown', () => {
+    render(<FeaturedProducts products={products} />)
 
-    render(<FeaturedProducts />)
-
-    await waitFor(() => {
-      expect(screen.getByText('NEW')).toBeInTheDocument()
-    })
+    expect(screen.getByText('25% OFF')).toBeInTheDocument()
+    expect(screen.getAllByText(/% OFF/)).toHaveLength(1)
   })
 
-  it('displays BESTSELLER badge for bestseller products', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(mockProducts),
-    })
+  it('shows NEW and BESTSELLER badges', () => {
+    render(<FeaturedProducts products={products} />)
 
-    render(<FeaturedProducts />)
-
-    await waitFor(() => {
-      expect(screen.getByText('BESTSELLER')).toBeInTheDocument()
-    })
+    expect(screen.getByText('NEW')).toBeInTheDocument()
+    expect(screen.getByText('BESTSELLER')).toBeInTheDocument()
   })
 
-  it('displays discount percentage', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(mockProducts),
-    })
-
-    render(<FeaturedProducts />)
-
-    await waitFor(() => {
-      // Silk Saree: (7999 - 5999) / 7999 * 100 = 25% off
-      const discountElements = screen.getAllByText('25% OFF')
-      expect(discountElements.length).toBeGreaterThan(0)
-    })
+  it('links each card to the product page', () => {
+    render(<FeaturedProducts products={products} />)
+    const links = screen.getAllByRole('link').filter((a) => a.getAttribute('href')?.startsWith('/products/'))
+    expect(links.map((a) => a.getAttribute('href'))).toEqual(['/products/silk-saree', '/products/cotton-saree'])
   })
 
-  it('displays product prices', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(mockProducts),
-    })
+  it('toggles the local wishlist heart', () => {
+    render(<FeaturedProducts products={products} />)
+    const hearts = screen.getAllByRole('button').filter((b) => b.querySelector('svg.lucide-heart'))
+    expect(hearts.length).toBeGreaterThan(0)
 
-    render(<FeaturedProducts />)
-
-    await waitFor(() => {
-      // Prices should be formatted in INR
-      expect(screen.getByText(/₹5,999/)).toBeInTheDocument()
-      expect(screen.getByText(/₹7,999/)).toBeInTheDocument()
-    })
-  })
-
-  it('displays product rating and review count', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(mockProducts),
-    })
-
-    render(<FeaturedProducts />)
-
-    // RatingBadge splits the chip into aria-hidden pieces — score, star,
-    // divider, count — and puts the whole sentence on the wrapper's
-    // aria-label. Assert the accessible name rather than the visual fragments,
-    // so restyling the chip does not break the test but dropping the rating
-    // does.
-    await waitFor(() => {
-      expect(
-        screen.getByLabelText('Rated 4.5 out of 5 from 20 reviews')
-      ).toBeInTheDocument()
-    })
-
-    expect(
-      screen.getByLabelText('Rated 4.2 out of 5 from 15 reviews')
-    ).toBeInTheDocument()
-
-    // The score and count are still on screen for sighted users.
-    expect(screen.getByText('4.5')).toBeInTheDocument()
-    expect(screen.getByText('20')).toBeInTheDocument()
-  })
-
-  it('displays color swatches', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(mockProducts),
-    })
-
-    const { container } = render(<FeaturedProducts />)
-
-    await waitFor(() => {
-      // Find color swatch divs with specific background colors
-      const colorSwatches = container.querySelectorAll('[style*="background-color"]')
-      expect(colorSwatches.length).toBeGreaterThan(0)
-    })
-  })
-
-  it('links to product detail page', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(mockProducts),
-    })
-
-    render(<FeaturedProducts />)
-
-    await waitFor(() => {
-      const productLinks = screen.getAllByRole('link', { name: /Silk Saree|Cotton Saree/i })
-      expect(productLinks.length).toBeGreaterThan(0)
-      expect(productLinks[0]).toHaveAttribute('href', '/products/silk-saree')
-    })
-  })
-
-  it('has wishlist button for products', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(mockProducts),
-    })
-
-    const { container } = render(<FeaturedProducts />)
-
-    await waitFor(() => {
-      expect(screen.getByText('Silk Saree')).toBeInTheDocument()
-    })
-
-    // Find wishlist buttons
-    const wishlistButtons = container.querySelectorAll('button')
-    expect(wishlistButtons.length).toBeGreaterThan(0)
-  })
-
-  it('fetches from correct API endpoint', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve([]),
-    })
-
-    render(<FeaturedProducts />)
-
-    expect(global.fetch).toHaveBeenCalledWith('/api/products/featured', {})
-  })
-
-  it('handles network errors gracefully', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network error'))
-
-    render(<FeaturedProducts />)
-
-    await waitFor(() => {
-      expect(screen.getByText('Failed to load featured products')).toBeInTheDocument()
-    })
+    fireEvent.click(hearts[0])
+    expect(hearts[0].className).toContain('bg-red-500')
+    fireEvent.click(hearts[0])
+    expect(hearts[0].className).not.toContain('bg-red-500')
   })
 })

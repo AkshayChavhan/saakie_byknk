@@ -1,15 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Heart, ShoppingCart } from 'lucide-react'
 import { RatingBadge } from '@/components/ui/rating-badge'
 import { formatPrice } from '@/lib/utils'
-import { SareeLoader } from '@/components/ui/saree-loader'
-import { fetchApi } from '@/lib/api'
 
-interface Product {
+export interface FeaturedProductCard {
   id: string
   slug: string
   name: string
@@ -23,33 +21,14 @@ interface Product {
   isBestseller?: boolean
 }
 
-export function FeaturedProducts() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+interface FeaturedProductsProps {
+  /** Featured products loaded on the server (app/page.tsx). */
+  products: FeaturedProductCard[]
+}
+
+export function FeaturedProducts({ products }: FeaturedProductsProps) {
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null)
   const [wishlist, setWishlist] = useState<string[]>([])
-
-  useEffect(() => {
-    fetchFeaturedProducts()
-  }, [])
-
-  const fetchFeaturedProducts = async () => {
-    try {
-      setLoading(true)
-      const response = await fetchApi('/api/products/featured')
-      if (!response.ok) {
-        throw new Error('Failed to fetch products')
-      }
-      const data = await response.json()
-      setProducts(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
-      console.error('Error fetching featured products:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const toggleWishlist = (productId: string) => {
     setWishlist((prev) =>
@@ -64,8 +43,8 @@ export function FeaturedProducts() {
   }
 
   // Nothing is featured — hide the section entirely rather than showing an
-  // empty shelf. Errors still render below so the user can retry.
-  if (!loading && !error && products.length === 0) {
+  // empty shelf.
+  if (products.length === 0) {
     return null
   }
 
@@ -89,21 +68,7 @@ export function FeaturedProducts() {
           </Link>
         </div>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <SareeLoader size="md" text="Loading featured sarees..." />
-          </div>
-        ) : error ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500 mb-4">Failed to load featured products</p>
-            <button 
-              onClick={fetchFeaturedProducts}
-              className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
-            >
-              Try Again
-            </button>
-          </div>
-        ) : (
+        {(
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {products.map((product, index) => (
             <div

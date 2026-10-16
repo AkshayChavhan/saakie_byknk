@@ -4,85 +4,39 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight, Star, TrendingUp, Tag, Sparkles } from 'lucide-react'
-import { fetchApi } from '@/lib/api'
+import type { HeroSlide } from '@/lib/server/storefront'
 
-interface HeroSlide {
-  id: string
-  type: string
-  title: string
-  subtitle: string
-  description: string
-  image: string
-  link: string
-  cta: string
-  badge: string | null
-  discount: number | null
-  product: {
-    name: string
-    price: number
-    comparePrice: number | null
-    category: string
-  } | null
+export type { HeroSlide }
+
+const DEFAULT_SLIDES: HeroSlide[] = [
+  {
+    id: 'default',
+    type: 'default',
+    title: 'Premium Sarees',
+    subtitle: 'Handcrafted Excellence',
+    description: 'Discover our beautiful collection',
+    image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1920&h=1080&fit=crop',
+    link: '/products',
+    cta: 'Shop Now',
+    badge: null,
+    discount: null,
+    product: null,
+  },
+]
+
+interface HeroSectionProps {
+  /** Slides loaded on the server (app/page.tsx). Empty falls back to a default slide. */
+  slides: HeroSlide[]
 }
 
-export function HeroSection() {
+/**
+ * Homepage carousel. The slides arrive as props from the server-rendered
+ * page, so the first slide's image is in the initial HTML and `priority`
+ * actually preloads it; this component only owns the carousel state.
+ */
+export function HeroSection({ slides: incoming }: HeroSectionProps) {
   const [currentSlide, setCurrentSlide] = useState(0)
-  const [slides, setSlides] = useState<HeroSlide[]>([])
-  const [loading, setLoading] = useState(true)
-
-  // Fetch dynamic slides
-  useEffect(() => {
-    const fetchSlides = async () => {
-      try {
-        const response = await fetchApi('/api/hero-slides')
-        if (response.ok) {
-          const data = await response.json()
-          // Handle both array response and {slides: [...]} response
-          const slidesData = Array.isArray(data) ? data : (data.slides || [])
-          // Map API response to expected format
-          const mappedSlides = slidesData.map((slide: any) => ({
-            id: slide.id,
-            type: slide.type || 'default',
-            title: slide.title,
-            subtitle: slide.subtitle,
-            description: slide.description,
-            image: slide.image,
-            link: slide.ctaLink || slide.link || '/products',
-            cta: slide.ctaText || slide.cta || 'Shop Now',
-            badge: slide.badge || null,
-            discount: slide.discount || null,
-            product: slide.product || null
-          }))
-          setSlides(mappedSlides.length > 0 ? mappedSlides : getDefaultSlides())
-        } else {
-          setSlides(getDefaultSlides())
-        }
-      } catch (error) {
-        console.error('Failed to fetch hero slides:', error)
-        setSlides(getDefaultSlides())
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchSlides()
-  }, [])
-
-  const getDefaultSlides = (): HeroSlide[] => [
-    {
-      id: 'default',
-      type: 'default',
-      title: 'Premium Sarees',
-      subtitle: 'Handcrafted Excellence',
-      description: 'Discover our beautiful collection',
-      image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1920&h=1080&fit=crop',
-      link: '/products',
-      cta: 'Shop Now',
-      badge: null,
-      discount: null,
-      product: null
-    }
-  ]
+  const slides = incoming.length > 0 ? incoming : DEFAULT_SLIDES
 
   // Auto-slide functionality
   useEffect(() => {
@@ -122,16 +76,6 @@ export function HeroSection() {
       case 'featured': return 'bg-purple-500'
       default: return 'bg-blue-500'
     }
-  }
-
-  if (loading) {
-    return (
-      <section className="relative h-[400px] sm:h-[500px] lg:h-[600px] overflow-hidden bg-gray-200 animate-pulse">
-        <div className="h-full flex items-center justify-center">
-          <div className="text-gray-400">Loading...</div>
-        </div>
-      </section>
-    )
   }
 
   if (slides.length === 0) {

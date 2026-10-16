@@ -1,217 +1,51 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { describe, it, expect } from 'vitest'
+import { render, screen } from '@testing-library/react'
 import { CategoryGrid } from '@/components/home/category-grid'
 
+/**
+ * The grid is prop-driven: the home page loads the cards on the server and
+ * passes them in, so there is no loading state and no fetch to mock.
+ */
+const categories = [
+  { id: 'cat_1', name: 'Silk Sarees', slug: 'silk-sarees', image: 'https://example.com/silk.jpg', count: 45 },
+  { id: 'cat_2', name: 'Cotton Sarees', slug: 'cotton-sarees', image: 'https://example.com/cotton.jpg', count: 32 },
+  { id: 'cat_3', name: 'Designer Sarees', slug: 'designer-sarees', image: '', count: 18 },
+]
+
 describe('CategoryGrid component', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    global.fetch = vi.fn()
-  })
+  it('renders every category it is given, synchronously', () => {
+    render(<CategoryGrid categories={categories} />)
 
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
-
-  const mockCategories = [
-    {
-      id: 'cat_1',
-      name: 'Silk Sarees',
-      slug: 'silk-sarees',
-      image: 'https://example.com/silk.jpg',
-      count: 45,
-    },
-    {
-      id: 'cat_2',
-      name: 'Cotton Sarees',
-      slug: 'cotton-sarees',
-      image: 'https://example.com/cotton.jpg',
-      count: 32,
-    },
-    {
-      id: 'cat_3',
-      name: 'Designer Sarees',
-      slug: 'designer-sarees',
-      image: 'https://example.com/designer.jpg',
-      count: 18,
-    },
-  ]
-
-  it('shows loading skeleton initially', () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockImplementation(
-      () => new Promise(() => {}) // Never resolves
-    )
-
-    render(<CategoryGrid />)
-
-    // The initial state renders the SareeLoader (role="status") while loading.
-    expect(screen.getByRole('status')).toBeInTheDocument()
-  })
-
-  it('renders categories after successful fetch', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(mockCategories),
-    })
-
-    render(<CategoryGrid />)
-
-    await waitFor(() => {
-      expect(screen.getByText('Silk Sarees')).toBeInTheDocument()
-      expect(screen.getByText('Cotton Sarees')).toBeInTheDocument()
-      expect(screen.getByText('Designer Sarees')).toBeInTheDocument()
-    })
+    expect(screen.getByText('Silk Sarees')).toBeInTheDocument()
+    expect(screen.getByText('Cotton Sarees')).toBeInTheDocument()
+    expect(screen.getByText('Designer Sarees')).toBeInTheDocument()
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 
   it('displays section title and description', () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve([]),
-    })
-
-    render(<CategoryGrid />)
+    render(<CategoryGrid categories={[]} />)
 
     expect(screen.getByText('Shop by Category')).toBeInTheDocument()
     expect(screen.getByText(/Browse through our handpicked collection/)).toBeInTheDocument()
   })
 
-  it('shows error state when fetch fails', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: false,
-      status: 500,
-    })
+  it('links each card to its category page with the product count', () => {
+    render(<CategoryGrid categories={categories} />)
 
-    render(<CategoryGrid />)
-
-    await waitFor(() => {
-      expect(screen.getByText('Failed to load categories')).toBeInTheDocument()
-    })
+    const link = screen.getByRole('listitem', { name: 'Silk Sarees - 45 products' })
+    expect(link).toHaveAttribute('href', '/categories/silk-sarees')
+    expect(screen.getByText('45 Products')).toBeInTheDocument()
   })
 
-  it('shows Try Again button on error', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: false,
-      status: 500,
-    })
-
-    render(<CategoryGrid />)
-
-    await waitFor(() => {
-      expect(screen.getByText('Try Again')).toBeInTheDocument()
-    })
+  it('shows an empty state when there are no categories', () => {
+    render(<CategoryGrid categories={[]} />)
+    expect(screen.getByText('No categories available')).toBeInTheDocument()
   })
 
-  it('retries fetch when Try Again is clicked', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce({ ok: false, status: 500 })
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockCategories) })
-
-    render(<CategoryGrid />)
-
-    await waitFor(() => {
-      expect(screen.getByText('Try Again')).toBeInTheDocument()
-    })
-
-    fireEvent.click(screen.getByText('Try Again'))
-
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(2)
-    })
-  })
-
-  it('shows empty state when no categories', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve([]),
-    })
-
-    render(<CategoryGrid />)
-
-    await waitFor(() => {
-      expect(screen.getByText('No categories available')).toBeInTheDocument()
-    })
-  })
-
-  it('displays product count for each category', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(mockCategories),
-    })
-
-    render(<CategoryGrid />)
-
-    await waitFor(() => {
-      expect(screen.getByText('45 Products')).toBeInTheDocument()
-      expect(screen.getByText('32 Products')).toBeInTheDocument()
-      expect(screen.getByText('18 Products')).toBeInTheDocument()
-    })
-  })
-
-  it('links to category page', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(mockCategories),
-    })
-
-    render(<CategoryGrid />)
-
-    await waitFor(() => {
-      // Each category link carries role="listitem" (overriding the implicit
-      // link role); its accessible name comes from the aria-label, e.g.
-      // "Silk Sarees - 45 products".
-      const silkLink = screen.getByRole('listitem', { name: /Silk Sarees - 45 products/i })
-      expect(silkLink).toHaveAttribute('href', '/categories/silk-sarees')
-    })
-  })
-
-  it('renders category images', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(mockCategories),
-    })
-
-    const { container } = render(<CategoryGrid />)
-
-    await waitFor(() => {
-      // Category images use decorative empty alt text (the name is conveyed by
-      // the link's aria-label), so query the DOM directly rather than by role.
-      const images = container.querySelectorAll('img')
-      expect(images.length).toBe(mockCategories.length)
-    })
-  })
-
-  it('fetches from correct API endpoint', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve([]),
-    })
-
-    render(<CategoryGrid />)
-
-    expect(global.fetch).toHaveBeenCalledWith('/api/categories', {})
-  })
-
-  it('handles network errors gracefully', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network error'))
-
-    render(<CategoryGrid />)
-
-    await waitFor(() => {
-      expect(screen.getByText('Failed to load categories')).toBeInTheDocument()
-    })
-  })
-
-  it('renders grid layout', async () => {
-    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(mockCategories),
-    })
-
-    const { container } = render(<CategoryGrid />)
-
-    await waitFor(() => {
-      const grid = container.querySelector('.grid')
-      expect(grid).toBeInTheDocument()
-      expect(grid).toHaveClass('grid-cols-2', 'md:grid-cols-3')
-    })
+  it('falls back to an icon when a category has no image', () => {
+    const { container } = render(<CategoryGrid categories={categories} />)
+    // Two pictured categories (decorative, alt=""); the third renders the
+    // folder icon instead.
+    expect(container.querySelectorAll('img')).toHaveLength(2)
   })
 })
