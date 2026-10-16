@@ -138,6 +138,10 @@ export const wishlistApi = {
   get: () =>
     apiFetch<any>('/api/wishlist'),
 
+  /** Whether one product is wishlisted — avoids loading the whole list. */
+  contains: (productId: string) =>
+    apiFetch<{ inWishlist: boolean }>(`/api/wishlist/check?productId=${encodeURIComponent(productId)}`),
+
   addItem: (productId: string) =>
     apiFetch<any>('/api/wishlist', {
       method: 'POST',

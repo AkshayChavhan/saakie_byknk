@@ -1,14 +1,16 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getProductSeo, type ProductSeo } from '@/lib/server/seo'
+import { loadProductDetail, type ProductDetailPayload } from '@/lib/server/products'
 import { ProductDetail } from './product-detail'
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 /**
  * Server wrapper for the product page. The interactive UI lives in the
- * 'use client' ProductDetail component; this server component adds per-product
- * SEO metadata + Product JSON-LD that the client component can't export.
+ * 'use client' ProductDetail component; this server component loads the
+ * product once (shared by the metadata, the JSON-LD and the page body through
+ * React cache) and hands it to the client as initial data, so the gallery is
+ * in the first HTML and the client makes no second request for it.
  */
 export async function generateMetadata({
   params,
@@ -16,9 +18,9 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
   const { slug } = await params
-  const product = await getProductSeo(slug)
+  const product = await loadProductDetail(slug)
 
-  if (!product) {
+  if (!product || !product.isActive) {
     return {
       title: 'Product not found',
       robots: { index: false, follow: true },
@@ -28,7 +30,8 @@ export async function generateMetadata({
   const title = `${product.name} | Saakie by KNK`
   const description = product.description.slice(0, 160)
   const url = `${SITE_URL}/products/${product.slug}`
-  const images = product.image ? [{ url: product.image }] : undefined
+  const image = product.images[0]?.url
+  const images = image ? [{ url: image }] : undefined
 
   return {
     title,
@@ -46,20 +49,21 @@ export async function generateMetadata({
       card: 'summary_large_image',
       title,
       description,
-      images: product.image ? [product.image] : undefined,
+      images: image ? [image] : undefined,
     },
   }
 }
 
-function ProductJsonLd({ product }: { product: ProductSeo }) {
+function ProductJsonLd({ product }: { product: ProductDetailPayload }) {
+  const image = product.images[0]?.url
   const jsonLd = {
     '@context': 'https://schema.org/',
     '@type': 'Product',
     name: product.name,
     description: product.description,
-    image: product.image ? [product.image] : undefined,
+    image: image ? [image] : undefined,
     brand: { '@type': 'Brand', name: product.brand || 'Saakie by KNK' },
-    category: product.categoryName || undefined,
+    category: product.category?.name || undefined,
     offers: {
       '@type': 'Offer',
       url: `${SITE_URL}/products/${product.slug}`,
@@ -70,11 +74,11 @@ function ProductJsonLd({ product }: { product: ProductSeo }) {
           ? 'https://schema.org/InStock'
           : 'https://schema.org/OutOfStock',
     },
-    ...(product.reviewCount > 0 && product.ratingValue
+    ...(product.reviewCount > 0 && product.avgRating > 0
       ? {
           aggregateRating: {
             '@type': 'AggregateRating',
-            ratingValue: product.ratingValue,
+            ratingValue: Number(product.avgRating.toFixed(1)),
             reviewCount: product.reviewCount,
           },
         }
@@ -99,14 +103,14 @@ export default async function ProductPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
-  // getProductSeo is cached, so this shares the query generateMetadata already ran.
-  const product = await getProductSeo(slug)
-  if (!product) notFound()
+  // loadProductDetail is cached, so this shares the query generateMetadata ran.
+  const product = await loadProductDetail(slug)
+  if (!product || !product.isActive) notFound()
 
   return (
     <>
       <ProductJsonLd product={product} />
-      <ProductDetail />
+      <ProductDetail initialProduct={JSON.parse(JSON.stringify(product))} />
     </>
   )
 }

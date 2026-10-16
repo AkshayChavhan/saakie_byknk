@@ -124,14 +124,23 @@ interface Product {
   }
 }
 
-export function ProductDetail() {
+interface ProductDetailProps {
+  /**
+   * The product as loaded by the server page. Rendering starts from it, so
+   * there is no skeleton and no second request for the product on first
+   * paint; `fetchProduct` remains for refreshes (for example after a review).
+   */
+  initialProduct?: Product | null
+}
+
+export function ProductDetail({ initialProduct = null }: ProductDetailProps) {
   const params = useParams()
   const router = useRouter()
   const toast = useToast()
   const slug = params.slug as string
   
-  const [product, setProduct] = useState<Product | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [product, setProduct] = useState<Product | null>(initialProduct)
+  const [loading, setLoading] = useState(!initialProduct)
   const [error, setError] = useState<string | null>(null)
   
   // UI State
@@ -182,8 +191,11 @@ export function ProductDetail() {
   }, [slug])
 
   useEffect(() => {
+    // Already rendered from server data for this slug; only fetch when the
+    // page is reached without it (or the slug changes client-side).
+    if (initialProduct && initialProduct.slug === slug) return
     fetchProduct()
-  }, [fetchProduct])
+  }, [fetchProduct, initialProduct, slug])
 
   // Reflect whether this product is already in the signed-in user's wishlist.
   useEffect(() => {
@@ -194,11 +206,9 @@ export function ProductDetail() {
     let cancelled = false
     ;(async () => {
       try {
-        const wishlist = await wishlistApi.get()
+        // One membership check, not the whole wishlist with every product.
+        const { inWishlist } = await wishlistApi.contains(product.id)
         if (cancelled) return
-        const inWishlist = (wishlist?.items ?? []).some(
-          (item: { product?: { id?: string } }) => item.product?.id === product.id
-        )
         setIsWishlisted(inWishlist)
       } catch (err) {
         console.error('Failed to load wishlist state:', err)
