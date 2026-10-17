@@ -1,5 +1,3 @@
-'use client'
-
 import { Droplets, Wind, Sun, Shirt, Archive, AlertTriangle, Sparkles, ThermometerSun } from 'lucide-react'
 
 interface CareSection {

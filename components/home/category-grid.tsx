@@ -1,46 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, Folder, Sparkles } from 'lucide-react'
-import { SareeLoader } from '@/components/ui/saree-loader'
-import { fetchApi } from '@/lib/api'
+import type { CategoryCard } from '@/lib/server/storefront'
 
-interface Category {
-  id: string
-  name: string
-  slug: string
-  image: string
-  count: number
+interface CategoryGridProps {
+  /** Category cards loaded on the server (app/page.tsx). */
+  categories: CategoryCard[]
 }
 
-export function CategoryGrid() {
-  const [categories, setCategories] = useState<Category[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetchCategories()
-  }, [])
-
-  const fetchCategories = async () => {
-    try {
-      setLoading(true)
-      const response = await fetchApi('/api/categories')
-      if (!response.ok) {
-        throw new Error('Failed to fetch categories')
-      }
-      const data = await response.json()
-      setCategories(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
-      console.error('Error fetching categories:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
+export function CategoryGrid({ categories }: CategoryGridProps) {
   return (
     <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-b from-gray-50 to-white" aria-labelledby="categories-heading">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -75,26 +45,7 @@ export function CategoryGrid() {
           </Link>
         </div>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-16" role="status" aria-label="Loading categories">
-            <SareeLoader size="md" text="Loading categories..." />
-          </div>
-        ) : error ? (
-          <div className="text-center py-12" role="alert" aria-live="polite">
-            <div className="bg-white rounded-xl shadow-sm p-8 max-w-md mx-auto border border-gray-100">
-              <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-primary-50 flex items-center justify-center">
-                <Folder className="h-6 w-6 text-primary-400" aria-hidden="true" />
-              </div>
-              <p className="text-gray-500 mb-4">Failed to load categories</p>
-              <button
-                onClick={fetchCategories}
-                className="inline-flex items-center justify-center gap-2 bg-primary-500 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-primary-600 transition-all duration-200 shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-              >
-                Try Again
-              </button>
-            </div>
-          </div>
-        ) : categories.length === 0 ? (
+        {categories.length === 0 ? (
           <div className="text-center py-12" role="status" aria-live="polite">
             <div className="bg-white rounded-xl shadow-sm p-8 max-w-md mx-auto border border-gray-100">
               <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
@@ -159,7 +110,7 @@ export function CategoryGrid() {
         )}
 
         {/* Mobile View All Link */}
-        {!loading && !error && categories.length > 0 && (
+        {categories.length > 0 && (
           <div className="mt-8 text-center sm:hidden">
             <Link
               href="/categories"

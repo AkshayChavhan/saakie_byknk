@@ -1,5 +1,3 @@
-'use client'
-
 import { Building2, Ruler, Heart, Target, Eye, Award, Users, Palette, Sparkles, Star, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'

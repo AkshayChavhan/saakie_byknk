@@ -1,92 +1,25 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
 import { apiError } from '@/lib/server/errors';
-import { watermarkImageUrl } from '@/lib/image-watermark';
+import { loadProductDetail } from '@/lib/server/products';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+/**
+ * Product detail. The product page renders `loadProductDetail` on the server;
+ * this route serves client-side refreshes (for example after a review).
+ */
 export async function GET(
   _request: Request,
   context: { params: Promise<{ slug: string }> }
 ) {
   try {
     const { slug } = await context.params;
-
-    const product = await prisma.product.findUnique({
-      where: { slug },
-      include: {
-        images: true,
-        colors: true,
-        sizes: true,
-        category: true,
-        // Only approved reviews are shown publicly.
-        reviews: {
-          where: { status: 'APPROVED' },
-          include: {
-            user: { select: { name: true, imageUrl: true } },
-          },
-          orderBy: { createdAt: 'desc' },
-          take: 10,
-        },
-        _count: { select: { reviews: { where: { status: 'APPROVED' } } } },
-      },
-    });
-
+    const product = await loadProductDetail(slug);
     if (!product) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
-
-    // Average over approved reviews, maintained on the product by review
-    // moderation (lib/server/reviews.ts) rather than recomputed per view.
-    const avgRating = product.rating;
-
-    // Related products: other active products in the same category.
-    const related = await prisma.product.findMany({
-      where: {
-        isActive: true,
-        categoryId: product.categoryId,
-        id: { not: product.id },
-      },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        price: true,
-        comparePrice: true,
-        images: { select: { url: true }, take: 1 },
-      },
-      take: 4,
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const relatedProducts = related.map((p) => ({
-      id: p.id,
-      name: p.name,
-      slug: p.slug,
-      price: p.price,
-      comparePrice: p.comparePrice,
-      image: watermarkImageUrl(
-        p.images[0]?.url || '/images/placeholder-product.svg'
-      ),
-    }));
-
-    // Internal numbers stay on the server.
-    const { costPrice: _costPrice, lowStockAlert: _lowStockAlert, ...publicProduct } = product;
-
-    return NextResponse.json({
-      ...publicProduct,
-      // Gallery images are the full-resolution shots, so they are the ones most
-      // worth lifting — watermark every one before it leaves the server.
-      images: product.images.map((image) => ({
-        ...image,
-        url: watermarkImageUrl(image.url),
-      })),
-      inStock: product.stock > 0,
-      avgRating,
-      reviewCount: product._count.reviews,
-      relatedProducts,
-    });
+    return NextResponse.json(product);
   } catch (error) {
     return apiError(error);
   }

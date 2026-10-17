@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth, verifyAddressOwnership } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { markLines } from '@/lib/server/watermark';
 import { getStoreSettings } from '@/lib/server/settings';
 import { calculateShipping } from '@/lib/shipping';
 
@@ -30,7 +31,7 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json(orders);
+    return NextResponse.json(orders.map((order) => markLines(order)));
   } catch (error) {
     return apiError(error);
   }

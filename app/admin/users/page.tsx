@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { Search, Filter, Edit, Trash2, Eye, UserPlus, MoreVertical, ArrowLeft, Users, ShieldCheck, Crown, ShoppingBag } from 'lucide-react'
 import { SareeLoader } from '@/components/ui/saree-loader'
 import { fetchApi } from '@/lib/api'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
 
 interface User {
   id: string
@@ -30,26 +31,40 @@ export default function UsersManagement() {
   const [roleFilter, setRoleFilter] = useState<string>('all')
   const [currentPage, setCurrentPage] = useState(1)
   const usersPerPage = 10
+  // Search, the role filter and pages are applied by the API, so the table
+  // covers the whole directory; the client used to filter its first 20 rows.
+  const debouncedSearch = useDebouncedValue(searchTerm, 300)
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, totalCount: 0, totalPages: 0 })
+  const [stats, setStats] = useState({ total: 0, USER: 0, ADMIN: 0, SUPER_ADMIN: 0, orders: 0 })
 
   const fetchUsers = useCallback(async () => {
     try {
-      const response = await fetchApi('/api/admin/users')
+      const params = new URLSearchParams({ page: String(currentPage), limit: String(usersPerPage) })
+      if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim())
+      if (roleFilter !== 'all') params.set('role', roleFilter)
+
+      const response = await fetchApi(`/api/admin/users?${params}`)
       if (response.ok) {
         const data = await response.json()
-        // Handle both array response and object with users property
-        const usersData = Array.isArray(data) ? data : (data.users ?? data.data ?? [])
-        setUsers(usersData)
+        setUsers(data.users ?? [])
+        if (data.pagination) setPagination(data.pagination)
+        if (data.stats) setStats((prev) => ({ ...prev, ...data.stats }))
       }
     } catch (error) {
       console.error('Failed to fetch users:', error)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [currentPage, usersPerPage, debouncedSearch, roleFilter])
 
   useEffect(() => {
     fetchUsers()
   }, [fetchUsers])
+
+  // A changed search or role filter starts again from the first page.
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [debouncedSearch, roleFilter])
 
   const handleDeleteUser = async (userId: string) => {
     if (confirm('Are you sure you want to delete this user?')) {
@@ -58,7 +73,7 @@ export default function UsersManagement() {
           method: 'DELETE',
         })
         if (response.ok) {
-          setUsers(users.filter(user => user.id !== userId))
+          await fetchUsers()
         }
       } catch (error) {
         console.error('Failed to delete user:', error)
@@ -85,19 +100,10 @@ export default function UsersManagement() {
     }
   }
 
-  const filteredUsers = (users ?? []).filter(user => {
-    const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter
-    return matchesSearch && matchesRole
-  })
-
-  const paginatedUsers = filteredUsers.slice(
-    (currentPage - 1) * usersPerPage,
-    currentPage * usersPerPage
-  )
-
-  const totalPages = Math.ceil(filteredUsers.length / usersPerPage)
+  // Already searched, filtered and paged by the API.
+  const filteredUsers = users ?? []
+  const paginatedUsers = filteredUsers
+  const totalPages = pagination.totalPages
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -140,7 +146,7 @@ export default function UsersManagement() {
               </div>
               <div>
                 <p className="text-xs sm:text-sm text-gray-500">Total Users</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{(users ?? []).length}</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.total}</p>
               </div>
             </div>
           </div>
@@ -153,7 +159,7 @@ export default function UsersManagement() {
               <div>
                 <p className="text-xs sm:text-sm text-gray-500">Admins</p>
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                  {(users ?? []).filter(u => u.role === 'ADMIN').length}
+                  {stats.ADMIN}
                 </p>
               </div>
             </div>
@@ -167,7 +173,7 @@ export default function UsersManagement() {
               <div>
                 <p className="text-xs sm:text-sm text-gray-500">Super Admins</p>
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                  {(users ?? []).filter(u => u.role === 'SUPER_ADMIN').length}
+                  {stats.SUPER_ADMIN}
                 </p>
               </div>
             </div>
@@ -181,7 +187,7 @@ export default function UsersManagement() {
               <div>
                 <p className="text-xs sm:text-sm text-gray-500">Total Orders</p>
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                  {(users ?? []).reduce((sum, u) => sum + (u._count?.orders ?? 0), 0)}
+                  {stats.orders}
                 </p>
               </div>
             </div>
@@ -331,7 +337,7 @@ export default function UsersManagement() {
             <div className="bg-gray-50/50 px-4 py-4 border-t border-gray-100 sm:px-6">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-600">
-                  Showing {(currentPage - 1) * usersPerPage + 1} - {Math.min(currentPage * usersPerPage, filteredUsers.length)} of {filteredUsers.length}
+                  Showing {(currentPage - 1) * usersPerPage + 1} - {Math.min(currentPage * usersPerPage, pagination.totalCount)} of {pagination.totalCount}
                 </p>
                 <div className="flex items-center gap-2">
                   <button

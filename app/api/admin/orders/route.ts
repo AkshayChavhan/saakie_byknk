@@ -3,6 +3,7 @@ import { OrderStatus, PaymentStatus, type Prisma } from '@prisma/client';
 import prisma from '@/lib/prisma';
 import { requireAuth, requireAdmin } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { markLines } from '@/lib/server/watermark';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -122,7 +123,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({
-      orders,
+      orders: orders.map((order) => markLines(order)),
       pagination: {
         page: pageNum,
         limit: limitNum,

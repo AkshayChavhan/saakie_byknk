@@ -1,6 +1,7 @@
 import 'server-only';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { markLines } from '@/lib/server/watermark';
 
 /**
  * The cart as the storefront renders it. A `select` rather than `include`:
@@ -51,4 +52,16 @@ export async function getCartItemCount(userId: string): Promise<number> {
     _sum: { quantity: true },
   });
   return agg._sum.quantity ?? 0;
+}
+
+/**
+ * The signed-in user's cart with totals, in the shape `GET /api/cart`
+ * returns, for pages that render on the server. Creates the cart row on
+ * first use, as the API does.
+ */
+export async function loadCart(userId: string) {
+  const cart =
+    (await prisma.cart.findUnique({ where: { userId }, include: cartInclude })) ??
+    (await prisma.cart.create({ data: { userId }, include: cartInclude }));
+  return markLines({ ...cart, ...cartTotals(cart) });
 }

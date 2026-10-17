@@ -35,6 +35,11 @@ const nextConfig = {
     // Allow SVG sources (e.g. /images/placeholder-category.svg) through the
     // image optimizer. Hardened so a served SVG can never execute scripts:
     // it is sandboxed with a strict CSP and sent as an attachment.
+    // AVIF first (roughly 20% smaller than WebP for these photos), WebP for
+    // browsers without it. The optimizer keeps a rendered variant for 30 days
+    // instead of the 60 s default, so repeat visits are served from its cache.
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60 * 60 * 24 * 30,
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",

@@ -46,6 +46,7 @@ export async function GET(request: Request) {
     }
 
     if (inStock === 'true') where.stock = { gt: 0 };
+    if (searchParams.get('featured') === 'true') where.isFeatured = true;
 
     // "On sale" means a genuine markdown — a compare-at price strictly above
     // what is being charged. A product with no comparePrice, or one that does

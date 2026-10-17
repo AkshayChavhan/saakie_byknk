@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { markLines } from '@/lib/server/watermark';
 import { cartQuantitySchema, validateBody } from '@/lib/server/validation';
 import { cartInclude } from '@/lib/server/cart';
 
@@ -49,7 +50,7 @@ export async function PATCH(
     const subtotal = updatedCart!.items.reduce((t, i) => t + i.price * i.quantity, 0);
     const itemCount = updatedCart!.items.reduce((c, i) => c + i.quantity, 0);
 
-    return NextResponse.json({ ...updatedCart, subtotal, itemCount });
+    return NextResponse.json(markLines({ ...updatedCart!, subtotal, itemCount }));
   } catch (error) {
     return apiError(error);
   }
@@ -85,7 +86,7 @@ export async function DELETE(
     const subtotal = items.reduce((t, i) => t + i.price * i.quantity, 0);
     const itemCount = items.reduce((c, i) => c + i.quantity, 0);
 
-    return NextResponse.json({ ...updatedCart, items, subtotal, itemCount });
+    return NextResponse.json(markLines({ ...updatedCart, items, subtotal, itemCount }));
   } catch (error) {
     return apiError(error);
   }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense, useCallback } from 'react'
+import { useState, useEffect, Suspense, useCallback, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -26,6 +26,7 @@ import { Header } from '@/components/layout/header'
 import { SareeLoader } from '@/components/ui/saree-loader'
 import { RatingBadge } from '@/components/ui/rating-badge'
 import { fetchApi } from '@/lib/api'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
 
 interface Product {
   id: string
@@ -82,6 +83,11 @@ function ProductsContent() {
   const [currentPage, setCurrentPage] = useState(1)
   const [saleOnly, setSaleOnly] = useState(false)
   const [initialized, setInitialized] = useState(false)
+  // Typed filters fire one request per pause in typing, not per keystroke.
+  const debouncedSearch = useDebouncedValue(searchQuery, 300)
+  const debouncedMinPrice = useDebouncedValue(minPrice, 300)
+  const debouncedMaxPrice = useDebouncedValue(maxPrice, 300)
+  const requestRef = useRef<AbortController | null>(null)
 
   // UI states
   const [showFilters, setShowFilters] = useState(false)
@@ -135,6 +141,13 @@ function ProductsContent() {
   }, [])
 
   const fetchProducts = useCallback(async () => {
+    // A newer filter change supersedes any request still in flight, so a
+    // slow earlier response can never overwrite a newer one.
+    requestRef.current?.abort()
+    const controller = new AbortController()
+    requestRef.current = controller
+    const { signal } = controller
+
     try {
       setLoading(true)
       setError(null)
@@ -144,13 +157,13 @@ function ProductsContent() {
         sort: sortBy
       })
 
-      if (searchQuery) params.append('search', searchQuery)
+      if (debouncedSearch) params.append('search', debouncedSearch)
       if (selectedCategory) params.append('category', selectedCategory)
-      if (minPrice) params.append('minPrice', minPrice)
-      if (maxPrice) params.append('maxPrice', maxPrice)
+      if (debouncedMinPrice) params.append('minPrice', debouncedMinPrice)
+      if (debouncedMaxPrice) params.append('maxPrice', debouncedMaxPrice)
       if (saleOnly) params.append('sale', 'true')
 
-      const response = await fetchApi(`/api/products?${params}`)
+      const response = await fetchApi(`/api/products?${params}`, { signal })
 
       if (!response.ok) {
         throw new Error(`Failed to fetch products: ${response.status}`)
@@ -160,13 +173,14 @@ function ProductsContent() {
       setProducts(data.products)
       setPagination(data.pagination)
     } catch (err) {
+      if (signal.aborted) return
       const errorMessage = err instanceof Error ? err.message : 'An error occurred'
       setError(errorMessage)
       console.error('Error fetching products:', err)
     } finally {
-      setLoading(false)
+      if (!signal.aborted) setLoading(false)
     }
-  }, [currentPage, sortBy, searchQuery, selectedCategory, minPrice, maxPrice, saleOnly])
+  }, [currentPage, sortBy, debouncedSearch, selectedCategory, debouncedMinPrice, debouncedMaxPrice, saleOnly])
 
   useEffect(() => {
     fetchCategories()
@@ -176,7 +190,13 @@ function ProductsContent() {
     if (initialized) {
       fetchProducts()
     }
+    return () => requestRef.current?.abort()
   }, [fetchProducts, initialized])
+
+  // The full-page loader is for the first load only. On a filter change the
+  // current products stay on screen, dimmed, so the grid and the inputs are
+  // never unmounted while the shopper is still typing.
+  const showInitialLoader = loading && products.length === 0
 
   const toggleWishlist = (productId: string) => {
     setWishlist(prev =>
@@ -433,8 +453,8 @@ function ProductsContent() {
           </div>
         )}
 
-        {/* Loading State */}
-        {loading && (
+        {/* Loading State (first load only) */}
+        {showInitialLoader && (
           <div className="flex items-center justify-center py-20">
             <SareeLoader size="lg" text="Finding beautiful sarees for you..." />
           </div>
@@ -458,8 +478,11 @@ function ProductsContent() {
         )}
 
         {/* Products */}
-        {!loading && !error && (
-          <>
+        {!showInitialLoader && !error && (
+          <div
+            className={loading ? 'opacity-60 transition-opacity pointer-events-none' : 'transition-opacity'}
+            aria-busy={loading}
+          >
             {products.length === 0 ? (
               <div className="text-center py-16">
                 <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-4">
@@ -690,7 +713,7 @@ function ProductsContent() {
                 )}
               </>
             )}
-          </>
+          </div>
         )}
       </div>
 

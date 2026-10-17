@@ -290,7 +290,18 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - `Product.salesCount` (payment settlement) and `Product.rating` (review moderation via `syncProductRating`) are maintained fields. Sort and badge on them; do not count `orderItems` or average `reviews` per request. Backfill: `node scripts/backfill-product-stats.mjs --apply`.
 - The header badge uses `GET /api/cart/count`; cart and wishlist responses use a `select`, not `include`.
 - Relation fields are indexed in `prisma/schema.prisma` (Prisma does not do this on MongoDB). Add an `@@index` when adding a relation or a new filter/sort field.
+- Pages load their data in the server component and pass it as `initial*` props (home, product, category, cart, checkout, wishlist); the loaders live in `lib/server/*.ts` and the public API routes call the same functions. Do not add a `useEffect` fetch for data the server page can load.
+- Typed filters go through `useDebouncedValue` with an `AbortController`; keep current rows on screen during a refetch.
+- `GET /api/admin/products` and `/api/admin/users` search, filter and page on the server and return `stats`; admin tables must not filter the rows they loaded.
+- The service worker never caches `/api/*`, Clerk or payment hosts, or private page navigations (`lib/sw-rules.ts`).
 - Full details: `docs/PERFORMANCE.md`
+
+## Product-Photo Watermark
+
+- Every product photo is delivered with the Saakie_by KNK logo composed by Cloudinary (`lib/image-watermark.ts`). On by default (`WATERMARK_ENABLED=false` turns it off). Remote demo photos go through Cloudinary fetch only with `WATERMARK_FETCH_REMOTE=true`, after fetched images are enabled in the Cloudinary account.
+- Any API response or server loader that returns a product image must pass it through `markProduct` / `markLines` from `lib/server/watermark.ts`. Components never see clean URLs.
+- The overlay asset is uploaded once with `node scripts/upload-watermark.mjs` (source: `assets/branding/saakie-watermark.png`); run it before deploying.
+- Full details: `docs/WATERMARK.md`
 
 ## Webhook Integration
 
