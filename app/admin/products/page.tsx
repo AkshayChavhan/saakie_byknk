@@ -9,6 +9,7 @@ import {
   IndianRupee, Layers, Tag, ShoppingBag, ImageIcon, Copy, Check
 } from 'lucide-react'
 import { fetchApi } from '@/lib/api'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import {
   compressImages,
   formatBytes,
@@ -68,6 +69,11 @@ export default function ProductsManagement() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [currentPage, setCurrentPage] = useState(1)
+  // Search, filters and pages are applied by the API, so the table covers the
+  // whole catalogue; the client used to filter the first 20 rows it was given.
+  const debouncedSearch = useDebouncedValue(searchTerm, 300)
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, totalCount: 0, totalPages: 0 })
+  const [stats, setStats] = useState({ total: 0, active: 0, lowStock: 0, outOfStock: 0 })
   const [showAddModal, setShowAddModal] = useState(false)
   const [isClosingAddModal, setIsClosingAddModal] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -146,11 +152,6 @@ export default function ProductsManagement() {
     [categories, formData.parentCategoryId]
   )
 
-  const parentIdByCategoryId = useMemo(
-    () => new Map(categories.map(cat => [cat.id, cat.parentId ?? null])),
-    [categories]
-  )
-
   // Picking a parent resets the sub-category and provisionally saves the
   // parent, so the product is always attached to something valid.
   const handleParentCategoryChange = (parentId: string) => {
@@ -179,11 +180,20 @@ export default function ProductsManagement() {
 
   const fetchProducts = useCallback(async () => {
     try {
-      const response = await fetchApi('/api/admin/products')
+      const params = new URLSearchParams({
+        page: String(currentPage),
+        limit: String(productsPerPage),
+      })
+      if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim())
+      if (categoryFilter !== 'all') params.set('category', categoryFilter)
+      if (statusFilter !== 'all') params.set('status', statusFilter)
+
+      const response = await fetchApi(`/api/admin/products?${params}`)
       if (response.ok) {
         const data = await response.json()
-        const productsData = Array.isArray(data) ? data : (data.products ?? data.data ?? [])
-        setProducts(productsData)
+        setProducts(data.products ?? [])
+        if (data.pagination) setPagination(data.pagination)
+        if (data.stats) setStats(data.stats)
       }
     } catch (error) {
       console.error('Failed to fetch products:', error)
@@ -191,7 +201,12 @@ export default function ProductsManagement() {
     } finally {
       setLoading(false)
     }
-  }, [toast])
+  }, [toast, currentPage, productsPerPage, debouncedSearch, categoryFilter, statusFilter])
+
+  // A changed search or filter starts again from the first page.
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [debouncedSearch, categoryFilter, statusFilter])
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -586,30 +601,10 @@ export default function ProductsManagement() {
     }, 250)
   }
 
-  const filteredProducts = (products ?? []).filter(product => {
-    const matchesSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase())
-    // A product filed under a sub-category still belongs to its parent, so
-    // filtering by the parent has to include everything beneath it.
-    const productCategoryId = product.category?.id
-    const matchesCategory =
-      categoryFilter === 'all' ||
-      productCategoryId === categoryFilter ||
-      (!!productCategoryId && parentIdByCategoryId.get(productCategoryId) === categoryFilter)
-    const matchesStatus = statusFilter === 'all' ||
-      (statusFilter === 'active' && product.isActive) ||
-      (statusFilter === 'inactive' && !product.isActive) ||
-      (statusFilter === 'featured' && product.isFeatured) ||
-      (statusFilter === 'low_stock' && (product.stock ?? 0) <= (product.lowStockAlert ?? 10)) ||
-      (statusFilter === 'out_of_stock' && (product.stock ?? 0) === 0)
-    return matchesSearch && matchesCategory && matchesStatus
-  })
-
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * productsPerPage,
-    currentPage * productsPerPage
-  )
-
-  const totalPages = Math.ceil(filteredProducts.length / productsPerPage)
+  // Already searched, filtered and paged by the API.
+  const filteredProducts = products ?? []
+  const paginatedProducts = filteredProducts
+  const totalPages = pagination.totalPages
 
   const getStockStatus = (stock: number, lowStockAlert: number) => {
     if (stock === 0) return { label: 'Out of Stock', color: 'bg-red-100 text-red-700', dotColor: 'bg-red-500' }
@@ -896,7 +891,7 @@ export default function ProductsManagement() {
               </div>
               <div>
                 <p className="text-xs sm:text-sm text-gray-500">Total</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{(products ?? []).length}</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.total}</p>
               </div>
             </div>
           </div>
@@ -909,7 +904,7 @@ export default function ProductsManagement() {
               <div>
                 <p className="text-xs sm:text-sm text-gray-500">Active</p>
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                  {(products ?? []).filter(p => p.isActive).length}
+                  {stats.active}
                 </p>
               </div>
             </div>
@@ -923,7 +918,7 @@ export default function ProductsManagement() {
               <div>
                 <p className="text-xs sm:text-sm text-gray-500">Low Stock</p>
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                  {(products ?? []).filter(p => (p.stock ?? 0) <= (p.lowStockAlert ?? 10) && (p.stock ?? 0) > 0).length}
+                  {stats.lowStock}
                 </p>
               </div>
             </div>
@@ -1059,7 +1054,7 @@ export default function ProductsManagement() {
             {totalPages > 1 && (
               <div className="mt-6 flex items-center justify-between">
                 <p className="text-sm text-gray-600">
-                  Showing {(currentPage - 1) * productsPerPage + 1} - {Math.min(currentPage * productsPerPage, filteredProducts.length)} of {filteredProducts.length}
+                  Showing {(currentPage - 1) * productsPerPage + 1} - {Math.min(currentPage * productsPerPage, pagination.totalCount)} of {pagination.totalCount}
                 </p>
                 <div className="flex items-center gap-2">
                   <button

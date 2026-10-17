@@ -4,6 +4,7 @@ import { requireAuth, requireAdmin } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
 import { invalidate, TAG } from '@/lib/server/cache';
 import { parseLimit, parsePage, productCreateSchema, validateBody } from '@/lib/server/validation';
+import { getCategoryScopeIds } from '@/lib/server/category-counts';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,6 +21,7 @@ export async function GET(request: Request) {
     const limitNum = parseLimit(searchParams.get('limit'), 20);
     const search = searchParams.get('search');
     const category = searchParams.get('category');
+    const status = searchParams.get('status');
 
     const where: any = {};
     if (search) {
@@ -28,9 +30,32 @@ export async function GET(request: Request) {
         { description: { contains: search, mode: 'insensitive' } },
       ];
     }
-    if (category) where.categoryId = category;
+    // A product filed under a sub-category still belongs to its parent, so
+    // filtering by the parent includes everything beneath it.
+    if (category) where.categoryId = { in: await getCategoryScopeIds(category) };
 
-    const [products, totalCount] = await Promise.all([
+    // The admin table's status dropdown. Search, filter and paginate here so
+    // the table covers the whole catalogue, not the first page of it.
+    const lowStock = { stock: { lte: prisma.product.fields.lowStockAlert } };
+    switch (status) {
+      case 'active':
+        where.isActive = true;
+        break;
+      case 'inactive':
+        where.isActive = false;
+        break;
+      case 'featured':
+        where.isFeatured = true;
+        break;
+      case 'low_stock':
+        Object.assign(where, lowStock);
+        break;
+      case 'out_of_stock':
+        where.stock = 0;
+        break;
+    }
+
+    const [products, totalCount, total, active, lowStockCount, outOfStock] = await Promise.all([
       prisma.product.findMany({
         where,
         include: {
@@ -43,6 +68,11 @@ export async function GET(request: Request) {
         orderBy: { createdAt: 'desc' },
       }),
       prisma.product.count({ where }),
+      // Catalogue-wide figures for the summary cards, independent of filters.
+      prisma.product.count(),
+      prisma.product.count({ where: { isActive: true } }),
+      prisma.product.count({ where: { ...lowStock, stock: { ...lowStock.stock, gt: 0 } } }),
+      prisma.product.count({ where: { stock: 0 } }),
     ]);
 
     return NextResponse.json({
@@ -53,6 +83,7 @@ export async function GET(request: Request) {
         totalCount,
         totalPages: Math.ceil(totalCount / limitNum),
       },
+      stats: { total, active, lowStock: lowStockCount, outOfStock },
     });
   } catch (error) {
     return apiError(error);

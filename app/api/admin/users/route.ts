@@ -18,6 +18,7 @@ export async function GET(request: Request) {
     const pageNum = parsePage(searchParams.get('page'));
     const limitNum = parseLimit(searchParams.get('limit'), 20);
     const search = searchParams.get('search');
+    const role = searchParams.get('role');
 
     const where: any = {};
     if (search) {
@@ -26,8 +27,9 @@ export async function GET(request: Request) {
         { name: { contains: search, mode: 'insensitive' } },
       ];
     }
+    if (role && ['USER', 'ADMIN', 'SUPER_ADMIN'].includes(role)) where.role = role;
 
-    const [users, totalCount] = await Promise.all([
+    const [users, totalCount, byRole, orders] = await Promise.all([
       prisma.user.findMany({
         where,
         select: {
@@ -46,7 +48,16 @@ export async function GET(request: Request) {
         orderBy: { createdAt: 'desc' },
       }),
       prisma.user.count({ where }),
+      // Whole-directory figures for the summary cards, independent of filters.
+      prisma.user.groupBy({ by: ['role'], _count: { _all: true } }),
+      prisma.order.count(),
     ]);
+
+    const stats = { total: 0, USER: 0, ADMIN: 0, SUPER_ADMIN: 0, orders } as Record<string, number>;
+    for (const row of byRole) {
+      stats[row.role] = row._count._all;
+      stats.total += row._count._all;
+    }
 
     return NextResponse.json({
       users,
@@ -56,6 +67,7 @@ export async function GET(request: Request) {
         totalCount,
         totalPages: Math.ceil(totalCount / limitNum),
       },
+      stats,
     });
   } catch (error) {
     return apiError(error);

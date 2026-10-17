@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, createContext, useContext, useCallback } from 'react'
+import { useState, useEffect, createContext, useContext, useCallback, useMemo } from 'react'
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react'
 
 type ToastType = 'success' | 'error' | 'warning' | 'info'
@@ -62,8 +62,16 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     addToast({ type: 'info', title, message })
   }, [addToast])
 
+  // A stable value: the admin pages list `toast` in their fetch callbacks'
+  // dependencies, and a fresh object on every toast change made them refetch
+  // their whole list when a toast appeared and again when it dismissed.
+  const value = useMemo(
+    () => ({ toasts, addToast, removeToast, success, error, warning, info }),
+    [toasts, addToast, removeToast, success, error, warning, info]
+  )
+
   return (
-    <ToastContext.Provider value={{ toasts, addToast, removeToast, success, error, warning, info }}>
+    <ToastContext.Provider value={value}>
       {children}
       <ToastContainer toasts={toasts} removeToast={removeToast} />
     </ToastContext.Provider>
