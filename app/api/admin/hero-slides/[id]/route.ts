@@ -4,6 +4,7 @@ import { uploadImage, deleteFromCloudinary } from '@/lib/cloudinary';
 import { validateImageFile } from '@/lib/upload';
 import { requireAuth, requireAdmin } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { invalidate, TAG } from '@/lib/server/cache';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -71,6 +72,7 @@ export async function PATCH(
       },
     });
 
+    invalidate(TAG.heroSlides);
     return NextResponse.json(slide);
   } catch (error) {
     return apiError(error);
@@ -99,6 +101,7 @@ export async function DELETE(
 
     await prisma.heroSlide.delete({ where: { id } });
 
+    invalidate(TAG.heroSlides);
     return NextResponse.json({ message: 'Hero slide deleted successfully' });
   } catch (error) {
     return apiError(error);

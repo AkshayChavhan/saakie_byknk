@@ -54,7 +54,7 @@ describe('settlePaidOrder', () => {
     // Stock is decremented with a floor, never blindly.
     expect(mockPrisma.product.updateMany).toHaveBeenCalledWith({
       where: { id: 'prod_a', stock: { gte: 2 } },
-      data: { stock: { decrement: 2 } },
+      data: { stock: { decrement: 2 }, salesCount: { increment: 2 } },
     })
     expect(mockPrisma.product.updateMany).toHaveBeenCalledTimes(2)
   })
@@ -83,7 +83,7 @@ describe('settlePaidOrder', () => {
     expect(result.oversold).toEqual(['prod_a'])
     expect(mockPrisma.product.updateMany).toHaveBeenCalledWith({
       where: { id: 'prod_a' },
-      data: { stock: 0 },
+      data: { stock: 0, salesCount: { increment: 2 } },
     })
     expect(mockPrisma.order.update).toHaveBeenCalledWith({
       where: { id: 'order_1' },

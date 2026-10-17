@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth, requireAdmin } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { invalidate, TAG } from '@/lib/server/cache';
 import { parseLimit, parsePage, productCreateSchema, validateBody } from '@/lib/server/validation';
 
 export const runtime = 'nodejs';
@@ -131,6 +132,7 @@ export async function POST(request: Request) {
       },
     });
 
+    invalidate(TAG.products, TAG.categories);
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
     return apiError(error);

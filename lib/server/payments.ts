@@ -1,5 +1,6 @@
 import 'server-only';
 import prisma from '@/lib/prisma';
+import { invalidate, TAG } from '@/lib/server/cache';
 
 /**
  * Order settlement — the one place a payment outcome is applied to an order.
@@ -107,16 +108,18 @@ export async function settlePaidOrder(opts: {
 
     const oversold: string[] = [];
     for (const item of order.items) {
+      // `salesCount` feeds the "popular" sort and the bestseller badge; it is
+      // maintained here so listings never have to count order items.
       const dec = await tx.product.updateMany({
         where: { id: item.productId, stock: { gte: item.quantity } },
-        data: { stock: { decrement: item.quantity } },
+        data: { stock: { decrement: item.quantity }, salesCount: { increment: item.quantity } },
       });
       if (dec.count === 0) {
         // Two customers paid for the last unit. Floor the stock at zero and
         // flag the order so admin can resolve it, instead of going negative.
         await tx.product.updateMany({
           where: { id: item.productId },
-          data: { stock: 0 },
+          data: { stock: 0, salesCount: { increment: item.quantity } },
         });
         oversold.push(item.productId);
       }
@@ -131,6 +134,10 @@ export async function settlePaidOrder(opts: {
     }
 
     return { applied: true, orderNumber: order.orderNumber, oversold };
+  }).then((result) => {
+    // Stock and sales changed, and the featured/category caches carry both.
+    if (result.applied) invalidate(TAG.products);
+    return result;
   });
 }
 

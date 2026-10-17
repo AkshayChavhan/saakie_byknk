@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import { requireAuth } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
 import { validateBody, wishlistAddSchema } from '@/lib/server/validation';
@@ -8,15 +9,35 @@ import { isUniqueViolation } from '@/lib/server/prisma-errors';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+// A `select`, not `include`: the wishlist page needs a card's worth of each
+// product, not the whole document (cost price included) and category.
 const wishlistInclude = {
   items: {
-    include: {
+    select: {
+      id: true,
+      wishlistId: true,
+      productId: true,
+      addedAt: true,
       product: {
-        include: { images: { take: 1 }, category: true },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          price: true,
+          comparePrice: true,
+          stock: true,
+          isActive: true,
+          images: {
+            select: { url: true, isPrimary: true },
+            orderBy: [{ isPrimary: 'desc' }, { order: 'asc' }],
+            take: 1,
+          },
+          category: { select: { id: true, name: true, slug: true } },
+        },
       },
     },
   },
-} as const;
+} satisfies Prisma.WishlistInclude;
 
 export async function GET() {
   try {

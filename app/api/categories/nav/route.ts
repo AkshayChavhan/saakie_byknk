@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { apiError } from '@/lib/server/errors';
+import { cached, TAG } from '@/lib/server/cache';
 import { getSubtreeProductCounts } from '@/lib/server/category-counts';
 
 export const runtime = 'nodejs';
@@ -19,8 +20,8 @@ export const revalidate = 300;
  * that one carries hero images and no child names, neither of which the nav
  * needs, and it costs an image lookup per category to build.
  */
-export async function GET() {
-  try {
+const loadNavTree = cached(
+  async () => {
     const [categories, counts] = await Promise.all([
       prisma.category.findMany({
         where: { isActive: true, parentId: null },
@@ -39,7 +40,7 @@ export async function GET() {
       getSubtreeProductCounts(),
     ]);
 
-    const tree = categories
+    return categories
       .map((category) => ({
         id: category.id,
         name: category.name,
@@ -55,8 +56,14 @@ export async function GET() {
           .filter((child) => child.count > 0),
       }))
       .filter((category) => category.count > 0);
+  },
+  'category-nav',
+  { tags: [TAG.categories, TAG.products] }
+);
 
-    return NextResponse.json(tree);
+export async function GET() {
+  try {
+    return NextResponse.json(await loadNavTree());
   } catch (error) {
     return apiError(error);
   }
