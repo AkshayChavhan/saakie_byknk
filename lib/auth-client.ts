@@ -3,6 +3,7 @@
 import { useAuth, useClerk, useUser } from '@clerk/nextjs'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
+import { PRIVATE_CACHE_NAMES } from '@/lib/sw-rules'
 
 /**
  * Client-side session, backed by Clerk.
@@ -153,6 +154,7 @@ export function useSession(): {
  */
 export async function signOut(options?: { callbackUrl?: string }): Promise<void> {
   const target = options?.callbackUrl ?? '/'
+  await clearPrivateCaches()
   if (!activeClerk) {
     window.location.assign(target)
     return
@@ -168,4 +170,18 @@ export async function signOut(options?: { callbackUrl?: string }): Promise<void>
  */
 export function openAccountSecurity(): void {
   activeClerk?.openUserProfile()
+}
+
+/**
+ * Drop the service worker's per-visitor page caches, so the next person on
+ * this device cannot be shown the previous account's pages while offline.
+ * Best effort: the Cache API may be unavailable (private mode, old browser).
+ */
+async function clearPrivateCaches(): Promise<void> {
+  if (typeof caches === 'undefined') return
+  try {
+    await Promise.all(PRIVATE_CACHE_NAMES.map((name) => caches.delete(name)))
+  } catch {
+    // Nothing to do: sign-out proceeds regardless.
+  }
 }

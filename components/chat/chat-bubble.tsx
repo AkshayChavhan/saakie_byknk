@@ -1,10 +1,16 @@
 'use client'
 
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import { usePathname } from 'next/navigation'
 import { MessageCircle, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { ChatWindow } from './chat-window'
+
+// The window (messages, streaming, product cards) is the heavy part; fetch
+// its code when the bubble is first opened.
+const ChatWindow = dynamic(() => import('./chat-window').then((m) => m.ChatWindow), {
+  ssr: false,
+})
 
 export function ChatBubble() {
   const pathname = usePathname()

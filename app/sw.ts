@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
 import { defaultCache } from '@serwist/next/worker'
 import type { PrecacheEntry, SerwistGlobalConfig } from 'serwist'
+import { isPrivateNavigation, isSessionOrPaymentHost } from '@/lib/sw-rules'
 import {
   Serwist,
   NetworkFirst,
@@ -38,13 +39,30 @@ const serwist = new Serwist({
       handler: new NetworkOnly(),
     },
 
+    // Clerk (session, environment) and the payment gateways: never cached.
+    // defaultCache's cross-origin rule would otherwise keep these for an
+    // hour, so a stale session could be replayed on a slow network.
+    {
+      matcher: ({ url }) => isSessionOrPaymentHost(url.hostname),
+      handler: new NetworkOnly(),
+    },
+
+    // Personal pages (account, cart, checkout, admin, wishlist, sign-in):
+    // always from the network, never from the 'pages' cache below.
+    {
+      matcher: ({ request, url }) => request.mode === 'navigate' && isPrivateNavigation(url.pathname),
+      handler: new NetworkOnly(),
+    },
+
     // Cloudinary product imagery: immutable per URL → CacheFirst, capped.
     {
       matcher: ({ url }) => url.hostname === 'res.cloudinary.com',
       handler: new CacheFirst({
         cacheName: 'cloudinary-images',
         plugins: [
-          new CacheableResponsePlugin({ statuses: [0, 200] }),
+          // 200 only: an opaque (status 0) response cannot be inspected and
+          // counts against storage as several megabytes each.
+          new CacheableResponsePlugin({ statuses: [200] }),
           new ExpirationPlugin({ maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 * 30 }), // 30d
         ],
       }),

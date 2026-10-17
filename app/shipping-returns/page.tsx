@@ -1,5 +1,3 @@
-'use client'
-
 import { Truck, Package, RefreshCw, Clock, MapPin, Shield, CreditCard, HelpCircle } from 'lucide-react'
 import Link from 'next/link'
 import { Header } from '@/components/layout/header'
