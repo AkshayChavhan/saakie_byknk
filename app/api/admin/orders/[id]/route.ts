@@ -3,6 +3,7 @@ import { OrderStatus, PaymentStatus, type Prisma } from '@prisma/client';
 import prisma from '@/lib/prisma';
 import { requireAuth, requireAdmin } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { markLines } from '@/lib/server/watermark';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -64,7 +65,7 @@ export async function GET(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    return NextResponse.json(order);
+    return NextResponse.json(markLines(order));
   } catch (error) {
     return apiError(error);
   }
@@ -140,7 +141,7 @@ export async function PATCH(
       include: orderDetailInclude,
     });
 
-    return NextResponse.json(order);
+    return NextResponse.json(markLines(order));
   } catch (error) {
     return apiError(error);
   }

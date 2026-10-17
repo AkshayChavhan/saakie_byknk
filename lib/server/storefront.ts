@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { cached, TAG } from '@/lib/server/cache';
 import { getSubtreeProductCounts } from '@/lib/server/category-counts';
 import { watermarkImageUrl } from '@/lib/image-watermark';
+import { markProduct } from '@/lib/server/watermark';
 
 /**
  * The storefront's shared reads: everything the home page shows, in the shape
@@ -48,8 +49,8 @@ export const loadHeroSlides = cached(
       where: { isActive: true },
       orderBy: { order: 'asc' },
     });
-    if (heroSlides.length > 0) return heroSlides as RawHeroSlide[];
-    return productDerivedSlides();
+    if (heroSlides.length > 0) return (heroSlides as RawHeroSlide[]).map(markProduct);
+    return productDerivedSlides().then((slides) => slides.map(markProduct));
   },
   'hero-slides',
   { tags: [TAG.heroSlides, TAG.products] }
@@ -231,7 +232,7 @@ export const loadCategoryCards = cached(
       id: category.id,
       name: category.name,
       slug: category.slug,
-      image: category.image || productImage(category) || '/images/placeholder-category.svg',
+      image: watermarkImageUrl(category.image || productImage(category) || '/images/placeholder-category.svg'),
       // Counts the sub-categories too — a top-level category's own product
       // list is usually empty, which is what made every card read "0 Products".
       count: subtreeCounts.get(category.id) ?? 0,

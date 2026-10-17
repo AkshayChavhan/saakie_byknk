@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { markLines } from '@/lib/server/watermark';
 import { validateBody, wishlistAddSchema } from '@/lib/server/validation';
 import { isUniqueViolation } from '@/lib/server/prisma-errors';
 import { wishlistInclude } from '@/lib/server/wishlist';
@@ -27,7 +28,7 @@ export async function GET() {
       });
     }
 
-    return NextResponse.json(wishlist);
+    return NextResponse.json(markLines(wishlist));
   } catch (error) {
     return apiError(error);
   }

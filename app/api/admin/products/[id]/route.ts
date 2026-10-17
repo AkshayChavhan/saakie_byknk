@@ -4,6 +4,7 @@ import { uploadImage, deleteFromCloudinary } from '@/lib/cloudinary';
 import { validateImageFile } from '@/lib/upload';
 import { requireAuth, requireAdmin } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { markProduct } from '@/lib/server/watermark';
 import { invalidate, TAG } from '@/lib/server/cache';
 import { productUpdateSchema, validateBody } from '@/lib/server/validation';
 
@@ -37,7 +38,7 @@ export async function GET(
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
-    return NextResponse.json(product);
+    return NextResponse.json(markProduct(product!));
   } catch (error) {
     return apiError(error);
   }
@@ -101,7 +102,7 @@ export async function PATCH(
         include: { category: true, images: true, colors: true, sizes: true },
       });
       invalidate(TAG.products, TAG.categories);
-      return NextResponse.json(product);
+      return NextResponse.json(markProduct(product!));
     }
 
     // --- FormData path: full edit with images ---
@@ -345,7 +346,7 @@ export async function PATCH(
     });
 
     invalidate(TAG.products, TAG.categories);
-    return NextResponse.json(product);
+    return NextResponse.json(markProduct(product!));
   } catch (error) {
     return apiError(error);
   }

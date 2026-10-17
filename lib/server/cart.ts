@@ -1,6 +1,7 @@
 import 'server-only';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { markLines } from '@/lib/server/watermark';
 
 /**
  * The cart as the storefront renders it. A `select` rather than `include`:
@@ -62,5 +63,5 @@ export async function loadCart(userId: string) {
   const cart =
     (await prisma.cart.findUnique({ where: { userId }, include: cartInclude })) ??
     (await prisma.cart.create({ data: { userId }, include: cartInclude }));
-  return { ...cart, ...cartTotals(cart) };
+  return markLines({ ...cart, ...cartTotals(cart) });
 }

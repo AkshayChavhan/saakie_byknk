@@ -1,6 +1,7 @@
 import 'server-only';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { markLines } from '@/lib/server/watermark';
 
 /**
  * A `select`, not `include`: the wishlist page needs a card's worth of each
@@ -40,5 +41,5 @@ export async function loadWishlistItems(userId: string) {
     where: { userId },
     include: wishlistInclude,
   });
-  return wishlist?.items ?? [];
+  return markLines({ items: wishlist?.items ?? [] }).items;
 }

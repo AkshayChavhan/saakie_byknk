@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { markLines } from '@/lib/server/watermark';
 import { cartAddSchema, validateBody } from '@/lib/server/validation';
 import { cartInclude, cartTotals as totals } from '@/lib/server/cart';
 
@@ -25,7 +26,7 @@ export async function GET() {
       });
     }
 
-    return NextResponse.json({ ...cart, ...totals(cart) });
+    return NextResponse.json(markLines({ ...cart, ...totals(cart) }));
   } catch (error) {
     return apiError(error);
   }
@@ -93,7 +94,7 @@ export async function POST(request: Request) {
       include: cartInclude,
     });
 
-    return NextResponse.json({ ...updatedCart, ...totals(updatedCart!) });
+    return NextResponse.json(markLines({ ...updatedCart!, ...totals(updatedCart!) }));
   } catch (error) {
     return apiError(error);
   }

@@ -4,6 +4,7 @@ import { uploadImage } from '@/lib/cloudinary';
 import { validateImageFile } from '@/lib/upload';
 import { requireAuth, requireAdmin } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { markProduct } from '@/lib/server/watermark';
 import { invalidate, TAG } from '@/lib/server/cache';
 
 export const runtime = 'nodejs';
@@ -191,7 +192,7 @@ export async function POST(request: Request) {
     });
 
     invalidate(TAG.products, TAG.categories);
-    return NextResponse.json(product, { status: 201 });
+    return NextResponse.json(markProduct(product), { status: 201 });
   } catch (error) {
     return apiError(error);
   }

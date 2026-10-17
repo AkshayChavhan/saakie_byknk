@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { markLines } from '@/lib/server/watermark';
 import { getOrderRemoval, ORDER_REMOVAL_STATUS } from '@/lib/orders';
 
 export const runtime = 'nodejs';
@@ -31,7 +32,7 @@ export async function GET(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    return NextResponse.json(order);
+    return NextResponse.json(markLines(order));
   } catch (error) {
     return apiError(error);
   }

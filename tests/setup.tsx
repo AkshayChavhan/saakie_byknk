@@ -2,6 +2,11 @@ import { afterEach, beforeAll, afterAll, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 
+// The logo watermark is on by default; the route tests assert on the plain
+// image URLs they were written against, so switch it off here and let the
+// watermark tests opt back in with vi.stubEnv.
+process.env.WATERMARK_ENABLED = 'false'
+
 // Cleanup after each test
 afterEach(() => {
   cleanup()
