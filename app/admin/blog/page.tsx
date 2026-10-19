@@ -736,7 +736,7 @@ export default function BlogManagement() {
         .blog-md-preview :global(h2:first-child),
         .blog-md-preview :global(h3:first-child) { margin-top: 0; }
         .blog-md-preview :global(p) { color: #374151; line-height: 1.7; margin: 0.75rem 0; }
-        .blog-md-preview :global(a) { color: #dc2626; text-decoration: underline; }
+        .blog-md-preview :global(a) { color: #520160; text-decoration: underline; }
         .blog-md-preview :global(ul),
         .blog-md-preview :global(ol) { margin: 0.75rem 0; padding-left: 1.5rem; color: #374151; }
         .blog-md-preview :global(ul) { list-style: disc; }

@@ -17,17 +17,19 @@ module.exports = {
           // Bare `bg-primary` / `text-primary` resolve to this. Without a
           // DEFAULT those classes generate no CSS at all — which is how the
           // Add to Cart button once shipped white-on-white.
-          DEFAULT: '#dc2626',
-          50: '#fef2f2',
-          100: '#fee2e2',
-          200: '#fecaca',
-          300: '#fca5a5',
-          400: '#f87171',
-          500: '#ef4444',
-          600: '#dc2626',
-          700: '#b91c1c',
-          800: '#991b1b',
-          900: '#7f1d1d',
+          // Brand plum #520160. The 50–500 tints mix it with white, 700–900
+          // with black, so hover/tint classes stay in the same family.
+          DEFAULT: '#520160',
+          50: '#f6f2f7',
+          100: '#eee6f0',
+          200: '#d4c0d7',
+          300: '#b18db7',
+          400: '#8f5a98',
+          500: '#6c2778',
+          600: '#520160',
+          700: '#42014d',
+          800: '#35013e',
+          900: '#290130',
         },
         secondary: {
           50: '#fef7e7',
