@@ -298,7 +298,7 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 
 ## Product-Photo Watermark
 
-- Every product photo is delivered with the Saakie_by KNK logo composed by Cloudinary (`lib/image-watermark.ts`). On by default (`WATERMARK_ENABLED=false` turns it off). Remote demo photos go through Cloudinary fetch only with `WATERMARK_FETCH_REMOTE=true`, after fetched images are enabled in the Cloudinary account.
+- Product photos uploaded on or after the cutover (`WATERMARK_SINCE`, default 2026-10-19) are delivered with the Saakie_by KNK logo composed by Cloudinary (`lib/image-watermark.ts`); the Cloudinary upload version in the URL is the upload time. Older photos and the remote demo photos are never marked. On by default (`WATERMARK_ENABLED=false` turns it off).
 - Any API response or server loader that returns a product image must pass it through `markProduct` / `markLines` from `lib/server/watermark.ts`. Components never see clean URLs.
 - The overlay asset is uploaded once with `node scripts/upload-watermark.mjs` (source: `assets/branding/saakie-watermark.png`); run it before deploying.
 - Full details: `docs/WATERMARK.md`
