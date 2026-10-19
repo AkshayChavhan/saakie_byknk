@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { markImages, markLines, markProduct } from '@/lib/server/watermark'
 
-const PHOTO = 'https://res.cloudinary.com/c/image/upload/v1/saakie-byknk/products/a.jpg'
+// Uploaded after the cutover (version = upload time in Unix seconds).
+const PHOTO = 'https://res.cloudinary.com/c/image/upload/v1900000000/saakie-byknk/products/a.jpg'
 const MARK = 'l_saakie-byknk:watermark'
 
 describe('server watermark mappers', () => {
