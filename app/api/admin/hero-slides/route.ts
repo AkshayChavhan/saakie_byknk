@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { uploadImage } from '@/lib/cloudinary';
 import { validateImageFile } from '@/lib/upload';
+import { DEFAULT_HERO_SLIDE_DEVICE, parseHeroSlideDevice } from '@/lib/hero-slide-device';
 import { requireAuth, requireAdmin } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
 import { invalidate, TAG } from '@/lib/server/cache';
@@ -52,10 +53,20 @@ export async function POST(request: Request) {
       ctaLink,
       order,
       isActive = true,
+      device: rawDevice,
     } = data;
 
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
+    }
+    // Which screens the slide is for. Missing means laptop; anything else
+    // unrecognised is a client bug worth a 400, not a silent default.
+    const device =
+      rawDevice === undefined || rawDevice === null || rawDevice === ''
+        ? DEFAULT_HERO_SLIDE_DEVICE
+        : parseHeroSlideDevice(rawDevice);
+    if (!device) {
+      return NextResponse.json({ error: 'device must be DESKTOP or MOBILE' }, { status: 400 });
     }
     if (!(imageFile instanceof File)) {
       return NextResponse.json({ error: 'An image is required' }, { status: 400 });
@@ -77,6 +88,7 @@ export async function POST(request: Request) {
         imagePublicId: result.publicId,
         ctaText: ctaText || null,
         ctaLink: ctaLink || null,
+        device,
         order: order != null ? parseInt(String(order)) || 0 : 0,
         isActive: isActive === true || isActive === 'true',
       },

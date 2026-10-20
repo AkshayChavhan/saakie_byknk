@@ -5,11 +5,24 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import {
   Plus, Edit, Trash2, X, ArrowLeft, Images, ImageIcon,
-  ToggleLeft, ToggleRight
+  ToggleLeft, ToggleRight, Monitor, Smartphone
 } from 'lucide-react'
 import { fetchApi } from '@/lib/api'
 import { useToast } from '@/components/ui/toast'
 import { compressImage, formatBytes } from '@/lib/image-compress'
+import {
+  DEFAULT_HERO_SLIDE_DEVICE,
+  DESKTOP_MIN_WIDTH_PX,
+  HERO_SLIDE_DEVICES,
+  HERO_SLIDE_DEVICE_HINT,
+  HERO_SLIDE_DEVICE_LABEL,
+  type HeroSlideDevice,
+} from '@/lib/hero-slide-device'
+
+const DEVICE_ICON: Record<HeroSlideDevice, typeof Monitor> = {
+  DESKTOP: Monitor,
+  MOBILE: Smartphone,
+}
 
 interface Slide {
   id: string
@@ -19,6 +32,8 @@ interface Slide {
   image: string
   ctaText: string | null
   ctaLink: string | null
+  /** Which screens the slide is shown on; older rows read back as DESKTOP. */
+  device: HeroSlideDevice
   order: number
   isActive: boolean
   createdAt: string
@@ -31,9 +46,12 @@ const emptyForm = {
   description: '',
   ctaText: '',
   ctaLink: '',
+  device: DEFAULT_HERO_SLIDE_DEVICE as HeroSlideDevice,
   order: '0',
   isActive: true,
 }
+
+type DeviceFilter = 'ALL' | HeroSlideDevice
 
 export default function HeroSlidesManagement() {
   const router = useRouter()
@@ -45,6 +63,7 @@ export default function HeroSlidesManagement() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState(emptyForm)
+  const [deviceFilter, setDeviceFilter] = useState<DeviceFilter>('ALL')
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [existingImage, setExistingImage] = useState<string | null>(null)
@@ -108,6 +127,7 @@ export default function HeroSlidesManagement() {
       description: slide.description ?? '',
       ctaText: slide.ctaText ?? '',
       ctaLink: slide.ctaLink ?? '',
+      device: slide.device ?? DEFAULT_HERO_SLIDE_DEVICE,
       order: String(slide.order ?? 0),
       isActive: slide.isActive,
     })
@@ -243,6 +263,8 @@ export default function HeroSlidesManagement() {
   }
 
   const sorted = [...slides].sort((a, b) => a.order - b.order)
+  const visible = deviceFilter === 'ALL' ? sorted : sorted.filter((s) => s.device === deviceFilter)
+  const countFor = (device: HeroSlideDevice) => slides.filter((s) => s.device === device).length
 
   if (loading) {
     return (
@@ -289,6 +311,37 @@ export default function HeroSlidesManagement() {
           )}
         </div>
 
+        {/* Laptop / Mobile filter. Each set is its own carousel on the storefront. */}
+        {sorted.length > 0 && (
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            {(['ALL', ...HERO_SLIDE_DEVICES] as DeviceFilter[]).map((filter) => {
+              const Icon = filter === 'ALL' ? Images : DEVICE_ICON[filter]
+              const label = filter === 'ALL' ? `All (${slides.length})` : `${HERO_SLIDE_DEVICE_LABEL[filter]} (${countFor(filter)})`
+              const active = deviceFilter === filter
+              return (
+                <button
+                  key={filter}
+                  type="button"
+                  onClick={() => setDeviceFilter(filter)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                    active
+                      ? 'bg-gray-900 text-white border-gray-900'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:text-gray-900'
+                  }`}
+                  aria-pressed={active}
+                >
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                  {label}
+                </button>
+              )
+            })}
+            <span className="basis-full sm:basis-auto sm:ml-auto text-xs text-gray-500">
+              Phones and tablets narrower than {DESKTOP_MIN_WIDTH_PX}px see the Mobile set; wider screens see Laptop.
+              An empty set borrows the other one.
+            </span>
+          </div>
+        )}
+
         {/* List */}
         {sorted.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm p-8 sm:p-12 text-center border border-gray-100">
@@ -305,7 +358,14 @@ export default function HeroSlidesManagement() {
           </div>
         ) : (
           <div className="space-y-3">
-            {sorted.map((slide) => (
+            {visible.length === 0 && deviceFilter !== 'ALL' && (
+              <p className="text-sm text-gray-500 bg-white border border-gray-100 rounded-xl px-4 py-6 text-center">
+                No {HERO_SLIDE_DEVICE_LABEL[deviceFilter]} slides yet — those screens show the other set for now.
+              </p>
+            )}
+            {visible.map((slide) => {
+              const DeviceIcon = DEVICE_ICON[slide.device] ?? Monitor
+              return (
               <div
                 key={slide.id}
                 className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-200"
@@ -317,13 +377,17 @@ export default function HeroSlidesManagement() {
                       alt={slide.title}
                       width={128}
                       height={72}
-                      className="h-[72px] w-32 rounded-lg object-cover ring-1 ring-gray-100"
+                      className={`${slide.device === 'MOBILE' ? 'h-[72px] w-14' : 'h-[72px] w-32'} rounded-lg object-cover ring-1 ring-gray-100`}
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold text-gray-900 truncate">{slide.title}</h3>
                       <span className="flex-shrink-0 text-xs text-gray-400">#{slide.order}</span>
+                      <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                        <DeviceIcon className="h-3 w-3" aria-hidden="true" />
+                        {HERO_SLIDE_DEVICE_LABEL[slide.device] ?? slide.device}
+                      </span>
                     </div>
                     {slide.subtitle && (
                       <p className="text-sm text-gray-600 truncate mt-0.5">{slide.subtitle}</p>
@@ -366,7 +430,8 @@ export default function HeroSlidesManagement() {
                   </div>
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
         )}
 
@@ -443,9 +508,42 @@ export default function HeroSlidesManagement() {
                             <ImageIcon className="h-7 w-7 text-gray-400" />
                           </div>
                           <span className="text-sm font-medium text-gray-700">Tap to upload image</span>
-                          <span className="text-xs text-gray-500 mt-1">Wide image works best • JPEG, PNG, WebP • Max 5MB</span>
+                          <span className="text-xs text-gray-500 mt-1">{HERO_SLIDE_DEVICE_HINT[formData.device]} • JPEG, PNG, WebP • Max 5MB</span>
                         </label>
                       )}
+                    </div>
+                  </div>
+
+                  {/* Which screens the slide is for */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Show on *</label>
+                    <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Show on">
+                      {HERO_SLIDE_DEVICES.map((device) => {
+                        const Icon = DEVICE_ICON[device]
+                        const selected = formData.device === device
+                        return (
+                          <button
+                            key={device}
+                            type="button"
+                            role="radio"
+                            aria-checked={selected}
+                            onClick={() => setFormData({ ...formData, device })}
+                            className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-colors ${
+                              selected
+                                ? 'border-red-500 bg-red-50 text-red-700 ring-2 ring-red-500/30'
+                                : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                            }`}
+                          >
+                            <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                            <span className="min-w-0">
+                              <span className="block text-sm font-medium">{HERO_SLIDE_DEVICE_LABEL[device]}</span>
+                              <span className="block text-xs opacity-80">
+                                {device === 'DESKTOP' ? `Screens ${DESKTOP_MIN_WIDTH_PX}px and wider` : `Screens under ${DESKTOP_MIN_WIDTH_PX}px`}
+                              </span>
+                            </span>
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
 

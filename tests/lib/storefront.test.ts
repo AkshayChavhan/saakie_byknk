@@ -40,6 +40,33 @@ describe('toHeroSlides', () => {
   })
 })
 
+describe('heroSlideSets', () => {
+  const row = (id: string, device?: 'DESKTOP' | 'MOBILE') => ({ id, title: id, image: `/${id}.jpg`, device })
+
+  it('puts each admin slide in the set it was uploaded for', async () => {
+    const { heroSlideSets } = await import('@/lib/server/storefront')
+    const sets = heroSlideSets([row('d1', 'DESKTOP'), row('m1', 'MOBILE'), row('d2', 'DESKTOP')])
+    expect(sets.DESKTOP.map((s) => s.id)).toEqual(['d1', 'd2'])
+    expect(sets.MOBILE.map((s) => s.id)).toEqual(['m1'])
+  })
+
+  it('shows product-derived slides (no device) on both', async () => {
+    const { heroSlideSets } = await import('@/lib/server/storefront')
+    const sets = heroSlideSets([row('p1'), row('p2')])
+    expect(sets.DESKTOP.map((s) => s.id)).toEqual(['p1', 'p2'])
+    expect(sets.MOBILE.map((s) => s.id)).toEqual(['p1', 'p2'])
+  })
+
+  it('lets an empty set borrow the other so no screen gets a blank hero', async () => {
+    const { heroSlideSets } = await import('@/lib/server/storefront')
+    const onlyDesktop = heroSlideSets([row('d1', 'DESKTOP')])
+    expect(onlyDesktop.MOBILE.map((s) => s.id)).toEqual(['d1'])
+    const onlyMobile = heroSlideSets([row('m1', 'MOBILE')])
+    expect(onlyMobile.DESKTOP.map((s) => s.id)).toEqual(['m1'])
+    expect(heroSlideSets([])).toEqual({ DESKTOP: [], MOBILE: [] })
+  })
+})
+
 describe('loadHeroSlides', () => {
   beforeEach(() => vi.clearAllMocks())
 

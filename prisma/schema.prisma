@@ -444,8 +444,15 @@ enum PaymentStatus {
   CANCELLED
 }
 
+/// Which screens a hero slide is made for. The home page serves DESKTOP
+/// slides to laptops and MOBILE slides to phones/tablets (lib/hero-slide-device.ts).
+enum HeroSlideDevice {
+  DESKTOP
+  MOBILE
+}
+
 model HeroSlide {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  id            String          @id @default(auto()) @map("_id") @db.ObjectId
   title         String
   subtitle      String?
   description   String?
@@ -453,11 +460,13 @@ model HeroSlide {
   imagePublicId String? // Cloudinary public ID for deletion
   ctaText       String?
   ctaLink       String?
-  order         Int      @default(0)
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  device        HeroSlideDevice @default(DESKTOP)
+  order         Int             @default(0)
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
+  @@index([isActive, device, order])
   @@map("hero_slides")
 }
 

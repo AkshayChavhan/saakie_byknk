@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight, Star, TrendingUp, Tag, Sparkles } from 'lucide-react'
-import type { HeroSlide } from '@/lib/server/storefront'
+import type { HeroSlide, HeroSlideSets } from '@/lib/server/storefront'
+import { DESKTOP_MEDIA_QUERY, type HeroSlideDevice } from '@/lib/hero-slide-device'
 
-export type { HeroSlide }
+export type { HeroSlide, HeroSlideSets }
 
 const DEFAULT_SLIDES: HeroSlide[] = [
   {
@@ -18,6 +19,7 @@ const DEFAULT_SLIDES: HeroSlide[] = [
     image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1920&h=1080&fit=crop',
     link: '/products',
     cta: 'Shop Now',
+    device: null,
     badge: null,
     discount: null,
     product: null,
@@ -25,8 +27,17 @@ const DEFAULT_SLIDES: HeroSlide[] = [
 ]
 
 interface HeroSectionProps {
-  /** Slides loaded on the server (app/page.tsx). Empty falls back to a default slide. */
-  slides: HeroSlide[]
+  /**
+   * The laptop and the phone slide set, loaded on the server (app/page.tsx).
+   * An empty set falls back to a default slide.
+   */
+  slides: HeroSlideSets
+  /**
+   * The set to render first, guessed on the server from the request headers
+   * so the first HTML already carries the right images. After hydration the
+   * real viewport width has the final say.
+   */
+  initialDevice: HeroSlideDevice
 }
 
 /**
@@ -34,9 +45,29 @@ interface HeroSectionProps {
  * page, so the first slide's image is in the initial HTML and `priority`
  * actually preloads it; this component only owns the carousel state.
  */
-export function HeroSection({ slides: incoming }: HeroSectionProps) {
+export function HeroSection({ slides: sets, initialDevice }: HeroSectionProps) {
+  const [device, setDevice] = useState<HeroSlideDevice>(initialDevice)
   const [currentSlide, setCurrentSlide] = useState(0)
+  const incoming = sets[device]
   const slides = incoming.length > 0 ? incoming : DEFAULT_SLIDES
+
+  // Confirm the server's guess against the real screen and follow rotations
+  // and window resizes across the laptop/phone boundary. Restart the carousel
+  // whenever the set changes: slide 3 of one set means nothing in the other.
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
+    const query = window.matchMedia(DESKTOP_MEDIA_QUERY)
+    const apply = () => {
+      const next: HeroSlideDevice = query.matches ? 'DESKTOP' : 'MOBILE'
+      setDevice((prev) => {
+        if (prev !== next) setCurrentSlide(0)
+        return next
+      })
+    }
+    apply()
+    query.addEventListener('change', apply)
+    return () => query.removeEventListener('change', apply)
+  }, [])
 
   // Auto-slide functionality
   useEffect(() => {

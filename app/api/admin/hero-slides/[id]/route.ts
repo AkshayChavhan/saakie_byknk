@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { uploadImage, deleteFromCloudinary } from '@/lib/cloudinary';
 import { validateImageFile } from '@/lib/upload';
+import { parseHeroSlideDevice } from '@/lib/hero-slide-device';
 import { requireAuth, requireAdmin } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
 import { invalidate, TAG } from '@/lib/server/cache';
@@ -36,7 +37,12 @@ export async function PATCH(
     const data = typeof dataJson === 'string' ? JSON.parse(dataJson) : {};
     const imageFile = formData.get('image');
 
-    const { title, subtitle, description, ctaText, ctaLink, order, isActive } = data;
+    const { title, subtitle, description, ctaText, ctaLink, order, isActive, device: rawDevice } = data;
+
+    const device = rawDevice === undefined ? undefined : parseHeroSlideDevice(rawDevice);
+    if (device === null) {
+      return NextResponse.json({ error: 'device must be DESKTOP or MOBILE' }, { status: 400 });
+    }
 
     let imageUrl = existing.image;
     let imagePublicId = existing.imagePublicId;
@@ -63,6 +69,7 @@ export async function PATCH(
         ...(description !== undefined && { description: description || null }),
         ...(ctaText !== undefined && { ctaText: ctaText || null }),
         ...(ctaLink !== undefined && { ctaLink: ctaLink || null }),
+        ...(device !== undefined && { device }),
         ...(order !== undefined && { order: parseInt(String(order)) || 0 }),
         ...(isActive !== undefined && {
           isActive: isActive === true || isActive === 'true',

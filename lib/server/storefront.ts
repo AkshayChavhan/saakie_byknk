@@ -3,6 +3,11 @@ import prisma from '@/lib/prisma';
 import { cached, TAG } from '@/lib/server/cache';
 import { getCategoryScopeIds, getSubtreeProductCounts } from '@/lib/server/category-counts';
 import { watermarkImageUrl } from '@/lib/image-watermark';
+import {
+  HERO_SLIDE_DEVICES,
+  otherHeroSlideDevice,
+  type HeroSlideDevice,
+} from '@/lib/hero-slide-device';
 import { markProduct } from '@/lib/server/watermark';
 
 /**
@@ -30,6 +35,8 @@ export interface HeroSlide {
   link: string | null;
   /** Button label; null when the admin left it blank — no button is shown. */
   cta: string | null;
+  /** Which screen set the slide belongs to; null (product-derived) means both. */
+  device: HeroSlideDevice | null;
   badge: string | null;
   discount: number | null;
   product: {
@@ -74,6 +81,7 @@ export interface RawHeroSlide {
   link?: string | null;
   ctaText?: string | null;
   cta?: string | null;
+  device?: HeroSlideDevice | null;
   badge?: string | null;
   discount?: number | null;
   product?: HeroSlide['product'];
@@ -106,11 +114,35 @@ export function toHeroSlides(rows: RawHeroSlide[]): HeroSlide[] {
       image: slide.image,
       link: cta ? link || '/products' : null,
       cta,
+      device: slide.device ?? null,
       badge: slide.badge || null,
       discount: slide.discount || null,
       product: slide.product || null,
     };
   });
+}
+
+/** The hero's slides per screen class, ready for `HeroSection`. */
+export type HeroSlideSets = Record<HeroSlideDevice, HeroSlide[]>;
+
+/**
+ * Split shaped slides into the laptop and the phone set. Admin slides go to
+ * the set they were uploaded for; product-derived slides carry no device and
+ * appear in both. A set the admin has left empty borrows the other one, so a
+ * store with only laptop slides still has a hero on phones.
+ */
+export function heroSlideSets(rows: RawHeroSlide[]): HeroSlideSets {
+  const slides = toHeroSlides(rows);
+  const sets = Object.fromEntries(
+    HERO_SLIDE_DEVICES.map((device) => [
+      device,
+      slides.filter((slide) => slide.device == null || slide.device === device),
+    ])
+  ) as HeroSlideSets;
+  for (const device of HERO_SLIDE_DEVICES) {
+    if (sets[device].length === 0) sets[device] = sets[otherHeroSlideDevice(device)];
+  }
+  return sets;
 }
 
 const productSlideSelect = {

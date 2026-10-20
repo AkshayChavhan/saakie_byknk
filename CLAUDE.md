@@ -247,6 +247,13 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - **Tree Navigation**: Visual category hierarchy
 - **Bulk Management**: Mass category operations
 
+### Hero Slides (`/admin/hero-slides`)
+- **Two sets, one per screen class**: every slide is uploaded for **Laptop / Desktop** or **Mobile / Tablet** (`HeroSlide.device`, default `DESKTOP`); the picker sits at the top of the slide form and the list can be filtered by set
+- **Served by screen**: screens 1024px and wider (Tailwind `lg`) get the DESKTOP set, narrower ones the MOBILE set. The server guesses from `sec-ch-ua-mobile` / the user agent (`lib/server/device.ts`) so the first HTML carries the right images; the hero re-checks against the real viewport after hydration
+- **Never blank**: a set with no slides borrows the other one (`heroSlideSets` in `lib/server/storefront.ts`); with no admin slides at all the hero falls back to product-derived slides on both
+- **Blank fields stay hidden**: subtitle, description and button are each omitted when left empty; admin slides are shown without the product watermark
+- Shared names and the breakpoint live in `lib/hero-slide-device.ts`
+
 ### Store Settings (`/admin/settings`)
 - **Charge shipping fee**: toggle off and every order ships free, whatever the subtotal; on (default) charges ₹99 up to ₹999 and free above
 - **Applies live**: saved to `store_settings` and read on the next cart/checkout load — no deploy
