@@ -21,8 +21,8 @@ export function RatingBadge({
   size?: 'sm' | 'md'
   className?: string
 }) {
-  // Unrated products show nothing rather than a hollow "0.0" chip.
-  if (!rating || rating <= 0) return null
+  // No reviews yet: show nothing, not a hollow "0.0" chip or a "0" count.
+  if (!reviews || reviews < 1 || !rating || rating <= 0) return null
 
   const sm = size === 'sm'
 

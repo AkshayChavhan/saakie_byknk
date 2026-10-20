@@ -489,6 +489,17 @@ export function ProductDetail({ initialProduct = null }: ProductDetailProps) {
     )
   }
 
+  // Reviews stay out of sight until the product has at least one approved
+  // review. The one exception is a signed-in customer who bought it and may
+  // write one (and keeps the tab while their submission message shows),
+  // otherwise the first review could never be written.
+  const showReviewsTab =
+    (product?.reviewCount ?? 0) > 0 || reviewEligibility?.canReview === true || reviewMessage !== null
+  const visibleTabs: Array<'description' | 'details' | 'reviews'> = showReviewsTab
+    ? ['description', 'details', 'reviews']
+    : ['description', 'details']
+  const shownTab = activeTab === 'reviews' && !showReviewsTab ? 'description' : activeTab
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -838,21 +849,22 @@ export function ProductDetail({ initialProduct = null }: ProductDetailProps) {
         <div className="mt-12">
           <div className="border-b border-gray-200">
             <nav className="flex space-x-8" role="tablist">
-              {['description', 'details', 'reviews'].map((tab) => (
+              {visibleTabs.map((tab) => (
                 <button
                   key={tab}
                   role="tab"
                   id={`tab-${tab}`}
                   aria-controls="product-tab-panel"
-                  aria-selected={activeTab === tab}
-                  onClick={() => setActiveTab(tab as any)}
+                  aria-selected={shownTab === tab}
+                  onClick={() => setActiveTab(tab)}
                   className={`py-4 px-1 border-b-2 font-medium text-sm capitalize transition-colors duration-200 ${
-                    activeTab === tab
+                    shownTab === tab
                       ? 'border-primary text-primary'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  {tab} {tab === 'reviews' && `(${product.reviewCount})`}
+                  {tab}
+                  {tab === 'reviews' && product.reviewCount > 0 && ` (${product.reviewCount})`}
                 </button>
               ))}
             </nav>
@@ -862,13 +874,13 @@ export function ProductDetail({ initialProduct = null }: ProductDetailProps) {
               time you switch, rather than the new content appearing instantly
               in place of the old. */}
           <div
-            key={activeTab}
+            key={shownTab}
             id="product-tab-panel"
             role="tabpanel"
-            aria-labelledby={`tab-${activeTab}`}
+            aria-labelledby={`tab-${shownTab}`}
             className="animate-panel-in py-8"
           >
-            {activeTab === 'description' && (
+            {shownTab === 'description' && (
               <div className="prose max-w-none">
                 <p className="text-gray-700 leading-relaxed mb-6 whitespace-pre-line">
                   {product.description}
@@ -884,7 +896,7 @@ export function ProductDetail({ initialProduct = null }: ProductDetailProps) {
               </div>
             )}
 
-            {activeTab === 'details' && (
+            {shownTab === 'details' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-4">
                   <h3 className="font-medium text-gray-900">Product Information</h3>
@@ -968,7 +980,7 @@ export function ProductDetail({ initialProduct = null }: ProductDetailProps) {
               </div>
             )}
 
-            {activeTab === 'reviews' && (
+            {shownTab === 'reviews' && (
               <div className="space-y-6">
                 {/* Write a Review */}
                 <div className="bg-gray-50 rounded-xl p-5 sm:p-6">
