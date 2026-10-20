@@ -173,14 +173,14 @@ export default function AdminDashboard() {
     },
     {
       title: 'Total Revenue',
-      value: `₹${(stats.totalRevenue ?? 0).toLocaleString()}`,
+      value: `Rs. ${(stats.totalRevenue ?? 0).toLocaleString()}`,
       icon: DollarSign,
       color: 'bg-yellow-500',
       change: '+15% from last month'
     },
     {
       title: 'Monthly Revenue',
-      value: `₹${(stats.monthlyRevenue ?? 0).toLocaleString()}`,
+      value: `Rs. ${(stats.monthlyRevenue ?? 0).toLocaleString()}`,
       icon: TrendingUp,
       color: 'bg-red-500',
       change: '+23% from last month'
@@ -501,7 +501,7 @@ export default function AdminDashboard() {
                       <p className="text-sm text-gray-500">{order.user.name || order.user.email}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-gray-900">₹{(order.total ?? 0).toFixed(2)}</p>
+                      <p className="font-medium text-gray-900">Rs. {(order.total ?? 0).toFixed(2)}</p>
                       <p className="text-sm text-gray-500">
                         {mounted ? formatTimeAgo(order.createdAt) : new Date(order.createdAt).toLocaleDateString()}
                       </p>
@@ -545,7 +545,7 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-gray-900">₹{(product.price ?? 0).toFixed(2)}</p>
+                      <p className="font-medium text-gray-900">Rs. {(product.price ?? 0).toFixed(2)}</p>
                       <p className="text-sm text-gray-500">In stock: {product.stock ?? 0}</p>
                     </div>
                   </div>

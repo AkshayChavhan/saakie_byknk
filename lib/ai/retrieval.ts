@@ -94,7 +94,7 @@ export async function retrieveContext(
  * where the catalogue context begins and ends.
  *
  * Per-product shape:
- *   N. <name> — ₹<price> — <category> — slug: <slug>
+ *   N. <name> — Rs. <price> — <category> — slug: <slug>
  *      <one-line description, truncated>
  *
  * Same fields the model would get from a `searchProducts` tool result, but
@@ -114,7 +114,7 @@ function formatContextBlock(
 
   const lines = rows.map((row, i) => {
     const description = previewDescription(row);
-    const head = `${i + 1}. ${row.name} — ₹${row.price.toLocaleString('en-IN')} — ${row.categoryName} — slug: ${row.slug}`;
+    const head = `${i + 1}. ${row.name} — Rs. ${row.price.toLocaleString('en-IN')} — ${row.categoryName} — slug: ${row.slug}`;
     return description ? `${head}\n   ${description}` : head;
   });
 

@@ -33,7 +33,6 @@ const navigation: NavItem[] = [
   // listing is still reachable from the foot of the dropdown.
   { kind: 'categories', name: 'Categories' },
   { kind: 'link', name: 'Sale', href: '/products?sale=true', needsSale: true },
-  { kind: 'link', name: 'Posts', href: '/post' },
 ]
 
 /**
@@ -486,7 +485,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 bg-black shadow-sm pt-safe">
       {/* <div className="bg-red-600 text-white py-2 text-center text-sm">
-        <p>Free shipping on orders above ₹2,999</p>
+        <p>Free shipping on orders above Rs. 2,999</p>
       </div> */}
       
       <nav className="container mx-auto px-4 sm:px-6 lg:px-8">

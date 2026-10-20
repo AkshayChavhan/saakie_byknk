@@ -101,12 +101,12 @@ export function CartItem({ item, onUpdateQuantity, onRemoveItem, isUpdating }: C
         
         <div className="flex items-center gap-4 mt-2">
           <p className="text-lg font-semibold text-gray-900">
-            ₹{item.price.toLocaleString()}
+            Rs. {item.price.toLocaleString()}
           </p>
           
           {item.price !== item.product.price && (
             <p className="text-sm text-gray-500 line-through">
-              ₹{item.product.price.toLocaleString()}
+              Rs. {item.product.price.toLocaleString()}
             </p>
           )}
         </div>
@@ -159,7 +159,7 @@ export function CartItem({ item, onUpdateQuantity, onRemoveItem, isUpdating }: C
 
       <div className="text-right">
         <p className="text-lg font-semibold text-gray-900">
-          ₹{(item.price * quantity).toLocaleString()}
+          Rs. {(item.price * quantity).toLocaleString()}
         </p>
       </div>
     </div>

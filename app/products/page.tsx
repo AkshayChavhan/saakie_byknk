@@ -780,7 +780,7 @@ function ProductsContent() {
                     <label className="text-xs text-gray-500 mb-1 block">Min Price</label>
                     <input
                       type="number"
-                      placeholder="₹0"
+                      placeholder="Rs. 0"
                       value={minPrice}
                       onChange={(e) => setMinPrice(e.target.value)}
                       className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-sm focus:ring-2 focus:ring-rose-500"
@@ -791,7 +791,7 @@ function ProductsContent() {
                     <label className="text-xs text-gray-500 mb-1 block">Max Price</label>
                     <input
                       type="number"
-                      placeholder="₹99,999"
+                      placeholder="Rs. 99,999"
                       value={maxPrice}
                       onChange={(e) => setMaxPrice(e.target.value)}
                       className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl text-sm focus:ring-2 focus:ring-rose-500"

@@ -9,6 +9,7 @@ import { Providers } from '@/components/providers'
 import { NavigationProgress } from '@/components/ui/navigation-progress'
 import { Footer } from '@/components/layout/footer'
 import { SiteFooter } from '@/components/layout/site-footer'
+import { InstagramCta } from '@/components/layout/instagram-cta'
 
 // One typeface for the whole storefront, body and headings alike: Jost, a
 // geometric sans in the Futura tradition, as used by suta.in. Both the
@@ -92,6 +93,7 @@ export default function RootLayout({
             {/* One footer for the whole app, shown only on the routes
                 SiteFooter lists. Pages no longer render their own. */}
             <SiteFooter>
+              <InstagramCta />
               <Footer />
             </SiteFooter>
           </Providers>

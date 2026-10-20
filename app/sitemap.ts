@@ -12,7 +12,6 @@ const STATIC_PATHS = [
   '/our-story',
   '/blog',
   '/contact',
-  '/post',
   '/care-instructions',
   '/shipping-returns',
   '/privacy-policy',

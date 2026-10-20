@@ -30,10 +30,9 @@ describe('utils', () => {
   })
 
   describe('formatPrice', () => {
-    it('formats price in INR currency', () => {
-      const result = formatPrice(5999)
-      expect(result).toContain('5,999')
-      expect(result).toContain('₹')
+    it('writes the amount as "Rs." with Indian grouping, never the ₹ sign', () => {
+      expect(formatPrice(5999)).toBe('Rs. 5,999')
+      expect(formatPrice(5999)).not.toContain('₹')
     })
 
     it('formats zero correctly', () => {

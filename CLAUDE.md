@@ -190,9 +190,6 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` - Optional. When set, `checkRateLimit()` counts across all serverless instances; otherwise it falls back to per-instance memory (see docs/RELIABILITY.md)
 - `instrumentation.ts` validates the environment at server start (`lib/server/env.ts`): required variables throw in production, optional integrations only warn
 
-### Instagram Integration
-- `INSTAGRAM_ACCESS_TOKEN` - Instagram Basic Display API long-lived access token (optional - required for Instagram feed display on /post page)
-
 ## Tech Stack
 - **Framework**: Next.js 15 (App Router)
 - **Language**: TypeScript

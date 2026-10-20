@@ -34,7 +34,7 @@ interface ChatWindowProps {
 const QUICK_PROMPTS = [
   'Wedding sarees',
   'Casual wear',
-  'Under ₹5000',
+  'Under Rs. 5000',
   'Silk sarees'
 ]
 

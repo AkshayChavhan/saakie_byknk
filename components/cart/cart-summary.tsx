@@ -48,7 +48,7 @@ export function CartSummary({ subtotal, itemCount, isLoading }: CartSummaryProps
           <span className="text-gray-600">
             Subtotal ({itemCount} {itemCount === 1 ? 'item' : 'items'})
           </span>
-          <span className="font-medium">₹{subtotal.toLocaleString()}</span>
+          <span className="font-medium">Rs. {subtotal.toLocaleString()}</span>
         </div>
 
         <div className="flex justify-between">
@@ -57,7 +57,7 @@ export function CartSummary({ subtotal, itemCount, isLoading }: CartSummaryProps
             {shipping === 0 ? (
               <span className="text-green-600">FREE</span>
             ) : (
-              `₹${shipping}`
+              `Rs. ${shipping}`
             )}
           </span>
         </div>
@@ -65,14 +65,14 @@ export function CartSummary({ subtotal, itemCount, isLoading }: CartSummaryProps
         <div className="border-t pt-3">
           <div className="flex justify-between">
             <span className="text-base font-semibold">Total</span>
-            <span className="text-base font-semibold">₹{total.toLocaleString()}</span>
+            <span className="text-base font-semibold">Rs. {total.toLocaleString()}</span>
           </div>
         </div>
       </div>
 
       {shipping > 0 && addForFreeShipping > 0 && (
         <p className="text-sm text-gray-600 mt-4 p-3 bg-blue-50 rounded-lg">
-          Add ₹{addForFreeShipping.toLocaleString()} more for FREE shipping!
+          Add Rs. {addForFreeShipping.toLocaleString()} more for FREE shipping!
         </p>
       )}
 
