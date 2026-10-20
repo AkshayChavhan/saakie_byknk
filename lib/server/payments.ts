@@ -90,7 +90,7 @@ export async function settlePaidOrder(opts: {
         orderNumber: true,
         userId: true,
         notes: true,
-        items: { select: { productId: true, quantity: true } },
+        items: { select: { productId: true, quantity: true, isPrebook: true } },
       },
     });
     if (!order) return NOT_APPLIED;
@@ -108,6 +108,16 @@ export async function settlePaidOrder(opts: {
 
     const oversold: string[] = [];
     for (const item of order.items) {
+      // A pre-booked saree was sold out when ordered and is made to order:
+      // there is no unit to take off the shelf, and it is not an oversell.
+      // It still counts as a sale.
+      if (item.isPrebook) {
+        await tx.product.updateMany({
+          where: { id: item.productId },
+          data: { salesCount: { increment: item.quantity } },
+        });
+        continue;
+      }
       // `salesCount` feeds the "popular" sort and the bestseller badge; it is
       // maintained here so listings never have to count order items.
       const dec = await tx.product.updateMany({

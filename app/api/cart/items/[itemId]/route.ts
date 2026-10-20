@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { isPrebookable } from '@/lib/prebook';
 import { requireAuth } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
 import { markLines } from '@/lib/server/watermark';
@@ -30,7 +31,8 @@ export async function PATCH(
       return NextResponse.json({ error: 'Cart item not found' }, { status: 404 });
     }
 
-    if (cartItem.product.stock < quantity) {
+    // Pre-booked (sold-out) lines are not held to the stock count.
+    if (!isPrebookable(cartItem.product) && cartItem.product.stock < quantity) {
       return NextResponse.json(
         { error: `Only ${cartItem.product.stock} items available in stock` },
         { status: 400 }

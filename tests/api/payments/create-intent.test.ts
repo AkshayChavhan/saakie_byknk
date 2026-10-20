@@ -213,6 +213,20 @@ describe('POST /api/payments/create-intent', () => {
       expect(mockPrisma.order.create).not.toHaveBeenCalled()
     })
 
+    it('takes a sold-out saree as a pre-booking and stamps the order line', async () => {
+      mockPrisma.cart.findUnique.mockResolvedValue(cartWith(sareeProduct({ stock: 0 }), 1))
+
+      expect((await post(RAZORPAY_BODY)).status).toBe(200)
+      expect(createdOrderData().items.create[0]).toMatchObject({ isPrebook: true })
+    })
+
+    it('stamps an in-stock line as a normal order line', async () => {
+      mockPrisma.cart.findUnique.mockResolvedValue(cartWith(sareeProduct({ stock: 5 }), 1))
+
+      expect((await post(RAZORPAY_BODY)).status).toBe(200)
+      expect(createdOrderData().items.create[0]).toMatchObject({ isPrebook: false })
+    })
+
     it('allows an order for exactly the remaining stock', async () => {
       mockPrisma.cart.findUnique.mockResolvedValue(cartWith(sareeProduct({ stock: 2 }), 2))
 
@@ -360,8 +374,8 @@ describe('POST /api/payments/create-intent', () => {
       await post(RAZORPAY_BODY)
 
       expect(createdOrderData().items.create).toEqual([
-        { productId: 'p1', quantity: 2, price: 200, total: 400 },
-        { productId: 'p2', quantity: 1, price: 500, total: 500 },
+        { productId: 'p1', quantity: 2, price: 200, total: 400, isPrebook: false },
+        { productId: 'p2', quantity: 1, price: 500, total: 500, isPrebook: false },
       ])
     })
   })

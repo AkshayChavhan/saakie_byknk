@@ -220,6 +220,29 @@ describe('Cart API', () => {
       expect(data.error).toContain('Only 2 items available')
     })
 
+    it('accepts a sold-out saree as a pre-booking instead of refusing it', async () => {
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
+      mockDb.user.findUnique.mockResolvedValue(createMockUser())
+      mockDb.product.findUnique.mockResolvedValue(
+        createMockProduct({ stock: 0, isActive: true, price: 1850 })
+      )
+      mockDb.cart.findUnique
+        .mockResolvedValueOnce(createMockCart({ items: [] }))
+        .mockResolvedValueOnce(createMockCart({ items: [] }))
+      mockDb.cartItem.upsert.mockResolvedValue({})
+
+      const { POST } = await import('@/app/api/cart/route')
+      const response = await POST(
+        new NextRequest('http://localhost:3000/api/cart', {
+          method: 'POST',
+          body: JSON.stringify({ productId: '507f1f77bcf86cd799439011', quantity: 1 }),
+        })
+      )
+
+      expect(response.status).toBe(200)
+      expect(mockDb.cartItem.upsert).toHaveBeenCalled()
+    })
+
     it('adds new item to cart', async () => {
       const user = createMockUser()
       const product = createMockProduct({ stock: 10, price: 5999 })

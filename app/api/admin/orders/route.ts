@@ -79,6 +79,7 @@ export async function GET(request: Request) {
               id: true,
               quantity: true,
               price: true,
+              isPrebook: true,
               product: {
                 select: {
                   name: true,

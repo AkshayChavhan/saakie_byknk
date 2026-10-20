@@ -18,6 +18,7 @@ import {
   Check
 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
+import { PrebookButton } from '@/components/products/prebook-button'
 import { fetchApi, cartApi, wishlistApi } from '@/lib/api'
 import { useToast } from '@/components/ui/toast'
 import { Header } from '@/components/layout/header'
@@ -406,6 +407,27 @@ export function ProductDetail({ initialProduct = null }: ProductDetailProps) {
     }
   }
 
+  // "Pre-book" — the saree is sold out. Same path as Buy Now, minus the stock
+  // check: the cart and checkout accept a sold-out saree as a pre-booking
+  // (lib/prebook.ts) and the order line is stamped so admin knows to make it.
+  const handlePrebook = async () => {
+    if (!product) return
+    if (authStatus !== 'authenticated') {
+      router.push('/sign-in')
+      return
+    }
+    try {
+      setAddingToCart(true)
+      await cartApi.addItem({ productId: product.id, quantity: 1 })
+      window.dispatchEvent(new CustomEvent('cartUpdated'))
+      router.push('/checkout')
+    } catch (error) {
+      console.error('Pre-book failed:', error)
+      toast.error("Couldn't start your pre-booking", error instanceof Error ? error.message : 'Please try again.')
+      setAddingToCart(false)
+    }
+  }
+
   const discount = (price: number, comparePrice: number) => {
     return Math.round(((comparePrice - price) / comparePrice) * 100)
   }
@@ -549,11 +571,11 @@ export function ProductDetail({ initialProduct = null }: ProductDetailProps) {
                 )}
               </div>
 
-              {/* Stock Status */}
+              {/* Sold out, but still on offer as a pre-booking: label, don't dim the photo. */}
               {!product.inStock && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                  <span className="text-white font-medium text-lg">Out of Stock</span>
-                </div>
+                <span className="absolute bottom-3 left-3 z-10 rounded-full bg-gray-900/85 px-3 py-1 text-xs font-medium text-white">
+                  Sold out · Pre-book available
+                </span>
               )}
             </div>
 
@@ -636,9 +658,9 @@ export function ProductDetail({ initialProduct = null }: ProductDetailProps) {
 
             {/* Stock Status */}
             <div className="flex items-center space-x-2">
-              <div className={`w-3 h-3 rounded-full ${product.inStock ? 'bg-green-500' : 'bg-red-500'}`}></div>
-              <span className={`text-sm font-medium ${product.inStock ? 'text-green-600' : 'text-red-600'}`}>
-                {product.inStock ? 'In Stock' : 'Out of Stock'}
+              <div className={`w-3 h-3 rounded-full ${product.inStock ? 'bg-green-500' : 'bg-amber-500'}`}></div>
+              <span className={`text-sm font-medium ${product.inStock ? 'text-green-600' : 'text-amber-700'}`}>
+                {product.inStock ? 'In Stock' : 'Sold out · Available to pre-book'}
               </span>
             </div>
 
@@ -744,11 +766,11 @@ export function ProductDetail({ initialProduct = null }: ProductDetailProps) {
                   <button
                     onClick={handleAddToCart}
                     disabled={addingToCart}
-                    className="w-full bg-primary text-white py-4 px-6 rounded-lg font-medium text-lg hover:bg-primary/90 transition-colors flex items-center justify-center space-x-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full bg-white text-gray-900 border border-gray-900 py-4 px-6 rounded-full font-medium text-lg hover:bg-gray-50 transition-colors flex items-center justify-center space-x-2 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {addingToCart ? (
                       <>
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <div className="w-5 h-5 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
                         <span>Adding...</span>
                       </>
                     ) : addedToCart ? (
@@ -767,19 +789,20 @@ export function ProductDetail({ initialProduct = null }: ProductDetailProps) {
                   <button
                     onClick={handleBuyNow}
                     disabled={addingToCart}
-                    className="w-full bg-gray-900 text-white py-4 px-6 rounded-lg font-medium text-lg hover:bg-gray-800 transition-colors flex items-center justify-center space-x-2 disabled:opacity-60"
+                    className="w-full bg-gray-900 text-white border border-gray-900 py-4 px-6 rounded-full font-medium text-lg hover:bg-gray-800 transition-colors flex items-center justify-center space-x-2 disabled:opacity-60"
                   >
                     <CreditCard size={20} />
                     <span>Buy Now - {formatPrice(product.price * quantity)}</span>
                   </button>
                 </>
               ) : (
-                <button
-                  disabled
-                  className="w-full bg-gray-300 text-gray-500 py-4 px-6 rounded-lg font-medium text-lg cursor-not-allowed"
-                >
-                  Out of Stock
-                </button>
+                <PrebookButton
+                  label={`Pre-book - ${formatPrice(product.price)}`}
+                  onConfirm={handlePrebook}
+                  busy={addingToCart}
+                  placement="bottom"
+                  size="lg"
+                />
               )}
 
               <div className="grid grid-cols-2 gap-3">
@@ -1236,11 +1259,11 @@ export function ProductDetail({ initialProduct = null }: ProductDetailProps) {
               <button
                 onClick={handleAddToCart}
                 disabled={addingToCart}
-                className="flex-1 bg-primary text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="flex-1 bg-white text-gray-900 border border-gray-900 py-3 px-4 rounded-full font-medium hover:bg-gray-50 flex items-center justify-center space-x-2 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {addingToCart ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
                     <span>Adding</span>
                   </>
                 ) : addedToCart ? (
@@ -1259,19 +1282,21 @@ export function ProductDetail({ initialProduct = null }: ProductDetailProps) {
               <button
                 onClick={handleBuyNow}
                 disabled={addingToCart}
-                className="flex-1 bg-gray-900 text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center space-x-2 disabled:opacity-60"
+                className="flex-1 bg-gray-900 text-white border border-gray-900 py-3 px-4 rounded-full font-medium flex items-center justify-center space-x-2 disabled:opacity-60"
               >
                 <CreditCard size={16} />
                 <span>Buy Now</span>
               </button>
             </>
           ) : (
-            <button
-              disabled
-              className="flex-1 bg-gray-300 text-gray-500 py-3 px-4 rounded-lg font-medium cursor-not-allowed"
-            >
-              Out of Stock
-            </button>
+            <PrebookButton
+              label="Pre-book"
+              onConfirm={handlePrebook}
+              busy={addingToCart}
+              placement="top"
+              size="md"
+              className="flex-1"
+            />
           )}
         </div>
       </div>

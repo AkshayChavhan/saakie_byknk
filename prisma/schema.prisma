@@ -358,6 +358,10 @@ model OrderItem {
   quantity  Int
   price     Float
   total     Float
+  // The saree was sold out when the order was placed, so this line is a
+  // pre-booking (delivered 15–20 days later, lib/prebook.ts). Stamped at order
+  // creation; settlement leaves stock alone for it.
+  isPrebook Boolean @default(false)
 
   @@index([orderId])
   @@index([productId])

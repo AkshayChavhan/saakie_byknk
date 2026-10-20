@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { isPrebookable } from '@/lib/prebook';
 import prisma from '@/lib/prisma';
 import { stripe } from '@/lib/stripe';
 import { razorpay } from '@/lib/razorpay';
@@ -77,6 +78,9 @@ export async function POST(request: Request) {
     }
 
     for (const item of cart.items) {
+      // A sold-out saree is a pre-booking: it is made to order, so the stock
+      // count does not limit it. Everything else must be in stock.
+      if (isPrebookable(item.product)) continue;
       if (item.product.stock < item.quantity) {
         return NextResponse.json(
           { error: `Insufficient stock for ${item.product.name}` },
@@ -127,6 +131,7 @@ export async function POST(request: Request) {
             quantity: item.quantity,
             price: item.product.price,
             total: item.product.price * item.quantity,
+            isPrebook: isPrebookable(item.product),
           })),
         },
       },

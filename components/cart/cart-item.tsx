@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Minus, Plus, Trash2 } from 'lucide-react'
+import { isPrebookable, PREBOOK_LINE_NOTE } from '@/lib/prebook'
 
 interface CartItemType {
   id: string
@@ -62,6 +63,8 @@ export function CartItem({ item, onUpdateQuantity, onRemoveItem, isUpdating }: C
 
   const primaryImage = item.product.images.find(img => img.isPrimary) || item.product.images[0]
   const isDisabled = isUpdating || isLocalUpdating
+  // Sold out: the line is a pre-booking and is not capped by stock.
+  const prebook = isPrebookable(item.product)
 
   return (
     // The wrapping card in cart.tsx has no padding of its own, so each row
@@ -127,7 +130,7 @@ export function CartItem({ item, onUpdateQuantity, onRemoveItem, isUpdating }: C
             
             <button
               onClick={() => handleQuantityChange(quantity + 1)}
-              disabled={isDisabled || quantity >= item.product.stock}
+              disabled={isDisabled || (!prebook && quantity >= item.product.stock)}
               className="p-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus size={16} />
@@ -144,16 +147,14 @@ export function CartItem({ item, onUpdateQuantity, onRemoveItem, isUpdating }: C
           </button>
         </div>
 
-        {item.product.stock < 10 && (
-          <p className="text-sm text-orange-600 mt-2">
-            Only {item.product.stock} left in stock
-          </p>
-        )}
-        
-        {item.product.stock === 0 && (
-          <p className="text-sm text-red-600 mt-2">
-            Out of stock
-          </p>
+        {prebook ? (
+          <p className="text-sm text-amber-700 mt-2">{PREBOOK_LINE_NOTE}</p>
+        ) : (
+          item.product.stock < 10 && (
+            <p className="text-sm text-orange-600 mt-2">
+              Only {item.product.stock} left in stock
+            </p>
+          )
         )}
       </div>
 

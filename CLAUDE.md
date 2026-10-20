@@ -288,6 +288,15 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - Unique indexes: `CartItem(cartId, productId)`, `WishlistItem(wishlistId, productId)`, `Review(userId, productId)`. Before `npm run prisma:push` on an existing database run `node scripts/dedupe-before-unique-indexes.mjs` (add `--apply` to fix).
 - Full details: `docs/RELIABILITY.md`
 
+## Pre-booking (sold-out sarees)
+
+- **Rule**: an active product with `stock <= 0` is pre-bookable (`isPrebookable` in `lib/prebook.ts`). One helper decides it for the product page, cart, checkout and settlement.
+- **Product page**: a sold-out saree shows **Pre-book** in place of Out of Stock (main column and the sticky phone bar). It opens a popover with the 15–20 day delivery message; the pre-booking (cart add → `/checkout`) happens only on **Pre-book now**.
+- **Cart / checkout**: a sold-out line is not capped by stock (`POST /api/cart`, `PATCH /api/cart/items/[id]`, `/api/payments/create-intent`); in-stock lines keep the normal limits. Cart and checkout label the line "Pre-book · delivered 15–20 days after ordering".
+- **Order**: `OrderItem.isPrebook` is stamped at order creation. Settlement (`lib/server/payments.ts`) only increments `salesCount` for those lines: no stock decrement, no `OVERSOLD` flag. Order pages and the admin order list show a Pre-book label.
+- **Restocking**: settlement never earmarks stock for pre-bookings. When admin raises the stock of a saree that has open pre-booked orders, those new pieces can be bought by anyone, so keep pieces made for pre-bookings out of the stock count.
+- Delivery window and popover copy live in `lib/prebook.ts`.
+
 ## Performance Conventions
 
 - Reads that rarely change (categories, nav tree, hero slides, banners, featured products, settings) go through `cached()` in `lib/server/cache.ts` with a tag; the admin write that changes them calls `invalidate(TAG.x)`. Never add a time-only `revalidate` for admin-managed data.
