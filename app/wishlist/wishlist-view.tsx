@@ -7,7 +7,7 @@ import { useSession } from '@/lib/auth-client'
 import { Heart, ShoppingCart, Trash2, ArrowRight, Package } from 'lucide-react'
 import { Header } from '@/components/layout/header'
 import { formatPrice } from '@/lib/utils'
-import { wishlistApi, cartApi } from '@/lib/api'
+import { wishlistApi, cartApi, hasApiErrorCode } from '@/lib/api'
 import { useToast } from '@/components/ui/toast'
 
 interface WishlistItem {
@@ -93,8 +93,12 @@ export function WishlistView({ initialItems = null }: WishlistViewProps) {
       window.dispatchEvent(new CustomEvent('cartUpdated'))
       toast.success('Added to cart', 'Moved from your wishlist to the cart.')
     } catch (error) {
-      console.error('Error adding to cart:', error)
-      toast.error("Couldn't add to cart", 'Please try again.')
+      if (hasApiErrorCode(error, 'ALREADY_IN_CART')) {
+        toast.info('Product already in cart', 'Open your cart to check out.')
+      } else {
+        console.error('Error adding to cart:', error)
+        toast.error("Couldn't add to cart", 'Please try again.')
+      }
     } finally {
       setAddingToCart(null)
     }

@@ -21,6 +21,23 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}): Pro
 }
 
 /**
+ * An API failure with the HTTP status and, when the route sends one, a
+ * machine-readable `code` (e.g. `ALREADY_IN_CART`), so callers can react to a
+ * specific case without matching on message text.
+ */
+export class ApiError extends Error {
+  constructor(message: string, readonly status: number, readonly code?: string) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
+/** True when `error` is an API failure carrying this `code`. */
+export function hasApiErrorCode(error: unknown, code: string): boolean {
+  return error instanceof ApiError && error.code === code
+}
+
+/**
  * Base fetch wrapper for same-origin Next.js API calls. The session
  * cookie is sent automatically (`credentials: 'same-origin'`), so protected
  * routes work without an Authorization header.
@@ -43,11 +60,13 @@ async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise
     // `error.error.message`, while most route bodies return a bare
     // `{ error: 'message' }`. Read both, or the plain-string case gets
     // swallowed and every failure reads "API request failed".
-    throw new Error(
+    throw new ApiError(
       error.error?.message ||
         (typeof error.error === 'string' ? error.error : null) ||
         error.message ||
-        'API request failed'
+        'API request failed',
+      response.status,
+      typeof error.code === 'string' ? error.code : undefined
     );
   }
 

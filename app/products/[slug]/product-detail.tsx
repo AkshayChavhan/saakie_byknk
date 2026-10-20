@@ -19,7 +19,7 @@ import {
 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { PrebookButton } from '@/components/products/prebook-button'
-import { fetchApi, cartApi, wishlistApi } from '@/lib/api'
+import { fetchApi, cartApi, wishlistApi, hasApiErrorCode } from '@/lib/api'
 import { useToast } from '@/components/ui/toast'
 import { Header } from '@/components/layout/header'
 import { RatingBadge } from '@/components/ui/rating-badge'
@@ -376,8 +376,12 @@ export function ProductDetail({ initialProduct = null }: ProductDetailProps) {
       // Let the header cart icon refresh its count.
       window.dispatchEvent(new CustomEvent('cartUpdated'))
     } catch (error) {
-      console.error('Failed to add to cart:', error)
-      toast.error("Couldn't add to cart", error instanceof Error ? error.message : 'Please try again.')
+      if (hasApiErrorCode(error, 'ALREADY_IN_CART')) {
+        toast.info('Product already in cart', 'Open your cart to check out.')
+      } else {
+        console.error('Failed to add to cart:', error)
+        toast.error("Couldn't add to cart", error instanceof Error ? error.message : 'Please try again.')
+      }
     } finally {
       setAddingToCart(false)
     }
@@ -401,6 +405,11 @@ export function ProductDetail({ initialProduct = null }: ProductDetailProps) {
       window.dispatchEvent(new CustomEvent('cartUpdated'))
       router.push('/checkout')
     } catch (error) {
+      // Already in the cart: nothing to add, the checkout has it.
+      if (hasApiErrorCode(error, 'ALREADY_IN_CART')) {
+        router.push('/checkout')
+        return
+      }
       console.error('Buy Now failed:', error)
       toast.error("Couldn't start checkout", error instanceof Error ? error.message : 'Please try again.')
       setAddingToCart(false)

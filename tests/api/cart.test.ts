@@ -334,6 +334,30 @@ describe('Cart API', () => {
       expect(mockDb.cartItem.upsert).not.toHaveBeenCalled()
     })
 
+    it('says "Product already in cart" when a one-off saree is added a second time', async () => {
+      const product = createMockProduct({ stock: 1, id: '507f1f77bcf86cd799439011' })
+      const cart = createMockCart({
+        items: [createMockCartItem({ productId: '507f1f77bcf86cd799439011', quantity: 1 })],
+      })
+
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
+      mockDb.user.findUnique.mockResolvedValue(createMockUser())
+      mockDb.product.findUnique.mockResolvedValue(product)
+      mockDb.cart.findUnique.mockResolvedValueOnce(cart)
+
+      const { POST } = await import('@/app/api/cart/route')
+      const response = await POST(
+        new NextRequest('http://localhost:3000/api/cart', {
+          method: 'POST',
+          body: JSON.stringify({ productId: '507f1f77bcf86cd799439011', quantity: 1 }),
+        })
+      )
+
+      expect(response.status).toBe(409)
+      expect(await response.json()).toEqual({ error: 'Product already in cart', code: 'ALREADY_IN_CART' })
+      expect(mockDb.cartItem.upsert).not.toHaveBeenCalled()
+    })
+
     it('rejects a non-integer or oversized quantity', async () => {
       mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
       mockDb.user.findUnique.mockResolvedValue(createMockUser())
