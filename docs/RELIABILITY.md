@@ -124,7 +124,7 @@ warning naming the missing variables; fully absent ones are listed as off.
 
 ## External calls
 
-Instagram fetches abort after 8 s, Cloudinary uploads after 60 s, and the
+Cloudinary uploads abort after 60 s, and the
 Anthropic client uses a 20 s timeout with one retry so a slow call fails
 cleanly inside the chat route's 30 s function limit. Cloudinary deletes for
 removed product images run after the product transaction commits, and fresh

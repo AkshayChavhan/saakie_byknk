@@ -14,7 +14,6 @@ const PUBLIC_PAGES = [
   '/our-story',
   '/blog',
   '/contact',
-  '/post',
   '/care-instructions',
   '/shipping-returns',
   '/privacy-policy',

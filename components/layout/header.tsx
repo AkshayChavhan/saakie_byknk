@@ -33,7 +33,6 @@ const navigation: NavItem[] = [
   // listing is still reachable from the foot of the dropdown.
   { kind: 'categories', name: 'Categories' },
   { kind: 'link', name: 'Sale', href: '/products?sale=true', needsSale: true },
-  { kind: 'link', name: 'Posts', href: '/post' },
 ]
 
 /**

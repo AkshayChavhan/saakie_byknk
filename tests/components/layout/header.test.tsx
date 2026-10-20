@@ -42,7 +42,7 @@ const at = (pathname: string, search = '') => {
 
 /** The class each nav variant uses to mark its active link. */
 const ACTIVE_MARKERS = ['font-semibold', 'bg-white/15', 'bg-rose-600']
-const NAV_LABELS = ['Home', 'New Arrivals', 'Categories', 'Sale', 'Posts']
+const NAV_LABELS = ['Home', 'New Arrivals', 'Categories', 'Sale']
 
 /** Nav labels currently rendered with active styling, in any variant. */
 const activeNavLabels = () =>
@@ -394,7 +394,7 @@ describe('Header component', () => {
 
       expect(screen.queryAllByRole('link', { name: 'Sale' })).toHaveLength(0)
       // The rest of the nav is unaffected.
-      expect(screen.getAllByRole('link', { name: 'Posts' }).length).toBeGreaterThan(0)
+      expect(screen.getAllByRole('link', { name: 'New Arrivals' }).length).toBeGreaterThan(0)
     })
 
     it('shows Sale when at least one product is marked down', () => {
