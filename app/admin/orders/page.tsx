@@ -50,6 +50,8 @@ interface Order {
     } | null
     quantity: number
     price: number
+    /** Sold out when ordered: needs making, delivered 15–20 days later. */
+    isPrebook?: boolean
   }>
   shippingAddress: ShippingAddress | null
   createdAt: string
@@ -434,6 +436,14 @@ export default function OrdersManagement() {
                             </div>
                           )}
                           <span className="ml-2 text-sm text-gray-500">{order.items.length} items</span>
+                          {order.items.some((item) => item.isPrebook) && (
+                            <span
+                              className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800"
+                              title="Contains a pre-booked saree (sold out when ordered, delivered 15–20 days later)"
+                            >
+                              Pre-book
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

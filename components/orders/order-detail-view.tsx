@@ -6,6 +6,7 @@ import { CheckCircle2, MapPin } from 'lucide-react'
 import { formatPrice, formatDate, cn } from '@/lib/utils'
 import { ORDER_STATUS_STYLES, PAYMENT_STATUS_STYLES, statusLabel } from '@/lib/orders'
 import { describePaymentMethod } from '@/lib/payment'
+import { PREBOOK_LINE_NOTE } from '@/lib/prebook'
 
 interface OrderAddress {
   name: string
@@ -24,6 +25,8 @@ interface OrderItem {
   quantity: number
   price: number
   total: number
+  /** Sold out when ordered: delivered 15–20 days after the order date. */
+  isPrebook?: boolean
   product: {
     name: string
     slug: string
@@ -186,6 +189,9 @@ export function OrderDetailView({
                   <p className="text-xs text-gray-500 mt-0.5">
                     Qty {item.quantity} · {formatPrice(item.price)} each
                   </p>
+                  {item.isPrebook && (
+                    <p className="text-xs text-amber-700 mt-0.5">{PREBOOK_LINE_NOTE}</p>
+                  )}
                 </div>
                 <p className="text-sm font-semibold text-gray-900 shrink-0">
                   {formatPrice(item.total)}

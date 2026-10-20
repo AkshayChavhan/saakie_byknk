@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { isPrebookable } from '@/lib/prebook';
 import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
@@ -52,7 +53,10 @@ export async function POST(request: Request) {
     if (!product.isActive) {
       return NextResponse.json({ error: 'Product is not available' }, { status: 400 });
     }
-    if (product.stock < quantity) {
+    // A sold-out saree goes in as a pre-booking (lib/prebook.ts) and is not
+    // held to the stock count; anything still in stock is.
+    const prebook = isPrebookable(product);
+    if (!prebook && product.stock < quantity) {
       return NextResponse.json(
         { error: `Only ${product.stock} items available in stock` },
         { status: 400 }
@@ -73,7 +77,7 @@ export async function POST(request: Request) {
 
     const existingItem = cart.items.find((i) => i.productId === productId);
     const newQuantity = (existingItem?.quantity ?? 0) + quantity;
-    if (product.stock < newQuantity) {
+    if (!prebook && product.stock < newQuantity) {
       return NextResponse.json(
         { error: `Only ${product.stock} items available in stock` },
         { status: 400 }

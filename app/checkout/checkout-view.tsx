@@ -14,6 +14,7 @@ import { districtsFor } from '@/lib/india-districts'
 import { availableChannels, isValidUpiId, type PaymentChannel } from '@/lib/payment'
 import { openRazorpayCheckout, type RazorpaySuccess } from '@/lib/razorpay-client'
 import { calculateShipping } from '@/lib/shipping'
+import { isPrebookable, PREBOOK_LINE_NOTE } from '@/lib/prebook'
 
 interface CartItem {
   id: string
@@ -22,6 +23,8 @@ interface CartItem {
   product: {
     id: string
     name: string
+    /** Zero means the saree is sold out and this line is a pre-booking. */
+    stock?: number
     images?: { url: string }[]
   }
 }
@@ -421,12 +424,18 @@ export function CheckoutView({ initial = null }: CheckoutViewProps) {
         <aside className="card p-5 h-fit">
           <h2 className="font-semibold text-gray-900 mb-4">Order summary</h2>
           <ul className="space-y-3 mb-4">
-            {items.map((i) => (
-              <li key={i.id} className="flex justify-between text-sm">
-                <span className="text-gray-600 truncate pr-2">{i.product.name} × {i.quantity}</span>
-                <span className="text-gray-900 whitespace-nowrap">{formatPrice(i.price * i.quantity)}</span>
-              </li>
-            ))}
+            {items.map((i) => {
+              const prebook = typeof i.product.stock === 'number' && isPrebookable({ stock: i.product.stock })
+              return (
+                <li key={i.id} className="text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 truncate pr-2">{i.product.name} × {i.quantity}</span>
+                    <span className="text-gray-900 whitespace-nowrap">{formatPrice(i.price * i.quantity)}</span>
+                  </div>
+                  {prebook && <p className="mt-0.5 text-xs text-amber-700">{PREBOOK_LINE_NOTE}</p>}
+                </li>
+              )
+            })}
           </ul>
           <div className="border-t border-gray-100 pt-3 space-y-2 text-sm">
             <div className="flex justify-between text-gray-600"><span>Subtotal</span><span>{formatPrice(subtotal)}</span></div>

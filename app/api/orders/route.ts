@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { isPrebookable } from '@/lib/prebook';
 import prisma from '@/lib/prisma';
 import { requireAuth, verifyAddressOwnership } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
@@ -91,6 +92,7 @@ export async function POST(request: Request) {
             quantity: item.quantity,
             price: item.product.price,
             total: item.product.price * item.quantity,
+            isPrebook: isPrebookable(item.product),
           })),
         },
       },

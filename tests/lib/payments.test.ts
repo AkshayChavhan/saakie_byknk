@@ -91,6 +91,36 @@ describe('settlePaidOrder', () => {
     })
   })
 
+  it('leaves stock alone for a pre-booked line and does not call it oversold', async () => {
+    mockPrisma.order.updateMany.mockResolvedValue({ count: 1 })
+    mockPrisma.order.findUnique.mockResolvedValue({
+      ...paidOrder,
+      items: [
+        { productId: 'prod_a', quantity: 1, isPrebook: true },
+        { productId: 'prod_b', quantity: 1, isPrebook: false },
+      ],
+    })
+    const { settlePaidOrder } = await import('@/lib/server/payments')
+
+    const result = await settlePaidOrder({ orderId: 'order_1', paymentId: 'pay_1' })
+
+    expect(result.oversold).toEqual([])
+    // The pre-booked saree only counts as a sale.
+    expect(mockPrisma.product.updateMany).toHaveBeenCalledWith({
+      where: { id: 'prod_a' },
+      data: { salesCount: { increment: 1 } },
+    })
+    expect(mockPrisma.product.updateMany).not.toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'prod_a', stock: { gte: 1 } } })
+    )
+    // The in-stock line is decremented as before.
+    expect(mockPrisma.product.updateMany).toHaveBeenCalledWith({
+      where: { id: 'prod_b', stock: { gte: 1 } },
+      data: { stock: { decrement: 1 }, salesCount: { increment: 1 } },
+    })
+    expect(mockPrisma.order.update).not.toHaveBeenCalled()
+  })
+
   it('runs everything inside one transaction', async () => {
     mockPrisma.order.updateMany.mockResolvedValue({ count: 1 })
     const { settlePaidOrder } = await import('@/lib/server/payments')
