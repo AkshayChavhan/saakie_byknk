@@ -3,12 +3,14 @@ import { HeroSection } from '@/components/home/hero-section'
 import { PromotionalBanner } from '@/components/home/promotional-banner'
 import { CategoryGrid } from '@/components/home/category-grid'
 import { FeaturedProducts } from '@/components/home/featured-products'
+import { NewArrivals } from '@/components/home/new-arrivals'
 import {
   loadHeroSlides,
   toHeroSlides,
   loadPromotionalStats,
   loadCategoryCards,
   loadFeaturedProducts,
+  loadNewArrivals,
 } from '@/lib/server/storefront'
 
 // Rendered per request on the server. The data comes from the tagged cache
@@ -28,8 +30,9 @@ export const dynamic = 'force-dynamic'
  * independently and falls back to an empty list.
  */
 export default async function HomePage() {
-  const [slides, promotional, categories, featured] = await Promise.allSettled([
+  const [slides, newArrivals, promotional, categories, featured] = await Promise.allSettled([
     loadHeroSlides(),
+    loadNewArrivals(),
     loadPromotionalStats(),
     loadCategoryCards(),
     loadFeaturedProducts(),
@@ -46,6 +49,8 @@ export default async function HomePage() {
       <Header />
       <main>
         <HeroSection slides={toHeroSlides(settled(slides, [], 'hero slides'))} />
+        {/* Omitted entirely (no heading) when nothing was added in the last two weeks. */}
+        <NewArrivals products={settled(newArrivals, [], 'new arrivals')} />
         <PromotionalBanner data={settled(promotional, null, 'promotional stats')} />
         <CategoryGrid categories={settled(categories, [], 'categories')} />
         <FeaturedProducts products={settled(featured, [], 'featured products')} />

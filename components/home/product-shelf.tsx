@@ -1,0 +1,179 @@
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { Heart, ShoppingCart } from 'lucide-react'
+import { RatingBadge } from '@/components/ui/rating-badge'
+import { formatPrice } from '@/lib/utils'
+
+export interface ProductShelfCard {
+  id: string
+  slug: string
+  name: string
+  price: number
+  comparePrice: number | null
+  rating: number
+  reviews: number
+  image: string
+  colors?: string[]
+  isNew?: boolean
+  isBestseller?: boolean
+}
+
+interface ProductShelfProps {
+  title: string
+  subtitle: string
+  viewAllHref: string
+  viewAllLabel: string
+  /** Products loaded on the server (app/page.tsx). */
+  products: ProductShelfCard[]
+}
+
+/**
+ * A titled grid of product cards used by the home page shelves (Featured
+ * Products, New Arrivals). Renders nothing at all, title included, when it
+ * has no products: an empty shelf is worse than no shelf.
+ */
+export function ProductShelf({ title, subtitle, viewAllHref, viewAllLabel, products }: ProductShelfProps) {
+  const [hoveredProduct, setHoveredProduct] = useState<string | null>(null)
+  const [wishlist, setWishlist] = useState<string[]>([])
+
+  const toggleWishlist = (productId: string) => {
+    setWishlist((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId]
+    )
+  }
+
+  const discount = (price: number, comparePrice: number) => {
+    return Math.round(((comparePrice - price) / comparePrice) * 100)
+  }
+
+  if (products.length === 0) {
+    return null
+  }
+
+  return (
+    <section className="py-12 sm:py-16">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 sm:mb-12">
+          <div>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
+              {title}
+            </h2>
+            <p className="text-gray-600">
+              {subtitle}
+            </p>
+          </div>
+          <Link
+            href={viewAllHref}
+            className="mt-4 sm:mt-0 text-primary hover:text-primary/80 font-medium"
+          >
+            {viewAllLabel} →
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {products.map((product, index) => (
+          <div
+            key={product.id}
+            className="group relative animate-slide-up"
+            style={{ animationDelay: `${index * 80}ms` }}
+            onMouseEnter={() => setHoveredProduct(product.id)}
+            onMouseLeave={() => setHoveredProduct(null)}
+          >
+            <Link href={`/products/${product.slug}`}>
+              <div className="relative aspect-[3/4] mb-3 overflow-hidden rounded-lg bg-gray-100 transition-shadow duration-300 group-hover:shadow-xl">
+                <Image
+                  src={product.image}
+                  alt={product.name}
+                  fill
+                  // grid-cols-2 lg:grid-cols-4
+                  sizes="(min-width: 1024px) 25vw, 50vw"
+                  className="object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
+                />
+                {product.isNew && (
+                  <span className="absolute top-2 left-2 z-10 bg-primary text-white text-xs px-2 py-1 rounded">
+                    NEW
+                  </span>
+                )}
+                {product.isBestseller && (
+                  <span className="absolute top-2 left-2 z-10 bg-secondary text-white text-xs px-2 py-1 rounded">
+                    BESTSELLER
+                  </span>
+                )}
+                {product.comparePrice && product.comparePrice > product.price && (
+                  <span className="absolute top-2 right-2 z-10 bg-red-500 text-white text-xs px-2 py-1 rounded">
+                    {discount(product.price, product.comparePrice)}% OFF
+                  </span>
+                )}
+                
+                <div className={`absolute inset-0 bg-black/20 transition-opacity ${
+                  hoveredProduct === product.id ? 'opacity-100' : 'opacity-0'
+                }`} />
+                
+                <div className={`absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 transition-all ${
+                  hoveredProduct === product.id
+                    ? 'opacity-100 translate-y-0'
+                    : 'opacity-0 translate-y-4'
+                }`}>
+                  <button className="btn-press bg-white p-2 rounded-full shadow-lg hover:bg-gray-100 hover:scale-110 transition-all">
+                    <ShoppingCart size={18} className="text-gray-700" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="font-medium text-gray-900 line-clamp-2 text-sm sm:text-base">
+                  {product.name}
+                </h3>
+                
+                <RatingBadge rating={product.rating} reviews={product.reviews} />
+
+                <div className="flex items-center space-x-2">
+                  <span className="font-bold text-gray-900">
+                    {formatPrice(product.price)}
+                  </span>
+                  {product.comparePrice && product.comparePrice > product.price && (
+                    <span className="text-sm text-gray-500 line-through">
+                      {formatPrice(product.comparePrice)}
+                    </span>
+                  )}
+                </div>
+
+                {product.colors && product.colors.length > 0 && (
+                  <div className="flex items-center space-x-1">
+                    {product.colors.map((color, index) => (
+                      <div
+                        key={index}
+                        className="w-4 h-4 rounded-full border border-gray-300"
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Link>
+
+            <button
+              onClick={() => toggleWishlist(product.id)}
+              className={`btn-press absolute top-2 right-2 p-2 rounded-full transition-all hover:scale-110 active:scale-90 ${
+                wishlist.includes(product.id)
+                  ? 'bg-red-500 text-white'
+                  : 'bg-white/80 text-gray-700 hover:bg-white'
+              }`}
+            >
+              <Heart
+                size={16}
+                className={wishlist.includes(product.id) ? 'fill-current' : ''}
+              />
+            </button>
+          </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}

@@ -279,45 +279,99 @@ export interface FeaturedProduct {
   inStock: boolean;
 }
 
+/** Fields a product card needs; shared by the featured and new-arrival shelves. */
+const productCardSelect = {
+  id: true,
+  name: true,
+  slug: true,
+  price: true,
+  comparePrice: true,
+  stock: true,
+  images: { select: { url: true }, take: 1 },
+  colors: { select: { hexCode: true } },
+  category: { select: { name: true, slug: true } },
+  rating: true,
+  _count: { select: { reviews: { where: { status: 'APPROVED' as const } } } },
+} as const;
+
+type ProductCardRow = {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  comparePrice: number | null;
+  stock: number;
+  images: { url: string }[];
+  colors: { hexCode: string }[];
+  category: { name: string; slug: string } | null;
+  rating: number;
+  _count: { reviews: number };
+};
+
+function toProductCard(product: ProductCardRow): FeaturedProduct {
+  return {
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    price: product.price,
+    // Pass through as-is. `null` means "not on sale" and the UI must not
+    // render a discount badge — never substitute a derived reference price.
+    comparePrice: product.comparePrice,
+    // Maintained on the product by review moderation (lib/server/reviews.ts).
+    rating: Math.round(product.rating * 10) / 10,
+    reviews: product._count.reviews,
+    image: watermarkImageUrl(product.images[0]?.url || '/images/placeholder-product.svg'),
+    colors: Array.from(new Set(product.colors.map((c) => c.hexCode))),
+    category: product.category,
+    inStock: product.stock > 0,
+  };
+}
+
 export const loadFeaturedProducts = cached(
   async (): Promise<FeaturedProduct[]> => {
     const products = await prisma.product.findMany({
       where: { isActive: true, isFeatured: true },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        price: true,
-        comparePrice: true,
-        stock: true,
-        images: { select: { url: true }, take: 1 },
-        colors: { select: { hexCode: true } },
-        category: { select: { name: true, slug: true } },
-        rating: true,
-        _count: { select: { reviews: { where: { status: 'APPROVED' } } } },
-      },
+      select: productCardSelect,
       take: 8,
       orderBy: { createdAt: 'desc' },
     });
-
-    return products.map((product) => ({
-      id: product.id,
-      name: product.name,
-      slug: product.slug,
-      price: product.price,
-      // Pass through as-is. `null` means "not on sale" and the UI must not
-      // render a discount badge — never substitute a derived reference price.
-      comparePrice: product.comparePrice,
-      // Maintained on the product by review moderation (lib/server/reviews.ts).
-      rating: Math.round(product.rating * 10) / 10,
-      reviews: product._count.reviews,
-      image: watermarkImageUrl(product.images[0]?.url || '/images/placeholder-product.svg'),
-      colors: Array.from(new Set(product.colors.map((c) => c.hexCode))),
-      category: product.category,
-      inStock: product.stock > 0,
-    }));
+    return products.map(toProductCard);
   },
   'featured-products',
+  { tags: [TAG.products] }
+);
+
+// ---------------------------------------------------------------------------
+// New arrivals
+// ---------------------------------------------------------------------------
+
+/** A product counts as a new arrival for this many days after it is created. */
+export const NEW_ARRIVAL_WINDOW_DAYS = 14;
+
+/** Products created at or after this instant are new arrivals. */
+export function newArrivalCutoff(now: Date = new Date()): Date {
+  return new Date(now.getTime() - NEW_ARRIVAL_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+}
+
+/**
+ * Active products added in the last two weeks, newest first. Empty when
+ * nothing qualifies, and the home page then omits the section entirely.
+ *
+ * The window is relative to "now", so the tagged cache alone would let a
+ * product linger past day 14; the default 5-minute revalidate in `cached()`
+ * re-evaluates the cutoff often enough that the drift is never visible.
+ */
+export const loadNewArrivals = cached(
+  async (): Promise<FeaturedProduct[]> => {
+    const products = await prisma.product.findMany({
+      where: { isActive: true, createdAt: { gte: newArrivalCutoff() } },
+      select: productCardSelect,
+      take: 8,
+      orderBy: { createdAt: 'desc' },
+    });
+    return products.map(toProductCard);
+  },
+  'new-arrivals',
   { tags: [TAG.products] }
 );
 

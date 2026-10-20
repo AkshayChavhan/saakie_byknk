@@ -79,3 +79,53 @@ describe('loadPromotionalStats', () => {
     expect(stats.featuredProducts.count).toBe(0)
   })
 })
+
+describe('loadNewArrivals', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('cuts off exactly fourteen days before now', async () => {
+    const { newArrivalCutoff, NEW_ARRIVAL_WINDOW_DAYS } = await import('@/lib/server/storefront')
+    expect(NEW_ARRIVAL_WINDOW_DAYS).toBe(14)
+    expect(newArrivalCutoff(new Date('2026-10-20T12:00:00Z'))).toEqual(new Date('2026-10-06T12:00:00Z'))
+  })
+
+  it('asks only for active products created inside the window, newest first', async () => {
+    const { loadNewArrivals } = await import('@/lib/server/storefront')
+    mockPrisma.product.findMany.mockResolvedValue([
+      {
+        id: 'p1',
+        name: 'Fresh',
+        slug: 'fresh',
+        price: 1000,
+        comparePrice: null,
+        stock: 2,
+        images: [{ url: 'https://example.com/a.jpg' }],
+        colors: [{ hexCode: '#000' }, { hexCode: '#000' }],
+        category: { name: 'Silk', slug: 'silk' },
+        rating: 4.26,
+        _count: { reviews: 3 },
+      },
+    ])
+
+    const before = Date.now()
+    const result = await loadNewArrivals()
+
+    const args = mockPrisma.product.findMany.mock.calls[0][0]
+    expect(args.where.isActive).toBe(true)
+    expect(args.orderBy).toEqual({ createdAt: 'desc' })
+    const gte: Date = args.where.createdAt.gte
+    const fourteenDays = 14 * 24 * 60 * 60 * 1000
+    expect(before - gte.getTime()).toBeGreaterThanOrEqual(fourteenDays - 1000)
+    expect(before - gte.getTime()).toBeLessThan(fourteenDays + 5000)
+
+    expect(result).toEqual([
+      expect.objectContaining({ id: 'p1', rating: 4.3, reviews: 3, colors: ['#000'], inStock: true }),
+    ])
+  })
+
+  it('returns an empty list when nothing was added recently', async () => {
+    const { loadNewArrivals } = await import('@/lib/server/storefront')
+    mockPrisma.product.findMany.mockResolvedValue([])
+    expect(await loadNewArrivals()).toEqual([])
+  })
+})
