@@ -7,6 +7,8 @@ import { apiError } from '@/lib/server/errors';
 import { markProduct } from '@/lib/server/watermark';
 import { invalidate, TAG } from '@/lib/server/cache';
 import { productUpdateSchema, validateBody } from '@/lib/server/validation';
+import { IMAGE_ORDER } from '@/lib/server/image-order';
+import { parseImageOrder, resolveImageOrder } from '@/lib/image-sequence';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -27,7 +29,7 @@ export async function GET(
       where: { id },
       include: {
         category: true,
-        images: true,
+        images: { orderBy: IMAGE_ORDER },
         colors: true,
         sizes: true,
         variants: true,
@@ -69,7 +71,7 @@ export async function PATCH(
 
     const existing = await prisma.product.findUnique({
       where: { id },
-      include: { images: true },
+      include: { images: { orderBy: IMAGE_ORDER } },
     });
     if (!existing) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
@@ -99,7 +101,7 @@ export async function PATCH(
       const product = await prisma.product.update({
         where: { id },
         data: productData,
-        include: { category: true, images: true, colors: true, sizes: true },
+        include: { category: true, images: { orderBy: IMAGE_ORDER }, colors: true, sizes: true },
       });
       invalidate(TAG.products, TAG.categories);
       return NextResponse.json(markProduct(product!));
@@ -120,6 +122,9 @@ export async function PATCH(
       typeof formData.get('primaryImageId') === 'string'
         ? (formData.get('primaryImageId') as string)
         : null;
+    // The admin's image sequence: existing image ids and `new:<n>` for the
+    // n-th upload, in display order. Image 1 becomes the main photo.
+    const imageOrder = parseImageOrder(formData.get('imageOrder'));
 
     const {
       name,
@@ -275,32 +280,50 @@ export async function PATCH(
         createdNew.push(created);
       }
 
-      // Resolve primary image. `primaryImageId` may reference an existing image
-      // id or `new:<index>` for a freshly-uploaded one.
-      let primaryId: string | null = null;
-      if (primaryImageId?.startsWith('new:')) {
-        const idx = parseInt(primaryImageId.slice(4));
-        primaryId = createdNew[idx]?.id ?? null;
-      } else if (
-        primaryImageId &&
-        !removedImageIds.includes(primaryImageId)
-      ) {
-        primaryId = primaryImageId;
-      }
-      // Fall back to the first remaining/added image.
-      if (!primaryId) {
-        primaryId =
-          remainingExisting[0]?.id ?? createdNew[0]?.id ?? null;
-      }
-      if (primaryId) {
-        await tx.image.updateMany({
-          where: { productId: id },
-          data: { isPrimary: false },
+      if (imageOrder) {
+        // Store the sequence: each image gets its position, and the first one
+        // is the main photo. Customers read the same order back
+        // (lib/server/image-order.ts).
+        const finalIds = resolveImageOrder({
+          order: imageOrder,
+          keptIds: remainingExisting.map((img) => img.id),
+          createdIds: createdNew.map((img) => img.id),
         });
-        await tx.image.update({
-          where: { id: primaryId },
-          data: { isPrimary: true },
-        });
+        for (let position = 0; position < finalIds.length; position++) {
+          await tx.image.update({
+            where: { id: finalIds[position] },
+            data: { order: position, isPrimary: position === 0 },
+          });
+        }
+      } else {
+        // No sequence sent (an older client): fall back to choosing the main
+        // image. `primaryImageId` may reference an existing image id or
+        // `new:<index>` for a freshly-uploaded one.
+        let primaryId: string | null = null;
+        if (primaryImageId?.startsWith('new:')) {
+          const idx = parseInt(primaryImageId.slice(4));
+          primaryId = createdNew[idx]?.id ?? null;
+        } else if (
+          primaryImageId &&
+          !removedImageIds.includes(primaryImageId)
+        ) {
+          primaryId = primaryImageId;
+        }
+        // Fall back to the first remaining/added image.
+        if (!primaryId) {
+          primaryId =
+            remainingExisting[0]?.id ?? createdNew[0]?.id ?? null;
+        }
+        if (primaryId) {
+          await tx.image.updateMany({
+            where: { productId: id },
+            data: { isPrimary: false },
+          });
+          await tx.image.update({
+            where: { id: primaryId },
+            data: { isPrimary: true },
+          });
+        }
       }
 
       // Replace colors / sizes (delete-all-then-recreate).
@@ -327,7 +350,9 @@ export async function PATCH(
           });
         }
       }
-      });
+      // Saving the image sequence adds one write per photo, so give the
+      // interactive transaction more than Prisma's 5 s default.
+      }, { timeout: 20_000 });
     } catch (error) {
       await Promise.all(
         uploaded.map((img) => deleteFromCloudinary(img.publicId).catch(() => {}))
@@ -342,7 +367,7 @@ export async function PATCH(
 
     const product = await prisma.product.findUnique({
       where: { id },
-      include: { category: true, images: true, colors: true, sizes: true },
+      include: { category: true, images: { orderBy: IMAGE_ORDER }, colors: true, sizes: true },
     });
 
     invalidate(TAG.products, TAG.categories);

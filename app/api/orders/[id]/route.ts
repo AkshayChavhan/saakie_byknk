@@ -4,6 +4,7 @@ import { requireAuth } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
 import { markLines } from '@/lib/server/watermark';
 import { getOrderRemoval, ORDER_REMOVAL_STATUS } from '@/lib/orders';
+import { IMAGE_ORDER } from '@/lib/server/image-order';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -21,7 +22,7 @@ export async function GET(
       where: { id, userId: r.id },
       include: {
         items: {
-          include: { product: { include: { images: { take: 1 } } } },
+          include: { product: { include: { images: { take: 1, orderBy: IMAGE_ORDER } } } },
         },
         shippingAddress: true,
         billingAddress: true,

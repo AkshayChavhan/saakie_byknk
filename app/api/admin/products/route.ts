@@ -6,6 +6,7 @@ import { markProduct } from '@/lib/server/watermark';
 import { invalidate, TAG } from '@/lib/server/cache';
 import { parseLimit, parsePage, productCreateSchema, validateBody } from '@/lib/server/validation';
 import { getCategoryScopeIds } from '@/lib/server/category-counts';
+import { IMAGE_ORDER } from '@/lib/server/image-order';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -61,7 +62,7 @@ export async function GET(request: Request) {
         where,
         include: {
           category: true,
-          images: { take: 1 },
+          images: { take: 1, orderBy: IMAGE_ORDER },
           _count: { select: { orderItems: true, reviews: true } },
         },
         skip: (pageNum - 1) * limitNum,
@@ -158,7 +159,7 @@ export async function POST(request: Request) {
       },
       include: {
         category: true,
-        images: true,
+        images: { orderBy: IMAGE_ORDER },
         colors: true,
         sizes: true,
       },

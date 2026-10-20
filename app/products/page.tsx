@@ -244,33 +244,28 @@ function ProductsContent() {
       <Header />
 
       {/*
-        Hero Banner — deep Banarasi maroon from the brand palette, not the rose
-        accent. It starts near-black so it reads as a continuation of the black
-        header, then warms into maroon. `overflow-hidden` keeps the soft glows
-        from creating horizontal scroll on narrow (iPhone) viewports.
+        Hero Banner — plain white with dark text, so the page title reads as
+        part of the page rather than a coloured block under the black header.
+        The thin zari-gold rule and bottom hairline keep the brand accent.
       */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#3a0f14] via-maroon-800 to-maroon-700 text-white">
-        {/* Zari sheen — echoes the woven-gold treatment on the auth screens */}
-        <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-marigold-400/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-28 -left-20 h-64 w-64 rounded-full bg-maroon-500/25 blur-3xl" />
-
+      <div className="relative bg-white text-gray-900">
         <div className="container relative mx-auto px-4 py-7 sm:py-12">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <nav className="flex items-center text-sm text-[#fdf0d8]/70 mb-2">
-                <Link href="/" className="flex items-center hover:text-white transition-colors">
+              <nav className="flex items-center text-sm text-gray-500 mb-2">
+                <Link href="/" className="flex items-center hover:text-gray-900 transition-colors">
                   <Home size={14} className="mr-1" />
                   Home
                 </Link>
-                <ChevronRight size={14} className="mx-2 text-zari/60" />
-                <span className="text-white font-medium">Products</span>
+                <ChevronRight size={14} className="mx-2 text-gray-400" />
+                <span className="text-gray-900 font-medium">Products</span>
               </nav>
               <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold">
                 Our Collection
               </h1>
               {/* Gold rule — the same accent that divides the auth panels */}
               <div className="mt-2 h-px w-16 bg-gradient-to-r from-zari to-transparent sm:w-24" />
-              <p className="text-[#fdf0d8]/75 mt-2 text-sm sm:text-base">
+              <p className="text-gray-600 mt-2 text-sm sm:text-base">
                 Discover exquisite sarees for every occasion
               </p>
             </div>
@@ -329,7 +324,7 @@ function ProductsContent() {
                   onClick={() => setSelectedCategory('')}
                   className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all flex-shrink-0 ${
                     !selectedCategory
-                      ? 'bg-rose-500 text-white shadow-md shadow-rose-500/25'
+                      ? 'bg-black text-white shadow-md shadow-black/25'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -341,7 +336,7 @@ function ProductsContent() {
                     onClick={() => setSelectedCategory(category.slug)}
                     className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all flex-shrink-0 ${
                       selectedCategory === category.slug
-                        ? 'bg-rose-500 text-white shadow-md shadow-rose-500/25'
+                        ? 'bg-black text-white shadow-md shadow-black/25'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
@@ -377,11 +372,11 @@ function ProductsContent() {
                           }}
                           className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
                             sortBy === option.value
-                              ? 'bg-rose-50 text-rose-600'
+                              ? 'bg-black text-white'
                               : 'text-gray-700 hover:bg-gray-50'
                           }`}
                         >
-                          <option.icon size={16} className={sortBy === option.value ? 'text-rose-500' : 'text-gray-400'} />
+                          <option.icon size={16} className={sortBy === option.value ? 'text-white' : 'text-gray-400'} />
                           {option.label}
                         </button>
                       ))}
@@ -395,7 +390,7 @@ function ProductsContent() {
                 <button
                   onClick={() => setViewMode('grid')}
                   className={`p-2 rounded-full transition-all ${
-                    viewMode === 'grid' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'
+                    viewMode === 'grid' ? 'bg-black text-white shadow-sm' : 'hover:bg-gray-200'
                   }`}
                 >
                   <Grid3X3 size={18} />
@@ -403,7 +398,7 @@ function ProductsContent() {
                 <button
                   onClick={() => setViewMode('list')}
                   className={`p-2 rounded-full transition-all ${
-                    viewMode === 'list' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'
+                    viewMode === 'list' ? 'bg-black text-white shadow-sm' : 'hover:bg-gray-200'
                   }`}
                 >
                   <LayoutGrid size={18} />
@@ -600,7 +595,7 @@ function ProductsContent() {
                         {/* Product Info */}
                         <div className={`p-4 ${viewMode === 'list' ? 'flex-1 flex flex-col justify-center' : ''}`}>
                           {/* Category */}
-                          <p className="text-xs text-rose-500 font-medium mb-1 uppercase tracking-wide">
+                          <p className="text-xs text-gray-900 font-medium mb-1 uppercase tracking-wide">
                             {product.category.name}
                           </p>
 
@@ -745,28 +740,28 @@ function ProductsContent() {
               <div className="mb-6">
                 <h4 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wide">Category</h4>
                 <div className="space-y-2">
-                  <label className="flex items-center p-3 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
+                  <label className={`flex items-center p-3 rounded-xl cursor-pointer transition-colors ${!selectedCategory ? 'bg-black text-white' : 'hover:bg-gray-50'}`}>
                     <input
                       type="radio"
                       name="mobile-category"
                       value=""
                       checked={!selectedCategory}
                       onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="w-4 h-4 text-rose-500 focus:ring-rose-500"
+                      className="w-4 h-4 accent-white focus:ring-white"
                     />
-                    <span className="ml-3 text-gray-700">All Categories</span>
+                    <span className={`ml-3 ${!selectedCategory ? 'text-white' : 'text-gray-700'}`}>All Categories</span>
                   </label>
                   {categories.map((category) => (
-                    <label key={category.id} className="flex items-center p-3 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
+                    <label key={category.id} className={`flex items-center p-3 rounded-xl cursor-pointer transition-colors ${selectedCategory === category.slug ? 'bg-black text-white' : 'hover:bg-gray-50'}`}>
                       <input
                         type="radio"
                         name="mobile-category"
                         value={category.slug}
                         checked={selectedCategory === category.slug}
                         onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="w-4 h-4 text-rose-500 focus:ring-rose-500"
+                        className="w-4 h-4 accent-white focus:ring-white"
                       />
-                      <span className="ml-3 text-gray-700">{category.name}</span>
+                      <span className={`ml-3 ${selectedCategory === category.slug ? 'text-white' : 'text-gray-700'}`}>{category.name}</span>
                     </label>
                   ))}
                 </div>
@@ -805,17 +800,17 @@ function ProductsContent() {
                 <h4 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wide">Sort By</h4>
                 <div className="space-y-2">
                   {sortOptions.map((option) => (
-                    <label key={option.value} className="flex items-center p-3 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
+                    <label key={option.value} className={`flex items-center p-3 rounded-xl cursor-pointer transition-colors ${sortBy === option.value ? 'bg-black text-white' : 'hover:bg-gray-50'}`}>
                       <input
                         type="radio"
                         name="mobile-sort"
                         value={option.value}
                         checked={sortBy === option.value}
                         onChange={(e) => setSortBy(e.target.value)}
-                        className="w-4 h-4 text-rose-500 focus:ring-rose-500"
+                        className="w-4 h-4 accent-white focus:ring-white"
                       />
-                      <option.icon size={16} className="ml-3 text-gray-400" />
-                      <span className="ml-2 text-gray-700">{option.label}</span>
+                      <option.icon size={16} className={`ml-3 ${sortBy === option.value ? 'text-white' : 'text-gray-400'}`} />
+                      <span className={`ml-2 ${sortBy === option.value ? 'text-white' : 'text-gray-700'}`}>{option.label}</span>
                     </label>
                   ))}
                 </div>

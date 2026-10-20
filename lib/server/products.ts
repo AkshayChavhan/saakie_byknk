@@ -2,6 +2,7 @@ import 'server-only';
 import { cache } from 'react';
 import prisma from '@/lib/prisma';
 import { watermarkImageUrl } from '@/lib/image-watermark';
+import { IMAGE_ORDER } from '@/lib/server/image-order';
 
 /**
  * The product detail payload, shared by the product page (server component)
@@ -16,7 +17,7 @@ export const loadProductDetail = cache(async (slug: string) => {
   const product = await prisma.product.findUnique({
     where: { slug },
     include: {
-      images: true,
+      images: { orderBy: IMAGE_ORDER },
       colors: true,
       sizes: true,
       category: true,
@@ -48,7 +49,7 @@ export const loadProductDetail = cache(async (slug: string) => {
       slug: true,
       price: true,
       comparePrice: true,
-      images: { select: { url: true }, take: 1 },
+      images: { select: { url: true }, take: 1, orderBy: IMAGE_ORDER },
     },
     take: 4,
     orderBy: { createdAt: 'desc' },

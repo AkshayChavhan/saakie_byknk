@@ -6,6 +6,7 @@ import { apiError } from '@/lib/server/errors';
 import { markLines } from '@/lib/server/watermark';
 import { getStoreSettings } from '@/lib/server/settings';
 import { calculateShipping } from '@/lib/shipping';
+import { IMAGE_ORDER } from '@/lib/server/image-order';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,7 +24,7 @@ export async function GET() {
         items: {
           include: {
             product: {
-              select: { name: true, slug: true, images: { take: 1 } },
+              select: { name: true, slug: true, images: { take: 1, orderBy: IMAGE_ORDER } },
             },
           },
         },

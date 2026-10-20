@@ -18,6 +18,8 @@ import {
 } from '@/lib/image-compress'
 import { useToast } from '@/components/ui/toast'
 import { HoldToDeleteDialog } from '@/components/admin/hold-to-delete-dialog'
+import { ImageSequenceEditor, type SequenceItem } from '@/components/admin/image-sequence-editor'
+import { moveItem } from '@/lib/image-sequence'
 
 interface Product {
   id: string
@@ -127,12 +129,15 @@ export default function ProductsManagement() {
 
   // Edit-mode state. When `editingProductId` is set, the modal acts as an
   // edit form; otherwise it creates. `existingImages` are images already on
-  // the product; `removedImageIds` tracks ones the admin removed; the primary
-  // image is either an existing image id or `new:<index>` for an added file.
+  // the product; `removedImageIds` tracks ones the admin removed.
+  // `imageSequence` is the display order of every photo in the form: an
+  // existing image's id, or `new:<index>` for the file at that index of
+  // `formData.images`. Image 1 is the main photo and customers see the rest
+  // in this order.
   const [editingProductId, setEditingProductId] = useState<string | null>(null)
   const [existingImages, setExistingImages] = useState<ExistingImage[]>([])
   const [removedImageIds, setRemovedImageIds] = useState<string[]>([])
-  const [primaryImageId, setPrimaryImageId] = useState<string | null>(null)
+  const [imageSequence, setImageSequence] = useState<string[]>([])
   const [descriptionCopied, setDescriptionCopied] = useState(false)
   const isEditMode = editingProductId !== null
 
@@ -357,8 +362,8 @@ export default function ProductsManagement() {
       }))
       setExistingImages(imgs)
       setRemovedImageIds([])
-      const primary = imgs.find(i => i.isPrimary) ?? imgs[0]
-      setPrimaryImageId(primary ? primary.id : null)
+      // The API returns images in display order (main first).
+      setImageSequence(imgs.map(i => i.id))
 
       setEditingProductId(productId)
       setShowAddModal(true)
@@ -369,17 +374,50 @@ export default function ProductsManagement() {
   }
 
   const toggleRemoveExistingImage = (imageId: string) => {
-    setRemovedImageIds(prev => {
-      const next = prev.includes(imageId)
-        ? prev.filter(id => id !== imageId)
-        : [...prev, imageId]
-      // If the removed image was primary, pick a new primary from what remains.
-      if (next.includes(imageId) && primaryImageId === imageId) {
-        const stillThere = existingImages.find(i => !next.includes(i.id))
-        setPrimaryImageId(stillThere ? stillThere.id : null)
+    setRemovedImageIds(prev =>
+      prev.includes(imageId) ? prev.filter(id => id !== imageId) : [...prev, imageId]
+    )
+  }
+
+  // Discard one picked-but-unsaved file. Later files shift down by one, so
+  // their `new:<index>` entries in the sequence are renumbered to match.
+  const removeNewImage = (index: number) => {
+    const files = formData.images.filter((_, i) => i !== index)
+    setFormData(prev => ({ ...prev, images: files }))
+    // Fresh preview URLs for the survivors: the effect above revokes every
+    // previous URL whenever this list changes, so reusing them would break
+    // the remaining thumbnails.
+    setImagePreviews(files.map(file => URL.createObjectURL(file)))
+    setImageSequence(prev =>
+      prev
+        .filter(token => token !== `new:${index}`)
+        .map(token => {
+          if (!token.startsWith('new:')) return token
+          const n = Number(token.slice(4))
+          return n > index ? `new:${n - 1}` : token
+        })
+    )
+  }
+
+  // The photo strip: one item per entry of the sequence.
+  const sequenceItems: SequenceItem[] = imageSequence.map(token => {
+    if (token.startsWith('new:')) {
+      return {
+        key: token,
+        url: imagePreviews[Number(token.slice(4))] ?? '/images/placeholder-product.svg',
+        isNew: true,
       }
-      return next
-    })
+    }
+    return {
+      key: token,
+      url: existingImages.find(img => img.id === token)?.url ?? '/images/placeholder-product.svg',
+      removed: removedImageIds.includes(token),
+    }
+  })
+
+  const handleRemoveSequenceImage = (key: string) => {
+    if (key.startsWith('new:')) removeNewImage(Number(key.slice(4)))
+    else toggleRemoveExistingImage(key)
   }
 
   const handleImageSelect = async (files: FileList | null) => {
@@ -413,6 +451,12 @@ export default function ProductsManagement() {
     const previews = compressed.map(file => URL.createObjectURL(file))
     setImagePreviews(previews)
     setFormData(prev => ({ ...prev, images: compressed }))
+    // A fresh selection replaces the previous picks; they join the end of the
+    // sequence, after the photos the product already has.
+    setImageSequence(prev => [
+      ...prev.filter(token => !token.startsWith('new:')),
+      ...compressed.map((_, i) => `new:${i}`),
+    ])
     setImageCompression({
       busy: false,
       done: compressed.length,
@@ -486,7 +530,8 @@ export default function ProductsManagement() {
         editFormData.append('data', JSON.stringify(productData))
         formData.images.forEach((file) => editFormData.append('newImages', file))
         editFormData.append('removedImageIds', JSON.stringify(removedImageIds))
-        if (primaryImageId) editFormData.append('primaryImageId', primaryImageId)
+        // The display order: image 1 becomes the main photo.
+        editFormData.append('imageOrder', JSON.stringify(imageSequence))
 
         const response = await fetchApi(`/api/admin/products/${editingProductId}`, {
           method: 'PATCH',
@@ -513,7 +558,13 @@ export default function ProductsManagement() {
       }
 
       const uploadFormData = new FormData()
-      formData.images.forEach((file) => {
+      // Upload in the chosen order: the server stores each file's position and
+      // makes the first one the main photo.
+      const orderedFiles = imageSequence
+        .filter(token => token.startsWith('new:'))
+        .map(token => formData.images[Number(token.slice(4))])
+        .filter((file): file is File => Boolean(file))
+      ;(orderedFiles.length === formData.images.length ? orderedFiles : formData.images).forEach((file) => {
         uploadFormData.append('images', file)
       })
       uploadFormData.append('data', JSON.stringify(productData))
@@ -547,7 +598,7 @@ export default function ProductsManagement() {
     setEditingProductId(null)
     setExistingImages([])
     setRemovedImageIds([])
-    setPrimaryImageId(null)
+    setImageSequence([])
     setFormData({
       name: '',
       slug: '',
@@ -1142,51 +1193,18 @@ export default function ProductsManagement() {
                       Product Images {isEditMode ? '' : '*'}
                     </label>
 
-                    {/* Existing images (edit mode only) — remove / set primary */}
-                    {isEditMode && existingImages.length > 0 && (
+                    {/* Photo strip — drag, or use the arrows, to set the order. */}
+                    {sequenceItems.length > 0 && (
                       <div className="mb-3">
-                        <p className="text-xs text-gray-500 mb-2">Current images — tap the star to set the main image</p>
-                        <div className="flex flex-wrap gap-3">
-                          {existingImages.map((img) => {
-                            const removed = removedImageIds.includes(img.id)
-                            const isPrimary = primaryImageId === img.id
-                            return (
-                              <div key={img.id} className="relative">
-                                <Image
-                                  src={img.url}
-                                  alt="Product image"
-                                  width={80}
-                                  height={80}
-                                  className={`h-20 w-20 object-cover rounded-lg ring-2 transition-all ${
-                                    removed
-                                      ? 'opacity-30 ring-red-300'
-                                      : isPrimary
-                                        ? 'ring-amber-400'
-                                        : 'ring-gray-200'
-                                  }`}
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => toggleRemoveExistingImage(img.id)}
-                                  className="absolute -top-2 -right-2 p-1 bg-white rounded-full shadow ring-1 ring-gray-200 hover:bg-red-50"
-                                  title={removed ? 'Keep image' : 'Remove image'}
-                                >
-                                  <X className={`h-3.5 w-3.5 ${removed ? 'text-gray-400' : 'text-red-600'}`} />
-                                </button>
-                                {!removed && (
-                                  <button
-                                    type="button"
-                                    onClick={() => setPrimaryImageId(img.id)}
-                                    className="absolute -bottom-2 -right-2 p-1 bg-white rounded-full shadow ring-1 ring-gray-200 hover:bg-amber-50"
-                                    title={isPrimary ? 'Main image' : 'Set as main image'}
-                                  >
-                                    <Star className={`h-3.5 w-3.5 ${isPrimary ? 'text-amber-500 fill-current' : 'text-gray-400'}`} />
-                                  </button>
-                                )}
-                              </div>
-                            )
-                          })}
-                        </div>
+                        <p className="text-xs text-gray-500 mb-2">
+                          Drag the photos (or tap the arrows) to set their order. Photo 1 is the main image;
+                          customers see the rest in this order.
+                        </p>
+                        <ImageSequenceEditor
+                          items={sequenceItems}
+                          onMove={(from, to) => setImageSequence(prev => moveItem(prev, from, to))}
+                          onRemove={handleRemoveSequenceImage}
+                        />
                       </div>
                     )}
 
@@ -1213,12 +1231,7 @@ export default function ProductsManagement() {
                         </div>
                       ) : imagePreviews.length > 0 ? (
                         <div>
-                          <div className="flex flex-wrap gap-3">
-                            {imagePreviews.map((url, idx) => (
-                              <Image key={idx} src={url} alt={`Preview ${idx + 1}`} width={80} height={80} className="h-20 w-20 object-cover rounded-lg" />
-                            ))}
-                          </div>
-                          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                             <label htmlFor="product-images" className="text-sm text-red-600 hover:text-red-700 cursor-pointer">
                               {isEditMode ? 'Change images to add' : 'Change images'}
                             </label>

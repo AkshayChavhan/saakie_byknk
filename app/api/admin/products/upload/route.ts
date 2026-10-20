@@ -6,6 +6,7 @@ import { requireAuth, requireAdmin } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
 import { markProduct } from '@/lib/server/watermark';
 import { invalidate, TAG } from '@/lib/server/cache';
+import { IMAGE_ORDER } from '@/lib/server/image-order';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -184,7 +185,7 @@ export async function POST(request: Request) {
       },
       include: {
         category: true,
-        images: true,
+        images: { orderBy: IMAGE_ORDER },
         colors: true,
         sizes: true,
         dimensions: true,

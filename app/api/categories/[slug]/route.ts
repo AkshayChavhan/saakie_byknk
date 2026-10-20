@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { apiError } from '@/lib/server/errors';
 import { watermarkImageUrl } from '@/lib/image-watermark';
 import { getSubtreeProductCounts } from '@/lib/server/category-counts';
+import { IMAGE_ORDER } from '@/lib/server/image-order';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,7 +31,7 @@ export async function GET(
               price: true,
               comparePrice: true,
               stock: true,
-              images: { select: { url: true }, take: 1 },
+              images: { select: { url: true }, take: 1, orderBy: IMAGE_ORDER },
             },
             skip: (pageNum - 1) * limitNum,
             take: limitNum,
