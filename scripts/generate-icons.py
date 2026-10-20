@@ -5,7 +5,7 @@ Run from the repo root:  python3 scripts/generate-icons.py
 
 Why this exists, and why it centres the way it does
 ---------------------------------------------------
-`public/images/saakieLogo.png` is the wordmark the side menu shows. Despite the
+`public/images/saakieLogo.jpeg` is the wordmark the side menu shows. Despite the
 extension it is a JPEG, 14173x7087, with a black background baked in and a
 maroon swash sweeping behind the letters.
 
@@ -39,7 +39,7 @@ from PIL import Image
 
 Image.MAX_IMAGE_PIXELS = None
 
-SRC = Path("public/images/saakieLogo.png")
+SRC = Path("public/images/saakieLogo.jpeg")
 ICONS_DIR = Path("public/icons")
 
 # Brightness above which a pixel counts as part of the wordmark rather than the

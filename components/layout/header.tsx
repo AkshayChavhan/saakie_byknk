@@ -510,7 +510,7 @@ export function Header() {
               className="ml-4 lg:ml-0 flex items-center flex-1 min-w-0 max-w-full"
             >
               <Image
-                src="/images/saakieLogo.png"
+                src="/images/saakieLogo.jpeg"
                 alt="Saakie by KNK"
                 width={150}
                 height={50}
@@ -703,7 +703,7 @@ export function Header() {
                 className="flex flex-1 min-w-0 items-center"
               >
                 <Image
-                src="/images/saakieLogo.png"
+                src="/images/saakieLogo.jpeg"
                 alt="Saakie by KNK"
                 width={240}
                 height={50}
