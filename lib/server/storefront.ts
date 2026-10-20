@@ -22,11 +22,14 @@ export interface HeroSlide {
   id: string;
   type: string;
   title: string;
-  subtitle: string;
-  description: string;
+  /** Null when the admin left the field blank — the component omits it. */
+  subtitle: string | null;
+  description: string | null;
   image: string;
-  link: string;
-  cta: string;
+  /** Button target; null (with `cta`) when the admin left the button blank. */
+  link: string | null;
+  /** Button label; null when the admin left it blank — no button is shown. */
+  cta: string | null;
   badge: string | null;
   discount: number | null;
   product: {
@@ -73,21 +76,37 @@ export interface RawHeroSlide {
   [key: string]: unknown;
 }
 
-/** Shape raw slide rows (admin or product-derived) for `HeroSection`. */
+/** Empty / whitespace-only admin input counts as "not provided". */
+const blankToNull = (value: string | null | undefined): string | null => {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+};
+
+/**
+ * Shape raw slide rows (admin or product-derived) for `HeroSection`.
+ *
+ * Optional fields the admin left blank come through as null, not as
+ * placeholder copy: the component then omits that element entirely. A button
+ * needs a label; a label with no link falls back to the catalogue.
+ */
 export function toHeroSlides(rows: RawHeroSlide[]): HeroSlide[] {
-  return rows.map((slide) => ({
-    id: slide.id,
-    type: slide.type || 'default',
-    title: slide.title,
-    subtitle: slide.subtitle ?? '',
-    description: slide.description ?? '',
-    image: slide.image,
-    link: slide.ctaLink || slide.link || '/products',
-    cta: slide.ctaText || slide.cta || 'Shop Now',
-    badge: slide.badge || null,
-    discount: slide.discount || null,
-    product: slide.product || null,
-  }));
+  return rows.map((slide) => {
+    const cta = blankToNull(slide.ctaText) ?? blankToNull(slide.cta);
+    const link = blankToNull(slide.ctaLink) ?? blankToNull(slide.link);
+    return {
+      id: slide.id,
+      type: slide.type || 'default',
+      title: slide.title,
+      subtitle: blankToNull(slide.subtitle),
+      description: blankToNull(slide.description),
+      image: slide.image,
+      link: cta ? link || '/products' : null,
+      cta,
+      badge: slide.badge || null,
+      discount: slide.discount || null,
+      product: slide.product || null,
+    };
+  });
 }
 
 const productSlideSelect = {

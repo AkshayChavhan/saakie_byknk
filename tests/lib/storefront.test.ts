@@ -21,12 +21,21 @@ describe('toHeroSlides', () => {
     expect(derived).toMatchObject({ link: '/products/x', cta: 'Buy', type: 'sale', discount: 20 })
   })
 
-  it('defaults the link and call to action', async () => {
+  it('leaves blank optional fields null so the hero omits them (no default button)', async () => {
     const { toHeroSlides } = await import('@/lib/server/storefront')
-    expect(toHeroSlides([{ id: 'a', title: 'T', image: '/i.jpg' }])[0]).toMatchObject({
+    expect(toHeroSlides([{ id: 'a', title: 'T', image: '/i.jpg', subtitle: '  ', ctaLink: '/x' }])[0]).toMatchObject({
+      link: null,
+      cta: null,
+      subtitle: null,
+      description: null,
+    })
+  })
+
+  it('falls back to the catalogue when a button has a label but no link', async () => {
+    const { toHeroSlides } = await import('@/lib/server/storefront')
+    expect(toHeroSlides([{ id: 'a', title: 'T', image: '/i.jpg', ctaText: 'Shop' }])[0]).toMatchObject({
       link: '/products',
-      cta: 'Shop Now',
-      subtitle: '',
+      cta: 'Shop',
     })
   })
 })
