@@ -1,8 +1,13 @@
 import 'server-only';
 import prisma from '@/lib/prisma';
 import { cached, TAG } from '@/lib/server/cache';
-import { getSubtreeProductCounts } from '@/lib/server/category-counts';
+import { getCategoryScopeIds, getSubtreeProductCounts } from '@/lib/server/category-counts';
 import { watermarkImageUrl } from '@/lib/image-watermark';
+import {
+  HERO_SLIDE_DEVICES,
+  otherHeroSlideDevice,
+  type HeroSlideDevice,
+} from '@/lib/hero-slide-device';
 import { markProduct } from '@/lib/server/watermark';
 
 /**
@@ -22,11 +27,16 @@ export interface HeroSlide {
   id: string;
   type: string;
   title: string;
-  subtitle: string;
-  description: string;
+  /** Null when the admin left the field blank — the component omits it. */
+  subtitle: string | null;
+  description: string | null;
   image: string;
-  link: string;
-  cta: string;
+  /** Button target; null (with `cta`) when the admin left the button blank. */
+  link: string | null;
+  /** Button label; null when the admin left it blank — no button is shown. */
+  cta: string | null;
+  /** Which screen set the slide belongs to; null (product-derived) means both. */
+  device: HeroSlideDevice | null;
   badge: string | null;
   discount: number | null;
   product: {
@@ -42,6 +52,10 @@ export interface HeroSlide {
  * derived from real products so the hero is never empty. Raw rows: the API
  * route returns these as-is for compatibility; `toHeroSlides` shapes them for
  * the component.
+ *
+ * Admin slides are banner artwork, not product photos, and are shown clean:
+ * no watermark. The product-derived fallback slides are product photos, so
+ * they keep the watermark like every other product image (docs/WATERMARK.md).
  */
 export const loadHeroSlides = cached(
   async () => {
@@ -49,7 +63,7 @@ export const loadHeroSlides = cached(
       where: { isActive: true },
       orderBy: { order: 'asc' },
     });
-    if (heroSlides.length > 0) return (heroSlides as RawHeroSlide[]).map(markProduct);
+    if (heroSlides.length > 0) return heroSlides as RawHeroSlide[];
     return productDerivedSlides().then((slides) => slides.map(markProduct));
   },
   'hero-slides',
@@ -67,27 +81,68 @@ export interface RawHeroSlide {
   link?: string | null;
   ctaText?: string | null;
   cta?: string | null;
+  device?: HeroSlideDevice | null;
   badge?: string | null;
   discount?: number | null;
   product?: HeroSlide['product'];
   [key: string]: unknown;
 }
 
-/** Shape raw slide rows (admin or product-derived) for `HeroSection`. */
+/** Empty / whitespace-only admin input counts as "not provided". */
+const blankToNull = (value: string | null | undefined): string | null => {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+};
+
+/**
+ * Shape raw slide rows (admin or product-derived) for `HeroSection`.
+ *
+ * Optional fields the admin left blank come through as null, not as
+ * placeholder copy: the component then omits that element entirely. A button
+ * needs a label; a label with no link falls back to the catalogue.
+ */
 export function toHeroSlides(rows: RawHeroSlide[]): HeroSlide[] {
-  return rows.map((slide) => ({
-    id: slide.id,
-    type: slide.type || 'default',
-    title: slide.title,
-    subtitle: slide.subtitle ?? '',
-    description: slide.description ?? '',
-    image: slide.image,
-    link: slide.ctaLink || slide.link || '/products',
-    cta: slide.ctaText || slide.cta || 'Shop Now',
-    badge: slide.badge || null,
-    discount: slide.discount || null,
-    product: slide.product || null,
-  }));
+  return rows.map((slide) => {
+    const cta = blankToNull(slide.ctaText) ?? blankToNull(slide.cta);
+    const link = blankToNull(slide.ctaLink) ?? blankToNull(slide.link);
+    return {
+      id: slide.id,
+      type: slide.type || 'default',
+      title: slide.title,
+      subtitle: blankToNull(slide.subtitle),
+      description: blankToNull(slide.description),
+      image: slide.image,
+      link: cta ? link || '/products' : null,
+      cta,
+      device: slide.device ?? null,
+      badge: slide.badge || null,
+      discount: slide.discount || null,
+      product: slide.product || null,
+    };
+  });
+}
+
+/** The hero's slides per screen class, ready for `HeroSection`. */
+export type HeroSlideSets = Record<HeroSlideDevice, HeroSlide[]>;
+
+/**
+ * Split shaped slides into the laptop and the phone set. Admin slides go to
+ * the set they were uploaded for; product-derived slides carry no device and
+ * appear in both. A set the admin has left empty borrows the other one, so a
+ * store with only laptop slides still has a hero on phones.
+ */
+export function heroSlideSets(rows: RawHeroSlide[]): HeroSlideSets {
+  const slides = toHeroSlides(rows);
+  const sets = Object.fromEntries(
+    HERO_SLIDE_DEVICES.map((device) => [
+      device,
+      slides.filter((slide) => slide.device == null || slide.device === device),
+    ])
+  ) as HeroSlideSets;
+  for (const device of HERO_SLIDE_DEVICES) {
+    if (sets[device].length === 0) sets[device] = sets[otherHeroSlideDevice(device)];
+  }
+  return sets;
 }
 
 const productSlideSelect = {
@@ -260,46 +315,146 @@ export interface FeaturedProduct {
   inStock: boolean;
 }
 
+/** Fields a product card needs; shared by the featured and new-arrival shelves. */
+const productCardSelect = {
+  id: true,
+  name: true,
+  slug: true,
+  price: true,
+  comparePrice: true,
+  stock: true,
+  images: { select: { url: true }, take: 1 },
+  colors: { select: { hexCode: true } },
+  category: { select: { name: true, slug: true } },
+  rating: true,
+  _count: { select: { reviews: { where: { status: 'APPROVED' as const } } } },
+} as const;
+
+type ProductCardRow = {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  comparePrice: number | null;
+  stock: number;
+  images: { url: string }[];
+  colors: { hexCode: string }[];
+  category: { name: string; slug: string } | null;
+  rating: number;
+  _count: { reviews: number };
+};
+
+function toProductCard(product: ProductCardRow): FeaturedProduct {
+  return {
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    price: product.price,
+    // Pass through as-is. `null` means "not on sale" and the UI must not
+    // render a discount badge — never substitute a derived reference price.
+    comparePrice: product.comparePrice,
+    // Maintained on the product by review moderation (lib/server/reviews.ts).
+    rating: Math.round(product.rating * 10) / 10,
+    reviews: product._count.reviews,
+    image: watermarkImageUrl(product.images[0]?.url || '/images/placeholder-product.svg'),
+    colors: Array.from(new Set(product.colors.map((c) => c.hexCode))),
+    category: product.category,
+    inStock: product.stock > 0,
+  };
+}
+
 export const loadFeaturedProducts = cached(
   async (): Promise<FeaturedProduct[]> => {
     const products = await prisma.product.findMany({
       where: { isActive: true, isFeatured: true },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        price: true,
-        comparePrice: true,
-        stock: true,
-        images: { select: { url: true }, take: 1 },
-        colors: { select: { hexCode: true } },
-        category: { select: { name: true, slug: true } },
-        rating: true,
-        _count: { select: { reviews: { where: { status: 'APPROVED' } } } },
-      },
+      select: productCardSelect,
       take: 8,
       orderBy: { createdAt: 'desc' },
     });
-
-    return products.map((product) => ({
-      id: product.id,
-      name: product.name,
-      slug: product.slug,
-      price: product.price,
-      // Pass through as-is. `null` means "not on sale" and the UI must not
-      // render a discount badge — never substitute a derived reference price.
-      comparePrice: product.comparePrice,
-      // Maintained on the product by review moderation (lib/server/reviews.ts).
-      rating: Math.round(product.rating * 10) / 10,
-      reviews: product._count.reviews,
-      image: watermarkImageUrl(product.images[0]?.url || '/images/placeholder-product.svg'),
-      colors: Array.from(new Set(product.colors.map((c) => c.hexCode))),
-      category: product.category,
-      inStock: product.stock > 0,
-    }));
+    return products.map(toProductCard);
   },
   'featured-products',
   { tags: [TAG.products] }
+);
+
+// ---------------------------------------------------------------------------
+// New arrivals
+// ---------------------------------------------------------------------------
+
+/** A product counts as a new arrival for this many days after it is created. */
+export const NEW_ARRIVAL_WINDOW_DAYS = 14;
+
+/** Products created at or after this instant are new arrivals. */
+export function newArrivalCutoff(now: Date = new Date()): Date {
+  return new Date(now.getTime() - NEW_ARRIVAL_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+}
+
+/**
+ * Active products added in the last two weeks, newest first. Empty when
+ * nothing qualifies, and the home page then omits the section entirely.
+ *
+ * The window is relative to "now", so the tagged cache alone would let a
+ * product linger past day 14; the default 5-minute revalidate in `cached()`
+ * re-evaluates the cutoff often enough that the drift is never visible.
+ */
+export const loadNewArrivals = cached(
+  async (): Promise<FeaturedProduct[]> => {
+    const products = await prisma.product.findMany({
+      where: { isActive: true, createdAt: { gte: newArrivalCutoff() } },
+      select: productCardSelect,
+      take: 8,
+      orderBy: { createdAt: 'desc' },
+    });
+    return products.map(toProductCard);
+  },
+  'new-arrivals',
+  { tags: [TAG.products] }
+);
+
+// ---------------------------------------------------------------------------
+// Category shelves
+// ---------------------------------------------------------------------------
+
+export interface CategoryShelfData {
+  id: string;
+  name: string;
+  slug: string;
+  products: FeaturedProduct[];
+}
+
+/** Products shown per category shelf on the home page. */
+export const CATEGORY_SHELF_SIZE = 8;
+
+/**
+ * One shelf per active top-level category, in name order, each holding that
+ * category's newest active products (its sub-categories included, since most
+ * stock hangs off them). Categories with nothing to show are left out, so
+ * the home page never renders an empty heading.
+ */
+export const loadCategoryShelves = cached(
+  async (): Promise<CategoryShelfData[]> => {
+    const categories = await prisma.category.findMany({
+      where: { isActive: true, parentId: null },
+      select: { id: true, name: true, slug: true },
+      orderBy: { name: 'asc' },
+    });
+
+    const shelves = await Promise.all(
+      categories.map(async (category) => {
+        const products = await prisma.product.findMany({
+          where: { isActive: true, categoryId: { in: await getCategoryScopeIds(category.id) } },
+          select: productCardSelect,
+          take: CATEGORY_SHELF_SIZE,
+          orderBy: { createdAt: 'desc' },
+        });
+        return { ...category, products: products.map(toProductCard) };
+      })
+    );
+
+    return shelves.filter((shelf) => shelf.products.length > 0);
+  },
+  'category-shelves',
+  { tags: [TAG.categories, TAG.products] }
 );
 
 // ---------------------------------------------------------------------------

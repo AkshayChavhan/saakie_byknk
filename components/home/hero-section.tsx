@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight, Star, TrendingUp, Tag, Sparkles } from 'lucide-react'
-import type { HeroSlide } from '@/lib/server/storefront'
+import type { HeroSlide, HeroSlideSets } from '@/lib/server/storefront'
+import { DESKTOP_MEDIA_QUERY, type HeroSlideDevice } from '@/lib/hero-slide-device'
 
-export type { HeroSlide }
+export type { HeroSlide, HeroSlideSets }
 
 const DEFAULT_SLIDES: HeroSlide[] = [
   {
@@ -18,6 +19,7 @@ const DEFAULT_SLIDES: HeroSlide[] = [
     image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=1920&h=1080&fit=crop',
     link: '/products',
     cta: 'Shop Now',
+    device: null,
     badge: null,
     discount: null,
     product: null,
@@ -25,8 +27,17 @@ const DEFAULT_SLIDES: HeroSlide[] = [
 ]
 
 interface HeroSectionProps {
-  /** Slides loaded on the server (app/page.tsx). Empty falls back to a default slide. */
-  slides: HeroSlide[]
+  /**
+   * The laptop and the phone slide set, loaded on the server (app/page.tsx).
+   * An empty set falls back to a default slide.
+   */
+  slides: HeroSlideSets
+  /**
+   * The set to render first, guessed on the server from the request headers
+   * so the first HTML already carries the right images. After hydration the
+   * real viewport width has the final say.
+   */
+  initialDevice: HeroSlideDevice
 }
 
 /**
@@ -34,9 +45,29 @@ interface HeroSectionProps {
  * page, so the first slide's image is in the initial HTML and `priority`
  * actually preloads it; this component only owns the carousel state.
  */
-export function HeroSection({ slides: incoming }: HeroSectionProps) {
+export function HeroSection({ slides: sets, initialDevice }: HeroSectionProps) {
+  const [device, setDevice] = useState<HeroSlideDevice>(initialDevice)
   const [currentSlide, setCurrentSlide] = useState(0)
+  const incoming = sets[device]
   const slides = incoming.length > 0 ? incoming : DEFAULT_SLIDES
+
+  // Confirm the server's guess against the real screen and follow rotations
+  // and window resizes across the laptop/phone boundary. Restart the carousel
+  // whenever the set changes: slide 3 of one set means nothing in the other.
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
+    const query = window.matchMedia(DESKTOP_MEDIA_QUERY)
+    const apply = () => {
+      const next: HeroSlideDevice = query.matches ? 'DESKTOP' : 'MOBILE'
+      setDevice((prev) => {
+        if (prev !== next) setCurrentSlide(0)
+        return next
+      })
+    }
+    apply()
+    query.addEventListener('change', apply)
+    return () => query.removeEventListener('change', apply)
+  }, [])
 
   // Auto-slide functionality
   useEffect(() => {
@@ -126,8 +157,6 @@ export function HeroSection({ slides: incoming }: HeroSectionProps) {
                 loading={index === currentSlide ? undefined : 'lazy'}
               />
             )}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/20 pointer-events-none" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
           </div>
           
           {/*
@@ -138,27 +167,39 @@ export function HeroSection({ slides: incoming }: HeroSectionProps) {
           <div className="absolute inset-x-0 bottom-0 top-1/2 sm:top-0 z-10 flex items-end sm:items-center">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-12 sm:pb-0">
               <div className="max-w-2xl text-white">
-                {/* Badge + subtitle share one row on mobile to save vertical space */}
-                <div className="flex flex-wrap items-center gap-2 mb-1 sm:block sm:mb-0">
-                  {slide.badge && (
-                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold text-white sm:mb-4 ${getBadgeColor(slide.type)}`}>
-                      {getBadgeIcon(slide.type)}
-                      {slide.badge}
-                    </div>
-                  )}
+                {/*
+                  Everything but the title is optional. An admin slide with a
+                  blank subtitle, description or button renders without that
+                  element rather than showing placeholder copy.
+                */}
 
-                  {/* Subtitle with discount */}
-                  <div className="flex items-center gap-2 sm:mb-2">
-                    <p className="text-xs sm:text-base uppercase tracking-wider animate-slide-up">
-                      {slide.subtitle}
-                    </p>
-                    {slide.discount && (
-                      <span className="bg-red-500 text-white px-2 py-0.5 sm:py-1 rounded text-xs font-bold">
-                        -{slide.discount}%
-                      </span>
+                {/* Badge + subtitle share one row on mobile to save vertical space */}
+                {(slide.badge || slide.subtitle || slide.discount) && (
+                  <div className="flex flex-wrap items-center gap-2 mb-1 sm:block sm:mb-0">
+                    {slide.badge && (
+                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold text-white sm:mb-4 ${getBadgeColor(slide.type)}`}>
+                        {getBadgeIcon(slide.type)}
+                        {slide.badge}
+                      </div>
+                    )}
+
+                    {/* Subtitle with discount */}
+                    {(slide.subtitle || slide.discount) && (
+                      <div className="flex items-center gap-2 sm:mb-2">
+                        {slide.subtitle && (
+                          <p className="text-xs sm:text-base uppercase tracking-wider animate-slide-up">
+                            {slide.subtitle}
+                          </p>
+                        )}
+                        {slide.discount && (
+                          <span className="bg-red-500 text-white px-2 py-0.5 sm:py-1 rounded text-xs font-bold">
+                            -{slide.discount}%
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
-                </div>
+                )}
 
                 {/* Title */}
                 <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold mb-1 sm:mb-4 line-clamp-2 animate-slide-up animation-delay-100">
@@ -166,12 +207,15 @@ export function HeroSection({ slides: incoming }: HeroSectionProps) {
                 </h2>
 
                 {/* Description */}
-                <p className="text-sm sm:text-lg lg:text-xl mb-3 sm:mb-6 line-clamp-2 sm:line-clamp-none animate-slide-up animation-delay-200">
-                  {slide.description}
-                </p>
+                {slide.description && (
+                  <p className="text-sm sm:text-lg lg:text-xl mb-3 sm:mb-6 line-clamp-2 sm:line-clamp-none animate-slide-up animation-delay-200">
+                    {slide.description}
+                  </p>
+                )}
 
                 {/* Details + CTA — on mobile: details bottom-left, button bottom-right */}
-                <div className="flex items-end gap-3 sm:block">
+                {(slide.product || slide.cta) && (
+                  <div className="flex items-end gap-3 sm:block">
                   {/* Product Info */}
                   {slide.product && (
                     <div className="min-w-0 flex-1 sm:flex-none sm:mb-6 animate-slide-up animation-delay-250">
@@ -190,14 +234,17 @@ export function HeroSection({ slides: incoming }: HeroSectionProps) {
                     </div>
                   )}
 
-                  {/* CTA Button */}
-                  <Link
-                    href={slide.link}
-                    className="shrink-0 ml-auto sm:ml-0 inline-block bg-white text-gray-900 px-5 sm:px-8 py-2.5 sm:py-4 rounded-md text-sm sm:text-base font-semibold hover:bg-gray-100 transition-all duration-300 animate-slide-up animation-delay-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-                  >
-                    {slide.cta}
-                  </Link>
-                </div>
+                  {/* CTA Button — only when the slide has a label */}
+                  {slide.cta && (
+                    <Link
+                      href={slide.link ?? '/products'}
+                      className="shrink-0 ml-auto sm:ml-0 inline-block bg-white text-gray-900 px-5 sm:px-8 py-2.5 sm:py-4 rounded-md text-sm sm:text-base font-semibold hover:bg-gray-100 transition-all duration-300 animate-slide-up animation-delay-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                    >
+                      {slide.cta}
+                    </Link>
+                  )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -220,17 +267,23 @@ export function HeroSection({ slides: incoming }: HeroSectionProps) {
         <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
       </button>
 
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex space-x-2">
+      {/*
+        Progress dots: small squares, the current slide stretched into a bar.
+        Bottom-right, offset left of the fixed chat bubble (bottom-6 right-6,
+        ~56px wide) so the two never overlap when the hero fills the viewport.
+      */}
+      <div className="absolute bottom-6 right-24 sm:bottom-8 sm:right-28 z-30 flex items-center gap-2.5 sm:gap-3">
         {slides.map((_, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all ${
+            className={`h-1.5 sm:h-2 rounded-[1px] transition-all duration-500 ease-out ${
               index === currentSlide
-                ? 'bg-white w-8 sm:w-10'
-                : 'bg-white/50 hover:bg-white/70'
+                ? 'w-10 sm:w-14 bg-white/90'
+                : 'w-1.5 sm:w-2 bg-white/50 hover:bg-white/75'
             }`}
             aria-label={`Go to slide ${index + 1}`}
+            aria-current={index === currentSlide ? 'true' : undefined}
           />
         ))}
       </div>

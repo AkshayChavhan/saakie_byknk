@@ -81,8 +81,9 @@ type NavVariant = 'desktop' | 'mobileRow' | 'drawer'
 const navLinkClass = (variant: NavVariant, isActive: boolean) => {
   switch (variant) {
     case 'desktop':
+      // Small spaced capitals, in the manner of suta.in's top bar.
       return cn(
-        'text-sm font-medium transition-colors hover:text-gray-300',
+        'text-xs font-medium uppercase tracking-[0.18em] transition-colors hover:text-gray-300',
         isActive ? 'text-white font-semibold' : 'text-gray-200'
       )
     case 'mobileRow':
@@ -532,7 +533,7 @@ export function Header() {
               <>
                 <Link
                   href="/admin"
-                  className="text-sm font-medium text-gray-200 hover:text-gray-300 transition-colors"
+                  className="text-xs font-medium uppercase tracking-[0.18em] text-gray-200 hover:text-gray-300 transition-colors"
                 >
                   Admin
                 </Link>
@@ -540,10 +541,14 @@ export function Header() {
             )}
           </div>
 
-          <div className="flex items-center space-x-4">
+          {/* `lg:ml-8` matches the gap between the nav links, so the search
+              icon sits the same distance from "Posts" as the links do from
+              each other instead of butting up against it. */}
+          <div className="flex items-center space-x-4 lg:ml-8">
             <button
               onClick={() => setSearchOpen(!searchOpen)}
               className="p-2 rounded-md text-white hover:bg-gray-800"
+              aria-label={searchOpen ? 'Close search' : 'Open search'}
             >
               <Search size={20} />
             </button>

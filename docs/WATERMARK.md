@@ -25,6 +25,11 @@ goes through one of them: product list, product page, category pages, home
 page loaders, cart, wishlist, orders, and the admin product, order and
 dashboard endpoints. Admins see the marked photos too.
 
+Not marked: admin-uploaded hero slides (`HeroSlide.image`). They are banner
+artwork, not product photos, and `loadHeroSlides` returns them clean. The
+product-derived fallback slides the hero shows until an admin creates one are
+product photos and keep the mark.
+
 ## Setup
 
 1. Upload the logo once per Cloudinary account (already done for the store's

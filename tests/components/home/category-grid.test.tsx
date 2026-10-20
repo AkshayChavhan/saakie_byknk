@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import { CategoryGrid } from '@/components/home/category-grid'
 
 /**
@@ -29,12 +29,21 @@ describe('CategoryGrid component', () => {
     expect(screen.getByText(/Browse through our handpicked collection/)).toBeInTheDocument()
   })
 
-  it('links each card to its category page with the product count', () => {
+  it('links each tile to its category page and announces the product count', () => {
     render(<CategoryGrid categories={categories} />)
 
     const link = screen.getByRole('listitem', { name: 'Silk Sarees - 45 products' })
     expect(link).toHaveAttribute('href', '/categories/silk-sarees')
-    expect(screen.getByText('45 Products')).toBeInTheDocument()
+    // The strip shows the name only; the count stays in the accessible label.
+    expect(screen.queryByText('45 Products')).not.toBeInTheDocument()
+  })
+
+  it('renders the tiles as one horizontally scrollable, snapping row', () => {
+    const { container } = render(<CategoryGrid categories={categories} />)
+    const strip = container.querySelector('[role="list"]')
+    expect(strip?.className).toContain('overflow-x-auto')
+    expect(strip?.firstElementChild?.className).toContain('snap-x')
+    expect(container.querySelectorAll('a.snap-start')).toHaveLength(3)
   })
 
   it('shows an empty state when there are no categories', () => {
@@ -47,5 +56,58 @@ describe('CategoryGrid component', () => {
     // Two pictured categories (decorative, alt=""); the third renders the
     // folder icon instead.
     expect(container.querySelectorAll('img')).toHaveLength(2)
+  })
+
+  describe('slide arrows', () => {
+    /** jsdom has no layout: fake the strip's geometry, then let it re-measure. */
+    const layout = (strip: HTMLElement, scrollWidth: number, clientWidth: number, scrollLeft = 0) => {
+      Object.defineProperty(strip, 'scrollWidth', { configurable: true, value: scrollWidth })
+      Object.defineProperty(strip, 'clientWidth', { configurable: true, value: clientWidth })
+      Object.defineProperty(strip, 'scrollLeft', { configurable: true, value: scrollLeft, writable: true })
+      act(() => {
+        fireEvent.scroll(strip)
+      })
+    }
+
+    it('shows no arrows while every tile fits', () => {
+      const { container } = render(<CategoryGrid categories={categories} />)
+      layout(container.querySelector('[role="list"]') as HTMLElement, 600, 1000)
+      expect(screen.queryByRole('button', { name: /categories/ })).not.toBeInTheDocument()
+    })
+
+    it('shows only the right arrow at the start of an overflowing strip, then both once scrolled', () => {
+      const { container } = render(<CategoryGrid categories={categories} />)
+      const strip = container.querySelector('[role="list"]') as HTMLElement
+
+      layout(strip, 1600, 1000, 0)
+      expect(screen.getByRole('button', { name: 'Show more categories' })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Show previous categories' })).not.toBeInTheDocument()
+
+      layout(strip, 1600, 1000, 300)
+      expect(screen.getByRole('button', { name: 'Show more categories' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Show previous categories' })).toBeInTheDocument()
+
+      layout(strip, 1600, 1000, 600)
+      expect(screen.queryByRole('button', { name: 'Show more categories' })).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Show previous categories' })).toBeInTheDocument()
+    })
+
+    it('slides by whole visible tiles per click', () => {
+      const { container } = render(<CategoryGrid categories={categories} />)
+      const strip = container.querySelector('[role="list"]') as HTMLElement
+      const scrollBy = vi.fn()
+      strip.scrollBy = scrollBy
+      const tiles = strip.querySelectorAll('a')
+      Object.defineProperty(tiles[0], 'offsetLeft', { configurable: true, value: 0 })
+      Object.defineProperty(tiles[1], 'offsetLeft', { configurable: true, value: 200 }) // tile + gap
+
+      layout(strip, 1600, 1000, 300)
+      fireEvent.click(screen.getByRole('button', { name: 'Show more categories' }))
+      // 1000px wide shows 5 tiles of 200px → slide exactly 5 tiles.
+      expect(scrollBy).toHaveBeenCalledWith({ left: 1000, behavior: 'smooth' })
+
+      fireEvent.click(screen.getByRole('button', { name: 'Show previous categories' }))
+      expect(scrollBy).toHaveBeenCalledWith({ left: -1000, behavior: 'smooth' })
+    })
   })
 })
