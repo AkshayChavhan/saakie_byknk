@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ShoppingCart, Check } from 'lucide-react'
 import { useSession } from '@/lib/auth-client'
-import { cartApi } from '@/lib/api'
+import { cartApi, hasApiErrorCode } from '@/lib/api'
 import { useToast } from '@/components/ui/toast'
 
 interface AddToCartButtonProps {
@@ -64,8 +64,12 @@ export function AddToCartButton({
       // Trigger a custom event to update cart count in header
       window.dispatchEvent(new CustomEvent('cartUpdated'))
     } catch (error) {
-      console.error('Failed to add to cart:', error)
-      toast.error("Couldn't add to cart", 'Please try again.')
+      if (hasApiErrorCode(error, 'ALREADY_IN_CART')) {
+        toast.info('Product already in cart', 'Open your cart to check out.')
+      } else {
+        console.error('Failed to add to cart:', error)
+        toast.error("Couldn't add to cart", 'Please try again.')
+      }
     } finally {
       setIsLoading(false)
     }

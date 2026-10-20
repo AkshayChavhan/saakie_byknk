@@ -78,6 +78,15 @@ export async function POST(request: Request) {
     const existingItem = cart.items.find((i) => i.productId === productId);
     const newQuantity = (existingItem?.quantity ?? 0) + quantity;
     if (!prebook && product.stock < newQuantity) {
+      // The cart already holds every piece there is (with one-off sarees,
+      // the saree is simply in the cart already). Say so plainly rather than
+      // reporting a stock error for a second tap on Add to Cart.
+      if (existingItem && existingItem.quantity >= product.stock) {
+        return NextResponse.json(
+          { error: 'Product already in cart', code: 'ALREADY_IN_CART' },
+          { status: 409 }
+        );
+      }
       return NextResponse.json(
         { error: `Only ${product.stock} items available in stock` },
         { status: 400 }
