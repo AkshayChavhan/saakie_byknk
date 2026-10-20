@@ -10,6 +10,7 @@ import { Search, Heart, User, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { fetchApi } from '@/lib/api'
 import { CartIcon } from '@/components/cart'
+import { socialLinks } from '@/components/layout/social-links'
 
 /** A category as GET /api/categories/nav returns it, already pruned of
  *  anything whose subtree holds no active product. */
@@ -509,7 +510,7 @@ export function Header() {
               className="ml-4 lg:ml-0 flex items-center flex-1 min-w-0 max-w-full"
             >
               <Image
-                src="/images/saakieLogo.png"
+                src="/images/saakieLogo.jpeg"
                 alt="Saakie by KNK"
                 width={150}
                 height={50}
@@ -702,7 +703,7 @@ export function Header() {
                 className="flex flex-1 min-w-0 items-center"
               >
                 <Image
-                src="/images/saakieLogo.png"
+                src="/images/saakieLogo.jpeg"
                 alt="Saakie by KNK"
                 width={240}
                 height={50}
@@ -796,6 +797,24 @@ export function Header() {
 
             {/* Footer */}
             <div className="shrink-0 p-4 border-t border-gray-800 bg-gray-900">
+              <ul className="mb-3 flex items-center justify-center gap-4" aria-label="Follow us">
+                {socialLinks.map((social) => {
+                  const Icon = social.icon
+                  return (
+                    <li key={social.name}>
+                      <Link
+                        href={social.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={social.name}
+                        className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-700 text-gray-300 transition-colors hover:bg-white hover:text-black"
+                      >
+                        <Icon size={18} />
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
               <p className="text-xs text-gray-500 text-center">
                 © 2024 Saakie_byknk. All rights reserved.
               </p>

@@ -120,7 +120,7 @@ export function AuthShell({
                 white card. */}
             <span className="rounded-xl bg-black px-3 py-2 shadow-lg ring-1 ring-gray-800">
               <Image
-                src="/images/saakieLogo.png"
+                src="/images/saakieLogo.jpeg"
                 alt="Saakie by KNK"
                 width={132}
                 height={40}
@@ -189,7 +189,7 @@ export function AuthShell({
                 className="overflow-hidden rounded-2xl bg-black p-1.5 shadow-lg shadow-black/50 ring-1 ring-gray-800 transition-shadow hover:shadow-rose-900/30"
               >
                 <Image
-                  src="/images/saakieLogo.png"
+                  src="/images/saakieLogo.jpeg"
                   alt="Saakie by KNK"
                   width={320}
                   height={160}

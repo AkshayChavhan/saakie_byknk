@@ -76,7 +76,7 @@ function BlogPostJsonLd({ post }: { post: BlogPostSeo }) {
     publisher: {
       '@type': 'Organization',
       name: 'Saakie by KNK',
-      logo: { '@type': 'ImageObject', url: `${SITE_URL}/images/saakieLogo.png` },
+      logo: { '@type': 'ImageObject', url: `${SITE_URL}/images/saakieLogo.jpeg` },
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': url },
   }
