@@ -40,6 +40,20 @@ describe('toHeroSlides', () => {
   })
 })
 
+describe('loadHeroSlides', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('serves admin banner slides without the product watermark', async () => {
+    const { loadHeroSlides } = await import('@/lib/server/storefront')
+    const url = 'https://res.cloudinary.com/demo/image/upload/v1760900000/saakie-byknk/hero-slides/banner.jpg'
+    mockPrisma.heroSlide.findMany.mockResolvedValue([{ id: 'h1', title: 'Banner', image: url, isActive: true, order: 0 }])
+
+    const [slide] = await loadHeroSlides()
+    expect(slide.image).toBe(url)
+    expect(mockPrisma.product.findMany).not.toHaveBeenCalled()
+  })
+})
+
 describe('loadPromotionalStats', () => {
   beforeEach(() => vi.clearAllMocks())
 

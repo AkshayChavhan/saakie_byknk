@@ -45,6 +45,10 @@ export interface HeroSlide {
  * derived from real products so the hero is never empty. Raw rows: the API
  * route returns these as-is for compatibility; `toHeroSlides` shapes them for
  * the component.
+ *
+ * Admin slides are banner artwork, not product photos, and are shown clean:
+ * no watermark. The product-derived fallback slides are product photos, so
+ * they keep the watermark like every other product image (docs/WATERMARK.md).
  */
 export const loadHeroSlides = cached(
   async () => {
@@ -52,7 +56,7 @@ export const loadHeroSlides = cached(
       where: { isActive: true },
       orderBy: { order: 'asc' },
     });
-    if (heroSlides.length > 0) return (heroSlides as RawHeroSlide[]).map(markProduct);
+    if (heroSlides.length > 0) return heroSlides as RawHeroSlide[];
     return productDerivedSlides().then((slides) => slides.map(markProduct));
   },
   'hero-slides',
