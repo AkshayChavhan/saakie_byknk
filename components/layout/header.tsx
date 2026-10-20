@@ -540,10 +540,14 @@ export function Header() {
             )}
           </div>
 
-          <div className="flex items-center space-x-4">
+          {/* `lg:ml-8` matches the gap between the nav links, so the search
+              icon sits the same distance from "Posts" as the links do from
+              each other instead of butting up against it. */}
+          <div className="flex items-center space-x-4 lg:ml-8">
             <button
               onClick={() => setSearchOpen(!searchOpen)}
               className="p-2 rounded-md text-white hover:bg-gray-800"
+              aria-label={searchOpen ? 'Close search' : 'Open search'}
             >
               <Search size={20} />
             </button>

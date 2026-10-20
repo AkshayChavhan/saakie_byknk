@@ -19,7 +19,7 @@ export function NewArrivals({ products }: NewArrivalsProps) {
   return (
     <ProductShelf
       title="New Arrivals"
-      subtitle="Fresh from the loom — added in the last two weeks"
+      subtitle=""
       viewAllHref="/products?sort=newest"
       viewAllLabel="View All New Arrivals"
       products={products.map((product) => ({ ...product, isNew: false }))}
