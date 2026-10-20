@@ -17,6 +17,19 @@ describe('loadProductDetail', () => {
     expect(mockPrisma.product.findMany).not.toHaveBeenCalled()
   })
 
+  it('loads the gallery in the admin\'s image sequence, main photo first', async () => {
+    mockPrisma.product.findUnique.mockResolvedValue(createMockProduct({ _count: { reviews: 0 }, reviews: [] }))
+    mockPrisma.product.findMany.mockResolvedValue([])
+    const { loadProductDetail } = await import('@/lib/server/products')
+
+    await loadProductDetail('ordered-saree')
+
+    const order = [{ isPrimary: 'desc' }, { order: 'asc' }]
+    expect(mockPrisma.product.findUnique.mock.calls[0][0].include.images).toEqual({ orderBy: order })
+    // The related-product thumbnails follow the same order.
+    expect(mockPrisma.product.findMany.mock.calls[0][0].select.images).toMatchObject({ take: 1, orderBy: order })
+  })
+
   it('keeps internal numbers off the payload and reads the maintained rating', async () => {
     mockPrisma.product.findUnique.mockResolvedValue(
       createMockProduct({

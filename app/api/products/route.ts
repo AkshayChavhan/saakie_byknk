@@ -4,6 +4,7 @@ import { apiError } from '@/lib/server/errors';
 import { parseLimit, parsePage } from '@/lib/server/validation';
 import { watermarkImageUrl } from '@/lib/image-watermark';
 import { getCategoryScopeIds } from '@/lib/server/category-counts';
+import { IMAGE_ORDER } from '@/lib/server/image-order';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -116,7 +117,7 @@ export async function GET(request: Request) {
           createdAt: true,
           rating: true,
           salesCount: true,
-          images: { select: { url: true }, take: 1 },
+          images: { select: { url: true }, take: 1, orderBy: IMAGE_ORDER },
           colors: { select: { hexCode: true } },
           category: { select: { name: true, slug: true } },
           // Approved only — the schema notes that unapproved reviews are never

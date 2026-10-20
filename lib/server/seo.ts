@@ -1,6 +1,7 @@
 import 'server-only';
 import { cache } from 'react';
 import prisma from '@/lib/prisma';
+import { IMAGE_ORDER } from '@/lib/server/image-order';
 
 /**
  * Server-side data fetchers for generateMetadata + JSON-LD on the product and
@@ -35,7 +36,7 @@ export const getProductSeo = cache(async (slug: string): Promise<ProductSeo | nu
       comparePrice: true,
       brand: true,
       stock: true,
-      images: { select: { url: true }, take: 1 },
+      images: { select: { url: true }, take: 1, orderBy: IMAGE_ORDER },
       category: { select: { name: true } },
       rating: true,
       _count: { select: { reviews: { where: { status: 'APPROVED' } } } },

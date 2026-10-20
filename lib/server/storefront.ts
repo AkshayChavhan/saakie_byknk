@@ -9,6 +9,7 @@ import {
   type HeroSlideDevice,
 } from '@/lib/hero-slide-device';
 import { markProduct } from '@/lib/server/watermark';
+import { IMAGE_ORDER } from '@/lib/server/image-order';
 
 /**
  * The storefront's shared reads: everything the home page shows, in the shape
@@ -152,7 +153,7 @@ const productSlideSelect = {
   price: true,
   comparePrice: true,
   isFeatured: true,
-  images: { select: { url: true }, take: 1 },
+  images: { select: { url: true }, take: 1, orderBy: IMAGE_ORDER },
   category: { select: { name: true } },
   salesCount: true,
 } as const;
@@ -323,7 +324,7 @@ const productCardSelect = {
   price: true,
   comparePrice: true,
   stock: true,
-  images: { select: { url: true }, take: 1 },
+  images: { select: { url: true }, take: 1, orderBy: IMAGE_ORDER },
   colors: { select: { hexCode: true } },
   category: { select: { name: true, slug: true } },
   rating: true,

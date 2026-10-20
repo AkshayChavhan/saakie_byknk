@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { requireAuth, requireAdmin } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
 import { markProduct } from '@/lib/server/watermark';
+import { IMAGE_ORDER } from '@/lib/server/image-order';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -69,7 +70,7 @@ export async function GET() {
           price: true,
           stock: true,
           salesCount: true,
-          images: { select: { url: true }, take: 1 },
+          images: { select: { url: true }, take: 1, orderBy: IMAGE_ORDER },
         },
       }),
       prisma.order.findMany({

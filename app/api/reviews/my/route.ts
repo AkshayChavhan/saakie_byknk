@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
+import { IMAGE_ORDER } from '@/lib/server/image-order';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,7 +31,7 @@ export async function GET() {
             id: true,
             name: true,
             slug: true,
-            images: { select: { url: true }, take: 1 },
+            images: { select: { url: true }, take: 1, orderBy: IMAGE_ORDER },
           },
         },
       },
