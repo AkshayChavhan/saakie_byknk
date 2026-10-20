@@ -658,9 +658,9 @@ export default function ProductsManagement() {
 
               {/* Price and Stock */}
               <div className="mt-2 flex items-center gap-3 flex-wrap">
-                <span className="font-bold text-gray-900">₹{(product.price ?? 0).toLocaleString()}</span>
+                <span className="font-bold text-gray-900">Rs. {(product.price ?? 0).toLocaleString()}</span>
                 {product.comparePrice && product.comparePrice > product.price && (
-                  <span className="text-sm text-gray-400 line-through">₹{product.comparePrice.toLocaleString()}</span>
+                  <span className="text-sm text-gray-400 line-through">Rs. {product.comparePrice.toLocaleString()}</span>
                 )}
                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${stockStatus.color}`}>
                   <span className={`h-1.5 w-1.5 rounded-full ${stockStatus.dotColor}`}></span>
@@ -784,9 +784,9 @@ export default function ProductsManagement() {
         </td>
         <td className="px-6 py-4">
           <div>
-            <p className="font-semibold text-gray-900">₹{(product.price ?? 0).toLocaleString()}</p>
+            <p className="font-semibold text-gray-900">Rs. {(product.price ?? 0).toLocaleString()}</p>
             {product.comparePrice && product.comparePrice > product.price && (
-              <p className="text-sm text-gray-400 line-through">₹{product.comparePrice.toLocaleString()}</p>
+              <p className="text-sm text-gray-400 line-through">Rs. {product.comparePrice.toLocaleString()}</p>
             )}
           </div>
         </td>
@@ -931,7 +931,7 @@ export default function ProductsManagement() {
               </div>
               <div>
                 <p className="text-xs sm:text-sm text-gray-500">Inventory</p>
-                <p className="text-lg sm:text-xl font-bold text-gray-900">₹{(totalValue / 1000).toFixed(0)}K</p>
+                <p className="text-lg sm:text-xl font-bold text-gray-900">Rs. {(totalValue / 1000).toFixed(0)}K</p>
               </div>
             </div>
           </div>
@@ -1317,7 +1317,7 @@ export default function ProductsManagement() {
                         step="0.01"
                         value={formData.price}
                         onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                        placeholder="₹0"
+                        placeholder="Rs. 0"
                         className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
                       />
                     </div>
@@ -1328,7 +1328,7 @@ export default function ProductsManagement() {
                         step="0.01"
                         value={formData.compareAtPrice}
                         onChange={(e) => setFormData({ ...formData, compareAtPrice: e.target.value })}
-                        placeholder="₹0"
+                        placeholder="Rs. 0"
                         className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
                       />
                     </div>
@@ -1579,7 +1579,7 @@ export default function ProductsManagement() {
                 {/* Price & Stock */}
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <div className="p-4 bg-green-50 rounded-xl text-center hover:bg-green-100 hover:shadow-sm transition-all duration-200 cursor-default">
-                    <p className="text-2xl font-bold text-green-600">₹{(selectedProduct.price ?? 0).toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-green-600">Rs. {(selectedProduct.price ?? 0).toLocaleString()}</p>
                     <p className="text-sm text-green-600">Price</p>
                   </div>
                   <div className="p-4 bg-blue-50 rounded-xl text-center hover:bg-blue-100 hover:shadow-sm transition-all duration-200 cursor-default">

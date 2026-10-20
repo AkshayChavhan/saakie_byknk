@@ -490,7 +490,7 @@ export const loadPromotionalData = cached(
           },
         ],
         offers: [
-          { id: '1', title: 'Free Shipping', description: 'On orders above ₹999', icon: 'truck' },
+          { id: '1', title: 'Free Shipping', description: 'On orders above Rs. 999', icon: 'truck' },
           { id: '2', title: 'Easy Returns', description: '7 days return policy', icon: 'refresh' },
           { id: '3', title: 'Secure Payment', description: '100% secure checkout', icon: 'shield' },
         ],

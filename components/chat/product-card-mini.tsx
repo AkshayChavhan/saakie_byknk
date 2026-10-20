@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { formatPrice } from '@/lib/utils'
 import Image from 'next/image'
 import type { RecommendedProduct } from '@/types/chat'
 
@@ -9,13 +10,6 @@ interface ProductCardMiniProps {
 }
 
 export function ProductCardMini({ product }: ProductCardMiniProps) {
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0
-    }).format(price)
-  }
 
   return (
     <Link

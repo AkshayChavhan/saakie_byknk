@@ -5,13 +5,16 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/** The currency prefix used everywhere a price is shown: "Rs. 5,350", never the ₹ sign. */
+export const CURRENCY_PREFIX = 'Rs. '
+
+/** Indian digit grouping (1,00,000), no paise, "Rs." prefix. */
 export function formatPrice(price: number): string {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
+  const amount = new Intl.NumberFormat('en-IN', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(price)
+  return `${CURRENCY_PREFIX}${amount}`
 }
 
 export function formatDate(date: Date | string): string {

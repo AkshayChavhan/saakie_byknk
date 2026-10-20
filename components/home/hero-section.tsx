@@ -223,10 +223,10 @@ export function HeroSection({ slides: sets, initialDevice }: HeroSectionProps) {
                         <p className="text-xs sm:text-sm text-white/80 mb-0.5 sm:mb-1">{slide.product.category}</p>
                         <p className="font-semibold text-sm sm:text-lg line-clamp-1">{slide.product.name}</p>
                         <div className="flex items-center gap-2 mt-1 sm:mt-2">
-                          <span className="text-base sm:text-xl font-bold">₹{slide.product.price.toLocaleString()}</span>
+                          <span className="text-base sm:text-xl font-bold">Rs. {slide.product.price.toLocaleString()}</span>
                           {slide.product.comparePrice && (
                             <span className="text-xs sm:text-sm text-white/60 line-through">
-                              ₹{slide.product.comparePrice.toLocaleString()}
+                              Rs. {slide.product.comparePrice.toLocaleString()}
                             </span>
                           )}
                         </div>
