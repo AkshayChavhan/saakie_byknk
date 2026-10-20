@@ -103,8 +103,11 @@ export function Footer() {
               </div>
               <div className="flex items-start text-gray-300">
                 <MapPin size={18} className="mr-3 flex-shrink-0 mt-1" />
-                <span>Pune, Maharashtra, India</span><br/>
-                <span>Yavatmal, Maharashtra, India</span>
+                {/* Two locations, one per line. A <br> between flex items does nothing. */}
+                <div className="space-y-1">
+                  <p>Pune, Maharashtra, India</p>
+                  <p>Yavatmal, Maharashtra, India</p>
+                </div>
               </div>
             </div>
           </div>
