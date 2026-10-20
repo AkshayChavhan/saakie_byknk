@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
-import { Facebook, Instagram, Youtube, Mail, Phone, MapPin } from 'lucide-react'
+import { Instagram, Mail, Phone, MapPin } from 'lucide-react'
 import { fetchApi } from '@/lib/api'
 
 /**
@@ -48,12 +48,11 @@ const footerLinks = {
   ],
 }
 
+// Only the networks the store is actually on; a dead "#" icon is worse
+// than no icon.
 const socialLinks = [
-  { name: 'Facebook', href: '#', icon: Facebook },
-  { name: 'Instagram', href: '#', icon: Instagram },
-  // Placeholder profile URL — swap for the real Pinterest account when known.
+  { name: 'Instagram', href: 'https://www.instagram.com/saakie_byknk/', icon: Instagram },
   { name: 'Pinterest', href: 'https://www.pinterest.com/saakiebyknk', icon: PinterestIcon },
-  { name: 'YouTube', href: '#', icon: Youtube },
 ]
 
 export function Footer() {
@@ -180,6 +179,8 @@ export function Footer() {
                   <Link
                     key={social.name}
                     href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-gray-400 hover:text-white transition-colors"
                     aria-label={social.name}
                   >
