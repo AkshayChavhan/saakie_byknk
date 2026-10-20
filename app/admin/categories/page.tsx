@@ -131,19 +131,24 @@ export default function CategoriesManagement() {
       const isEditing = !!editingCategory
 
       if (isEditing) {
-        // Update existing category
+        // Update existing category. Multipart, so a newly picked image goes
+        // up with the fields; it used to be JSON only and the image was
+        // silently dropped. "Remove image" on a category that had one clears it.
+        const removeImage = !!editingCategory.image && !selectedImage && !imagePreview
+        const updateFormData = new FormData()
+        updateFormData.append('data', JSON.stringify({
+          name: formData.name,
+          slug: formData.slug,
+          description: formData.description || null,
+          parentId: formData.parentId || null,
+          isActive: formData.isActive,
+          removeImage,
+        }))
+        if (selectedImage) updateFormData.append('image', selectedImage)
+
         response = await fetchApi(`/api/admin/categories/${editingCategory.id}`, {
           method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            name: formData.name,
-            slug: formData.slug,
-            description: formData.description || null,
-            parentId: formData.parentId || null,
-            isActive: formData.isActive
-          })
+          body: updateFormData
         })
       } else if (selectedImage) {
         // Create with image upload
