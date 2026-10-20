@@ -1,7 +1,7 @@
 import 'server-only';
 import prisma from '@/lib/prisma';
 import { cached, TAG } from '@/lib/server/cache';
-import { getSubtreeProductCounts } from '@/lib/server/category-counts';
+import { getCategoryScopeIds, getSubtreeProductCounts } from '@/lib/server/category-counts';
 import { watermarkImageUrl } from '@/lib/image-watermark';
 import { markProduct } from '@/lib/server/watermark';
 
@@ -377,6 +377,52 @@ export const loadNewArrivals = cached(
   },
   'new-arrivals',
   { tags: [TAG.products] }
+);
+
+// ---------------------------------------------------------------------------
+// Category shelves
+// ---------------------------------------------------------------------------
+
+export interface CategoryShelfData {
+  id: string;
+  name: string;
+  slug: string;
+  products: FeaturedProduct[];
+}
+
+/** Products shown per category shelf on the home page. */
+export const CATEGORY_SHELF_SIZE = 8;
+
+/**
+ * One shelf per active top-level category, in name order, each holding that
+ * category's newest active products (its sub-categories included, since most
+ * stock hangs off them). Categories with nothing to show are left out, so
+ * the home page never renders an empty heading.
+ */
+export const loadCategoryShelves = cached(
+  async (): Promise<CategoryShelfData[]> => {
+    const categories = await prisma.category.findMany({
+      where: { isActive: true, parentId: null },
+      select: { id: true, name: true, slug: true },
+      orderBy: { name: 'asc' },
+    });
+
+    const shelves = await Promise.all(
+      categories.map(async (category) => {
+        const products = await prisma.product.findMany({
+          where: { isActive: true, categoryId: { in: await getCategoryScopeIds(category.id) } },
+          select: productCardSelect,
+          take: CATEGORY_SHELF_SIZE,
+          orderBy: { createdAt: 'desc' },
+        });
+        return { ...category, products: products.map(toProductCard) };
+      })
+    );
+
+    return shelves.filter((shelf) => shelf.products.length > 0);
+  },
+  'category-shelves',
+  { tags: [TAG.categories, TAG.products] }
 );
 
 // ---------------------------------------------------------------------------

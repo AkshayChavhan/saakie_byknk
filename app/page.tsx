@@ -4,6 +4,7 @@ import { PromotionalBanner } from '@/components/home/promotional-banner'
 import { CategoryGrid } from '@/components/home/category-grid'
 import { FeaturedProducts } from '@/components/home/featured-products'
 import { NewArrivals } from '@/components/home/new-arrivals'
+import { CategoryShelves } from '@/components/home/category-shelves'
 import {
   loadHeroSlides,
   toHeroSlides,
@@ -11,6 +12,7 @@ import {
   loadCategoryCards,
   loadFeaturedProducts,
   loadNewArrivals,
+  loadCategoryShelves,
 } from '@/lib/server/storefront'
 
 // Rendered per request on the server. The data comes from the tagged cache
@@ -30,11 +32,12 @@ export const dynamic = 'force-dynamic'
  * independently and falls back to an empty list.
  */
 export default async function HomePage() {
-  const [slides, newArrivals, promotional, categories, featured] = await Promise.allSettled([
+  const [slides, newArrivals, promotional, categories, shelves, featured] = await Promise.allSettled([
     loadHeroSlides(),
     loadNewArrivals(),
     loadPromotionalStats(),
     loadCategoryCards(),
+    loadCategoryShelves(),
     loadFeaturedProducts(),
   ])
 
@@ -53,6 +56,8 @@ export default async function HomePage() {
         <NewArrivals products={settled(newArrivals, [], 'new arrivals')} />
         <PromotionalBanner data={settled(promotional, null, 'promotional stats')} />
         <CategoryGrid categories={settled(categories, [], 'categories')} />
+        {/* Every category's latest sarees, under a "— NAME ———" rule heading. */}
+        <CategoryShelves shelves={settled(shelves, [], 'category shelves')} />
         <FeaturedProducts products={settled(featured, [], 'featured products')} />
       </main>
     </div>

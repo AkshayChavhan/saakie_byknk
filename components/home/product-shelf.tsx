@@ -23,11 +23,19 @@ export interface ProductShelfCard {
 
 interface ProductShelfProps {
   title: string
-  subtitle: string
+  subtitle?: string
   viewAllHref: string
   viewAllLabel: string
   /** Products loaded on the server (app/page.tsx). */
   products: ProductShelfCard[]
+  /**
+   * `default`: bold title with subtitle and a "view all" link beside it.
+   * `rule`: the title in spaced capitals between a short rule on the left
+   * and a rule running to the right edge, as on the per-category shelves.
+   */
+  variant?: 'default' | 'rule'
+  /** Shown on the `rule` variant to let a shelf be skipped by assistive tech. */
+  id?: string
 }
 
 /**
@@ -35,7 +43,15 @@ interface ProductShelfProps {
  * Products, New Arrivals). Renders nothing at all, title included, when it
  * has no products: an empty shelf is worse than no shelf.
  */
-export function ProductShelf({ title, subtitle, viewAllHref, viewAllLabel, products }: ProductShelfProps) {
+export function ProductShelf({
+  title,
+  subtitle,
+  viewAllHref,
+  viewAllLabel,
+  products,
+  variant = 'default',
+  id,
+}: ProductShelfProps) {
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null)
   const [wishlist, setWishlist] = useState<string[]>([])
 
@@ -56,24 +72,46 @@ export function ProductShelf({ title, subtitle, viewAllHref, viewAllLabel, produ
   }
 
   return (
-    <section className="py-12 sm:py-16">
+    <section className={variant === 'rule' ? 'py-8 sm:py-10' : 'py-12 sm:py-16'} id={id}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 sm:mb-12">
-          <div>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
-              {title}
-            </h2>
-            <p className="text-gray-600">
-              {subtitle}
-            </p>
+        {variant === 'rule' ? (
+          <div className="mb-8 sm:mb-10">
+            <div className="flex items-center gap-4 sm:gap-6">
+              <span className="h-px w-6 sm:w-10 shrink-0 bg-gray-400" aria-hidden="true" />
+              <h2 className="shrink-0 text-lg sm:text-2xl lg:text-3xl font-light uppercase tracking-[0.25em] sm:tracking-[0.3em] text-gray-900">
+                {title}
+              </h2>
+              <span className="h-px flex-1 bg-gray-400" aria-hidden="true" />
+            </div>
+            <div className="mt-3 flex justify-end">
+              <Link
+                href={viewAllHref}
+                className="text-sm font-medium uppercase tracking-wider text-primary hover:text-primary/80"
+              >
+                {viewAllLabel} →
+              </Link>
+            </div>
           </div>
-          <Link
-            href={viewAllHref}
-            className="mt-4 sm:mt-0 text-primary hover:text-primary/80 font-medium"
-          >
-            {viewAllLabel} →
-          </Link>
-        </div>
+        ) : (
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-8 sm:mb-12">
+            <div>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
+                {title}
+              </h2>
+              {subtitle && (
+                <p className="text-gray-600">
+                  {subtitle}
+                </p>
+              )}
+            </div>
+            <Link
+              href={viewAllHref}
+              className="mt-4 sm:mt-0 text-primary hover:text-primary/80 font-medium"
+            >
+              {viewAllLabel} →
+            </Link>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {products.map((product, index) => (

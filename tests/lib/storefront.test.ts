@@ -143,3 +143,41 @@ describe('loadNewArrivals', () => {
     expect(await loadNewArrivals()).toEqual([])
   })
 })
+
+describe('loadCategoryShelves', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    // Top-level categories, then the active tree used for subtree scoping.
+    mockPrisma.category.findMany
+      .mockResolvedValueOnce([
+        { id: 'silk', name: 'Pure Silk', slug: 'pure-silk' },
+        { id: 'empty', name: 'Linen', slug: 'linen' },
+      ])
+      .mockResolvedValue([
+        { id: 'silk', parentId: null },
+        { id: 'kanji', parentId: 'silk' },
+        { id: 'empty', parentId: null },
+      ])
+  })
+
+  it('returns a shelf per category with products, scoped to the subtree, and drops empty ones', async () => {
+    mockPrisma.product.findMany.mockImplementation(({ where }: { where: { categoryId: { in: string[] } } }) =>
+      Promise.resolve(
+        where.categoryId.in.includes('silk')
+          ? [{ id: 'p1', name: 'Kanjivaram', slug: 'kanji', price: 9000, comparePrice: null, stock: 2, createdAt: new Date(), rating: 4.5, salesCount: 20, images: [{ url: 'https://res.cloudinary.com/c/image/upload/v1/x.jpg' }], colors: [], category: { name: 'Kanjivaram', slug: 'kanjivaram' }, _count: { reviews: 3 } }]
+          : []
+      )
+    )
+    const { loadCategoryShelves, CATEGORY_SHELF_SIZE } = await import('@/lib/server/storefront')
+
+    const shelves = await loadCategoryShelves()
+
+    expect(shelves).toHaveLength(1)
+    expect(shelves[0]).toMatchObject({ slug: 'pure-silk', name: 'Pure Silk' })
+    expect(shelves[0].products[0]).toMatchObject({ slug: 'kanji', rating: 4.5 })
+    // The silk shelf asks for silk and its sub-category; newest first, capped.
+    const silkCall = mockPrisma.product.findMany.mock.calls.find((c) => c[0].where.categoryId.in.includes('silk'))
+    expect(silkCall[0].where.categoryId.in).toEqual(expect.arrayContaining(['silk', 'kanji']))
+    expect(silkCall[0]).toMatchObject({ take: CATEGORY_SHELF_SIZE, orderBy: { createdAt: 'desc' } })
+  })
+})
