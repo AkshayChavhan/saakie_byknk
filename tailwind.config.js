@@ -9,8 +9,12 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
-        serif: ['var(--font-playfair)', 'Georgia', 'serif'],
+        // Jost everywhere (see app/layout.tsx). `serif` is kept as a utility
+        // name so the display headings written with `font-serif` need no
+        // edits; it now renders the same geometric sans, lighter and spaced
+        // by the components that use it.
+        sans: ['var(--font-jost)', 'Jost', 'Futura', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-jost)', 'Jost', 'Futura', 'system-ui', 'sans-serif'],
       },
       colors: {
         primary: {

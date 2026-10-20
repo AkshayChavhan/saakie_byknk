@@ -81,8 +81,9 @@ type NavVariant = 'desktop' | 'mobileRow' | 'drawer'
 const navLinkClass = (variant: NavVariant, isActive: boolean) => {
   switch (variant) {
     case 'desktop':
+      // Small spaced capitals, in the manner of suta.in's top bar.
       return cn(
-        'text-sm font-medium transition-colors hover:text-gray-300',
+        'text-xs font-medium uppercase tracking-[0.18em] transition-colors hover:text-gray-300',
         isActive ? 'text-white font-semibold' : 'text-gray-200'
       )
     case 'mobileRow':
@@ -532,7 +533,7 @@ export function Header() {
               <>
                 <Link
                   href="/admin"
-                  className="text-sm font-medium text-gray-200 hover:text-gray-300 transition-colors"
+                  className="text-xs font-medium uppercase tracking-[0.18em] text-gray-200 hover:text-gray-300 transition-colors"
                 >
                   Admin
                 </Link>

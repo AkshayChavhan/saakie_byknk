@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, Playfair_Display } from 'next/font/google'
+import { Jost } from 'next/font/google'
 import { Suspense } from 'react'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Analytics } from '@vercel/analytics/next'
@@ -10,14 +10,14 @@ import { NavigationProgress } from '@/components/ui/navigation-progress'
 import { Footer } from '@/components/layout/footer'
 import { SiteFooter } from '@/components/layout/site-footer'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
-
-// Editorial serif used for headings — gives the storefront its premium,
-// saree-boutique feel. Exposed as a CSS variable so any component can opt in
-// via the `font-serif` utility (wired up in tailwind.config.js).
-const playfair = Playfair_Display({
+// One typeface for the whole storefront, body and headings alike: Jost, a
+// geometric sans in the Futura tradition, as used by suta.in. Both the
+// `font-sans` and `font-serif` utilities resolve to it (tailwind.config.js),
+// so the display headings keep their markup and simply take the new face.
+const jost = Jost({
   subsets: ['latin'],
-  variable: '--font-playfair',
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-jost',
   display: 'swap',
 })
 
@@ -71,8 +71,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
-      <body className={inter.className}>
+    <html lang="en" className={jost.variable}>
+      <body className={jost.className}>
         {/* Top-of-page navigation progress bar. Suspense is required because it
             reads useSearchParams; without it Next would opt the whole tree into
             client rendering. */}

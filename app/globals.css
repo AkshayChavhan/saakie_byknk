@@ -31,8 +31,9 @@
   }
 
   body {
-    @apply bg-white text-gray-900;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    /* `font-sans` resolves to the Jost variable set in app/layout.tsx; a
+       hard-coded system stack here used to override the loaded font. */
+    @apply bg-white text-gray-900 font-sans;
     font-feature-settings: "kern" 1;
     text-rendering: optimizeLegibility;
   }
