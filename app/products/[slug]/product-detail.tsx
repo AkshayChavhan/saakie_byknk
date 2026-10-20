@@ -525,7 +525,10 @@ export function ProductDetail({ initialProduct = null }: ProductDetailProps) {
                   fill
                   // Half the row on lg (grid-cols-1 lg:grid-cols-2), full below.
                   sizes="(min-width: 1024px) 50vw, 100vw"
-                  className="object-cover"
+                  // scale-down: the whole photo is shown uncropped, shrunk to
+                  // fit the square if it is larger and never enlarged if it
+                  // is smaller. The grey behind it fills any margin.
+                  className="object-scale-down"
                   priority
                 />
               ) : (
