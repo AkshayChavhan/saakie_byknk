@@ -420,6 +420,24 @@ describe('Header component', () => {
     })
   })
 
+  describe('drawer social links', () => {
+    it('shows the Instagram and Pinterest icons in the open menu, opening in a new tab', () => {
+      renderHeader(CATEGORY_TREE, { sale: 0, blog: 0 })
+      // Closed: the drawer is not mounted, so neither link exists yet.
+      expect(screen.queryByRole('link', { name: 'Instagram' })).not.toBeInTheDocument()
+
+      fireEvent.click(screen.getByRole('button', { name: 'Open menu' }))
+
+      const instagram = screen.getByRole('link', { name: 'Instagram' })
+      expect(instagram).toHaveAttribute('href', 'https://www.instagram.com/saakie_byknk/')
+      expect(instagram).toHaveAttribute('target', '_blank')
+      expect(instagram).toHaveAttribute('rel', 'noopener noreferrer')
+
+      const pinterest = screen.getByRole('link', { name: 'Pinterest' })
+      expect(pinterest).toHaveAttribute('href', 'https://www.pinterest.com/saakiebyknk')
+    })
+  })
+
   describe('account avatar', () => {
     const PHOTO = 'https://res.cloudinary.com/demo/image/upload/profiles/me.jpg'
     const accountLink = () => screen.getAllByRole('link', { name: 'Account' })[0]
