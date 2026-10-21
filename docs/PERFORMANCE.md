@@ -56,6 +56,7 @@ missed.
 | `GET /api/hero-slides` | `hero-slides`, `products` | admin hero slide writes, product writes |
 | `GET /api/promotional-data` | `promotional-banners` | admin banner writes |
 | `GET /api/products/featured` | `products` | product writes, payment settlement, review moderation |
+| `GET /api/search/suggest` (`loadSearchIndex`: every active saree and category, filtered in memory per keystroke) | `products`, `categories` | admin product and category writes, payment settlement, review moderation |
 | `getStoreSettings()` | `settings` | `PATCH /api/admin/settings` |
 
 Under Vitest the wrapper is a pass-through so tests see every query.
