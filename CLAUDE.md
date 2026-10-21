@@ -305,6 +305,7 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - Relation fields are indexed in `prisma/schema.prisma` (Prisma does not do this on MongoDB). Add an `@@index` when adding a relation or a new filter/sort field.
 - Pages load their data in the server component and pass it as `initial*` props (home, product, category, cart, checkout, wishlist); the loaders live in `lib/server/*.ts` and the public API routes call the same functions. Do not add a `useEffect` fetch for data the server page can load.
 - Typed filters go through `useDebouncedValue` with an `AbortController`; keep current rows on screen during a refetch.
+- The shop listing (`GET /api/products`, used by /products and category pages) filters, sorts and pages the cached catalogue in memory (`lib/server/catalogue.ts`); a filter change reads no database. Add new listing filters there.
 - `GET /api/admin/products` and `/api/admin/users` search, filter and page on the server and return `stats`; admin tables must not filter the rows they loaded.
 - The service worker never caches `/api/*`, Clerk or payment hosts, or private page navigations (`lib/sw-rules.ts`).
 - Images: `next/image` uses the custom loader in `lib/image-loader.ts`, so Cloudinary resizes and re-encodes (`c_limit,w_<n>` … `f_auto,q_auto:eco`; hero banners keep `q_auto`) and the server's image optimizer is never used. Keep new image hosts handled there.

@@ -1,416 +1,275 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { NextRequest, NextResponse } from 'next/server'
-import { createMockProduct, createMockCategory, createMany } from '../mocks/factories'
+import { NextRequest } from 'next/server'
+import { createMockProduct } from '../mocks/factories'
 
-// Mock Prisma
-const mockPrisma = {
-  product: {
-    findMany: vi.fn(),
-    findUnique: vi.fn(),
-    count: vi.fn(),
-    // Prisma exposes field references here; the sale filter compares
-    // comparePrice against this rather than a literal.
-    fields: { price: { __fieldRef: 'price' } },
-  },
-  category: {
-    findUnique: vi.fn(),
-    // Read by getCategoryScopeIds when scoping a listing to a category subtree.
-    findMany: vi.fn(),
-  },
-  review: {
-    // The listing averages approved reviews per product in one grouped query
-    // rather than a round trip each, so the card and the product page it links
-    // to can never disagree about a rating.
-    groupBy: vi.fn(),
-  },
-}
+/**
+ * The listing filters, sorts and pages a cached catalogue in memory
+ * (lib/server/catalogue.ts). These tests hand the catalogue query a set of
+ * products and check what each combination of parameters returns.
+ */
+const mockPrisma = vi.hoisted(() => ({
+  product: { findMany: vi.fn() },
+  category: { findMany: vi.fn() },
+  review: { groupBy: vi.fn() },
+}))
+vi.mock('@/lib/prisma', () => ({ prisma: mockPrisma, default: mockPrisma }))
 
-vi.mock('@/lib/prisma', () => ({
-  prisma: mockPrisma,
-  default: mockPrisma,
+// Record how the catalogue is cached; otherwise pass straight through.
+const cacheCalls = vi.hoisted(() => [] as Array<{ key: string; tags: string[] }>)
+vi.mock('@/lib/server/cache', () => ({
+  TAG: { products: 'products', categories: 'categories' },
+  cached: (fn: unknown, key: string, opts: { tags: string[] }) => {
+    cacheCalls.push({ key, tags: opts.tags })
+    return fn
+  },
 }))
 
-/** The `where` clause the route handed to Prisma for the listing query. */
-const whereClause = () => mockPrisma.product.findMany.mock.calls[0][0].where
+/** Categories: Silk (top) > Banarasi (sub), Cotton (top), Retired (inactive). */
+const CATEGORIES = [
+  { id: 'cat_silk', slug: 'silk', parentId: null, isActive: true },
+  { id: 'cat_banarasi', slug: 'banarasi', parentId: 'cat_silk', isActive: true },
+  { id: 'cat_cotton', slug: 'cotton', parentId: null, isActive: true },
+  { id: 'cat_retired', slug: 'retired', parentId: null, isActive: false },
+]
 
-describe('Products API', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockPrisma.category.findMany.mockResolvedValue([])
-    // No approved reviews unless a test says otherwise. groupBy emits no row
-    // for a product with none, so an empty array means "nothing rated yet".
-    mockPrisma.review.groupBy.mockResolvedValue([])
+const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000)
+
+/** A catalogue row as the loader's query returns it. */
+const row = (id: string, extra: Record<string, unknown> = {}) =>
+  createMockProduct({
+    id,
+    slug: id,
+    name: `Saree ${id}`,
+    description: 'Handwoven saree',
+    tags: [],
+    price: 3000,
+    comparePrice: null,
+    stock: 1,
+    isFeatured: false,
+    rating: 0,
+    salesCount: 0,
+    categoryId: 'cat_cotton',
+    category: { name: 'Cotton', slug: 'cotton' },
+    createdAt: daysAgo(100),
+    _count: { reviews: 0 },
+    ...extra,
   })
 
-  describe('GET /api/products', () => {
-    it('returns paginated products', async () => {
-      const products = createMany(createMockProduct, 12, (index) => ({
-        id: `product_${index}`,
-        name: `Product ${index}`,
-      }))
-      mockPrisma.product.findMany.mockResolvedValue(products)
-      mockPrisma.product.count.mockResolvedValue(24)
+function catalogue(products: unknown[]) {
+  mockPrisma.product.findMany.mockResolvedValue(products)
+}
 
-      const { GET } = await import('@/app/api/products/route')
-      const request = new NextRequest('http://localhost:3000/api/products')
-      const response = await GET(request)
-      const data = await response.json()
+async function list(query = '') {
+  const { GET } = await import('@/app/api/products/route')
+  const response = await GET(new NextRequest(`http://localhost:3000/api/products${query ? `?${query}` : ''}`))
+  return { status: response.status, data: await response.json() }
+}
+
+const slugs = (data: { products: Array<{ slug: string }> }) => data.products.map((p) => p.slug)
+
+describe('GET /api/products', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockPrisma.category.findMany.mockImplementation(
+      ({ where, select }: { where?: { isActive?: boolean }; select: Record<string, boolean> }) =>
+        Promise.resolve(
+          CATEGORIES.filter((c) => where?.isActive === undefined || c.isActive === where.isActive).map((c) =>
+            Object.fromEntries(Object.keys(select).map((k) => [k, c[k as keyof typeof c]]))
+          )
+        )
+    )
+  })
+
+  describe('catalogue', () => {
+    it('is cached and cleared by any product or category change', async () => {
+      await import('@/lib/server/catalogue')
+      expect(cacheCalls).toContainEqual({ key: 'product-catalogue', tags: ['products', 'categories'] })
+    })
+
+    it('loads every active product once, with no per-filter query', async () => {
+      catalogue([])
+      await list('sale=true&minPrice=1000&search=silk')
+
+      const { where, select } = mockPrisma.product.findMany.mock.calls[0][0]
+      expect(where).toEqual({ isActive: true })
+      // Approved reviews only, counted in the same read.
+      expect(select._count.select.reviews).toEqual({ where: { status: 'APPROVED' } })
+      expect(mockPrisma.review.groupBy).not.toHaveBeenCalled()
+    })
+
+    it('answers 500 when the database fails', async () => {
+      mockPrisma.product.findMany.mockRejectedValue(new Error('Database error'))
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      expect((await list()).status).toBe(500)
+    })
+  })
+
+  describe('paging', () => {
+    it('returns the requested page and accurate totals', async () => {
+      catalogue(Array.from({ length: 30 }, (_, i) => row(`p${String(i).padStart(2, '0')}`, { createdAt: daysAgo(i + 40) })))
+
+      const { data } = await list('page=2&limit=12')
 
       expect(data.products).toHaveLength(12)
-      expect(data.pagination).toEqual({
-        page: 1,
-        limit: 12,
-        totalCount: 24,
-        totalPages: 2,
-        hasNext: true,
-        hasPrev: false,
-      })
+      expect(data.products[0].slug).toBe('p12')
+      expect(data.pagination).toEqual({ page: 2, limit: 12, totalCount: 30, totalPages: 3, hasNext: true, hasPrev: true })
     })
 
-    it('filters by category', async () => {
-      const category = createMockCategory({ id: 'cat_123', slug: 'sarees' })
-      mockPrisma.category.findUnique.mockResolvedValue(category)
-      mockPrisma.product.findMany.mockResolvedValue([createMockProduct()])
-      mockPrisma.product.count.mockResolvedValue(1)
+    it('defaults to twelve per page, first page', async () => {
+      catalogue(Array.from({ length: 13 }, (_, i) => row(`p${i}`)))
 
-      const { GET } = await import('@/app/api/products/route')
-      const request = new NextRequest('http://localhost:3000/api/products?category=sarees')
-      await GET(request)
+      const { data } = await list()
 
-      expect(mockPrisma.category.findUnique).toHaveBeenCalledWith({
-        where: { slug: 'sarees' },
-        select: { id: true },
-      })
-      // Scoped to the subtree, not an exact match — a parent category's
-      // products hang off its sub-categories.
-      expect(whereClause()).toMatchObject({ categoryId: { in: ['cat_123'] } })
+      expect(data.products).toHaveLength(12)
+      expect(data.pagination).toMatchObject({ page: 1, limit: 12, totalCount: 13, hasNext: true, hasPrev: false })
     })
+  })
 
-    it('includes sub-category products when filtering by category', async () => {
-      mockPrisma.category.findUnique.mockResolvedValue({ id: 'chiffon' })
-      mockPrisma.category.findMany.mockResolvedValue([
-        { id: 'chiffon', parentId: null },
-        { id: 'handwork', parentId: 'chiffon' },
-        { id: 'gotapatti', parentId: 'chiffon' },
+  describe('filters', () => {
+    it('scopes a category to itself and its sub-categories', async () => {
+      catalogue([
+        row('own', { categoryId: 'cat_silk' }),
+        row('sub', { categoryId: 'cat_banarasi' }),
+        row('other', { categoryId: 'cat_cotton' }),
       ])
-      mockPrisma.product.findMany.mockResolvedValue([])
-      mockPrisma.product.count.mockResolvedValue(0)
 
-      const { GET } = await import('@/app/api/products/route')
-      await GET(new NextRequest('http://localhost:3000/api/products?category=chiffon'))
+      expect(slugs((await list('category=silk')).data).sort()).toEqual(['own', 'sub'])
+      expect(slugs((await list('category=banarasi')).data)).toEqual(['sub'])
+    })
 
-      expect(whereClause().categoryId.in.sort()).toEqual([
-        'chiffon',
-        'gotapatti',
-        'handwork',
+    it('still finds products under an inactive category by its slug, as before', async () => {
+      catalogue([row('kept', { categoryId: 'cat_retired' }), row('other')])
+
+      expect(slugs((await list('category=retired')).data)).toEqual(['kept'])
+    })
+
+    it('matches nothing for an unknown category instead of everything', async () => {
+      catalogue([row('a'), row('b')])
+
+      const { data } = await list('category=no-such-category')
+
+      expect(data.products).toEqual([])
+      expect(data.pagination.totalCount).toBe(0)
+    })
+
+    it('keeps only genuine markdowns when sale=true', async () => {
+      catalogue([
+        row('marked-down', { price: 2000, comparePrice: 2500 }),
+        row('same-price', { price: 2000, comparePrice: 2000 }),
+        row('no-compare', { price: 2000, comparePrice: null }),
       ])
+
+      expect(slugs((await list('sale=true')).data)).toEqual(['marked-down'])
+      expect((await list('sale=false')).data.products).toHaveLength(3)
     })
 
-    it('matches nothing for an unknown category slug', async () => {
-      mockPrisma.category.findUnique.mockResolvedValue(null)
-      mockPrisma.product.findMany.mockResolvedValue([])
-      mockPrisma.product.count.mockResolvedValue(0)
+    it('filters by price, both ends inclusive', async () => {
+      catalogue([row('cheap', { price: 999 }), row('low', { price: 1000 }), row('high', { price: 5000 }), row('dear', { price: 5001 })])
 
-      const { GET } = await import('@/app/api/products/route')
-      await GET(new NextRequest('http://localhost:3000/api/products?category=bogus'))
-
-      // Must not fall through to an unfiltered listing of the whole catalogue.
-      expect(whereClause()).toMatchObject({ categoryId: { in: [] } })
+      expect(slugs((await list('minPrice=1000&maxPrice=5000')).data).sort()).toEqual(['high', 'low'])
+      expect(slugs((await list('minPrice=5000')).data).sort()).toEqual(['dear', 'high'])
     })
 
-    it('filters to discounted products when sale=true', async () => {
-      mockPrisma.product.findMany.mockResolvedValue([])
-      mockPrisma.product.count.mockResolvedValue(0)
+    it('filters to in-stock and featured products', async () => {
+      catalogue([row('sold-out', { stock: 0 }), row('in-stock', { stock: 2, isFeatured: true })])
 
-      const { GET } = await import('@/app/api/products/route')
-      await GET(new NextRequest('http://localhost:3000/api/products?sale=true'))
+      expect(slugs((await list('inStock=true')).data)).toEqual(['in-stock'])
+      expect(slugs((await list('featured=true')).data)).toEqual(['in-stock'])
+    })
 
-      // A real markdown: compare-at price strictly above the price charged.
-      expect(whereClause()).toMatchObject({
-        comparePrice: { gt: mockPrisma.product.fields.price },
+    it('keeps products with at least one requested colour', async () => {
+      catalogue([
+        row('red', { colors: [{ hexCode: '#FF0000' }] }),
+        row('blue', { colors: [{ hexCode: '#0000FF' }] }),
+        row('green', { colors: [{ hexCode: '#00FF00' }] }),
+      ])
+
+      expect(slugs((await list('colors=%23FF0000,%230000FF')).data).sort()).toEqual(['blue', 'red'])
+    })
+
+    it('searches name and description in any case, and tags exactly', async () => {
+      catalogue([
+        row('by-name', { name: 'Royal SILK Saree' }),
+        row('by-description', { description: 'Pure silk with zari' }),
+        row('by-tag', { tags: ['wedding'] }),
+        row('none', { name: 'Cotton Saree' }),
+      ])
+
+      expect(slugs((await list('search=silk')).data).sort()).toEqual(['by-description', 'by-name'])
+      expect(slugs((await list('search=wedding')).data)).toEqual(['by-tag'])
+      expect((await list('search=WEDDING')).data.products).toEqual([])
+    })
+  })
+
+  describe('sorting', () => {
+    const SORTABLE = [
+      row('a', { price: 3000, salesCount: 5, rating: 4.1, createdAt: daysAgo(3) }),
+      row('b', { price: 1000, salesCount: 20, rating: 4.8, createdAt: daysAgo(2) }),
+      row('c', { price: 5000, salesCount: 5, rating: 4.8, createdAt: daysAgo(1) }),
+    ]
+
+    it('sorts newest first by default', async () => {
+      catalogue(SORTABLE)
+      expect(slugs((await list()).data)).toEqual(['c', 'b', 'a'])
+    })
+
+    it('sorts by price both ways', async () => {
+      catalogue(SORTABLE)
+      expect(slugs((await list('sort=price-low')).data)).toEqual(['b', 'a', 'c'])
+      expect(slugs((await list('sort=price-high')).data)).toEqual(['c', 'a', 'b'])
+    })
+
+    it('sorts popular and rating on the maintained fields, newest breaking ties', async () => {
+      catalogue(SORTABLE)
+      expect(slugs((await list('sort=popular')).data)).toEqual(['b', 'c', 'a'])
+      expect(slugs((await list('sort=rating')).data)).toEqual(['c', 'b', 'a'])
+    })
+  })
+
+  describe('response shape', () => {
+    it('formats each card with the fields the grid reads', async () => {
+      catalogue([
+        row('fresh', {
+          createdAt: daysAgo(10),
+          salesCount: 15,
+          stock: 0,
+          rating: 4.25,
+          comparePrice: 3500,
+          _count: { reviews: 7 },
+          colors: [{ hexCode: '#FF0000' }, { hexCode: '#0000FF' }, { hexCode: '#FF0000' }],
+          images: [],
+        }),
+      ])
+
+      const { data } = await list()
+
+      expect(data.products[0]).toEqual({
+        id: 'fresh',
+        name: 'Saree fresh',
+        slug: 'fresh',
+        price: 3000,
+        comparePrice: 3500,
+        rating: 4.3,
+        reviews: 7,
+        image: '/images/placeholder-product.svg',
+        colors: ['#FF0000', '#0000FF'],
+        category: { name: 'Cotton', slug: 'cotton' },
+        stock: 0,
+        isNew: true,
+        isBestseller: true,
+        inStock: false,
       })
     })
 
-    it('does not filter by sale when the param is absent', async () => {
-      mockPrisma.product.findMany.mockResolvedValue([])
-      mockPrisma.product.count.mockResolvedValue(0)
-
-      const { GET } = await import('@/app/api/products/route')
-      await GET(new NextRequest('http://localhost:3000/api/products'))
-
-      expect(whereClause()).not.toHaveProperty('comparePrice')
+    it('marks a product new only within 30 days of being added', async () => {
+      catalogue([row('old', { createdAt: daysAgo(31) })])
+      expect((await list()).data.products[0].isNew).toBe(false)
     })
 
-    it('does not filter by sale when sale is not true', async () => {
-      mockPrisma.product.findMany.mockResolvedValue([])
-      mockPrisma.product.count.mockResolvedValue(0)
-
-      const { GET } = await import('@/app/api/products/route')
-      await GET(new NextRequest('http://localhost:3000/api/products?sale=false'))
-
-      expect(whereClause()).not.toHaveProperty('comparePrice')
-    })
-
-    it('filters by price range', async () => {
-      mockPrisma.product.findMany.mockResolvedValue([])
-      mockPrisma.product.count.mockResolvedValue(0)
-
-      const { GET } = await import('@/app/api/products/route')
-      const request = new NextRequest('http://localhost:3000/api/products?minPrice=1000&maxPrice=5000')
-      await GET(request)
-
-      expect(mockPrisma.product.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            price: { gte: 1000, lte: 5000 },
-          }),
-        })
-      )
-    })
-
-    it('filters by in-stock', async () => {
-      mockPrisma.product.findMany.mockResolvedValue([])
-      mockPrisma.product.count.mockResolvedValue(0)
-
-      const { GET } = await import('@/app/api/products/route')
-      const request = new NextRequest('http://localhost:3000/api/products?inStock=true')
-      await GET(request)
-
-      expect(mockPrisma.product.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            stock: { gt: 0 },
-          }),
-        })
-      )
-    })
-
-    it('sorts by price ascending', async () => {
-      mockPrisma.product.findMany.mockResolvedValue([])
-      mockPrisma.product.count.mockResolvedValue(0)
-
-      const { GET } = await import('@/app/api/products/route')
-      const request = new NextRequest('http://localhost:3000/api/products?sort=price-low')
-      await GET(request)
-
-      expect(mockPrisma.product.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          orderBy: { price: 'asc' },
-        })
-      )
-    })
-
-    it('sorts by price descending', async () => {
-      mockPrisma.product.findMany.mockResolvedValue([])
-      mockPrisma.product.count.mockResolvedValue(0)
-
-      const { GET } = await import('@/app/api/products/route')
-      const request = new NextRequest('http://localhost:3000/api/products?sort=price-high')
-      await GET(request)
-
-      expect(mockPrisma.product.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          orderBy: { price: 'desc' },
-        })
-      )
-    })
-
-    it('sorts by newest by default', async () => {
-      mockPrisma.product.findMany.mockResolvedValue([])
-      mockPrisma.product.count.mockResolvedValue(0)
-
-      const { GET } = await import('@/app/api/products/route')
-      const request = new NextRequest('http://localhost:3000/api/products')
-      await GET(request)
-
-      expect(mockPrisma.product.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          orderBy: { createdAt: 'desc' },
-        })
-      )
-    })
-
-    it('paginates correctly', async () => {
-      mockPrisma.product.findMany.mockResolvedValue([])
-      mockPrisma.product.count.mockResolvedValue(100)
-
-      const { GET } = await import('@/app/api/products/route')
-      const request = new NextRequest('http://localhost:3000/api/products?page=3&limit=20')
-      await GET(request)
-
-      expect(mockPrisma.product.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          skip: 40, // (3 - 1) * 20
-          take: 20,
-        })
-      )
-    })
-
-    it('only returns active products', async () => {
-      mockPrisma.product.findMany.mockResolvedValue([])
-      mockPrisma.product.count.mockResolvedValue(0)
-
-      const { GET } = await import('@/app/api/products/route')
-      const request = new NextRequest('http://localhost:3000/api/products')
-      await GET(request)
-
-      expect(mockPrisma.product.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            isActive: true,
-          }),
-        })
-      )
-    })
-
-    it('formats product response correctly', async () => {
-      const product = createMockProduct({
-        createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
-        _count: { reviews: 5, orderItems: 15 },
-      })
-      mockPrisma.product.findMany.mockResolvedValue([product])
-      mockPrisma.product.count.mockResolvedValue(1)
-
-      const { GET } = await import('@/app/api/products/route')
-      const request = new NextRequest('http://localhost:3000/api/products')
-      const response = await GET(request)
-      const data = await response.json()
-
-      expect(data.products[0]).toHaveProperty('id')
-      expect(data.products[0]).toHaveProperty('name')
-      expect(data.products[0]).toHaveProperty('slug')
-      expect(data.products[0]).toHaveProperty('price')
-      expect(data.products[0]).toHaveProperty('isNew')
-      expect(data.products[0]).toHaveProperty('isBestseller')
-      expect(data.products[0]).toHaveProperty('inStock')
-    })
-
-    it('returns the product real color hex codes (deduped), not a hardcoded swatch', async () => {
-      const product = createMockProduct({
-        colors: [
-          { id: 'c1', name: 'Red', hexCode: '#FF0000', productId: 'p1' },
-          { id: 'c2', name: 'Blue', hexCode: '#0000FF', productId: 'p1' },
-          { id: 'c3', name: 'Red (dup)', hexCode: '#FF0000', productId: 'p1' },
-        ],
-      })
-      mockPrisma.product.findMany.mockResolvedValue([product])
-      mockPrisma.product.count.mockResolvedValue(1)
-
-      const { GET } = await import('@/app/api/products/route')
-      const request = new NextRequest('http://localhost:3000/api/products')
-      const data = await (await GET(request)).json()
-
-      expect(data.products[0].colors).toEqual(['#FF0000', '#0000FF'])
-    })
-
-    it('filters by color via a relation where-clause when colors param is present', async () => {
-      mockPrisma.product.findMany.mockResolvedValue([])
-      mockPrisma.product.count.mockResolvedValue(0)
-
-      const { GET } = await import('@/app/api/products/route')
-      const request = new NextRequest('http://localhost:3000/api/products?colors=%23FF0000,%230000FF')
-      await GET(request)
-
-      expect(mockPrisma.product.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            colors: { some: { hexCode: { in: ['#FF0000', '#0000FF'] } } },
-          }),
-        })
-      )
-    })
-
-    it('handles database errors', async () => {
-      mockPrisma.product.count.mockRejectedValue(new Error('Database error'))
-
-      const { GET } = await import('@/app/api/products/route')
-      const request = new NextRequest('http://localhost:3000/api/products')
-      const response = await GET(request)
-
-      expect(response.status).toBe(500)
-      const data = await response.json()
-      expect(data.success).toBe(false)
-    })
-
-    describe('ratings', () => {
-      const listProducts = async (query = '') => {
-        const { GET } = await import('@/app/api/products/route')
-        const request = new NextRequest(`http://localhost:3000/api/products${query ? `?${query}` : ''}`)
-        return (await GET(request)).json()
-      }
-
-      const oneProduct = (id = 'product_123') => {
-        mockPrisma.product.findMany.mockResolvedValue([
-          createMockProduct({ id }),
-        ])
-        mockPrisma.product.count.mockResolvedValue(1)
-      }
-
-      it('reads the rating maintained on the product, not a fixed placeholder', async () => {
-        // 3.7 deliberately: this route used to answer a hardcoded 4.5 for any
-        // product with at least one review, so a test built around 4.5 would
-        // have passed against the bug it is meant to catch.
-        mockPrisma.product.findMany.mockResolvedValue([createMockProduct({ rating: 3.7 })])
-        mockPrisma.product.count.mockResolvedValue(1)
-
-        const data = await listProducts()
-
-        expect(data.products[0].rating).toBe(3.7)
-      })
-
-      it('rounds to the one decimal the UI renders', async () => {
-        // Three 4s and a 5 average to 4.25, which would otherwise reach the
-        // card as 4.25 and render inconsistently against the product page.
-        mockPrisma.product.findMany.mockResolvedValue([createMockProduct({ rating: 4.25 })])
-        mockPrisma.product.count.mockResolvedValue(1)
-
-        const data = await listProducts()
-
-        expect(data.products[0].rating).toBe(4.3)
-      })
-
-      it('never averages reviews per request — the product carries the number', async () => {
-        // Review moderation writes Product.rating (lib/server/reviews.ts), so
-        // listing a page costs no review query at all.
-        oneProduct()
-
-        await listProducts()
-
-        expect(mockPrisma.review.groupBy).not.toHaveBeenCalled()
-      })
-
-      it('reports 0 for a product with no approved reviews', async () => {
-        oneProduct()
-
-        const data = await listProducts()
-
-        expect(data.products[0].rating).toBe(0)
-      })
-
-      it('sorts "popular" and "rating" on the maintained fields', async () => {
-        oneProduct()
-
-        await listProducts('sort=popular')
-        expect(mockPrisma.product.findMany).toHaveBeenLastCalledWith(
-          expect.objectContaining({ orderBy: [{ salesCount: 'desc' }, { createdAt: 'desc' }] })
-        )
-
-        await listProducts('sort=rating')
-        expect(mockPrisma.product.findMany).toHaveBeenLastCalledWith(
-          expect.objectContaining({ orderBy: [{ rating: 'desc' }, { createdAt: 'desc' }] })
-        )
-      })
-
-      it('counts approved reviews only', async () => {
-        oneProduct()
-
-        await listProducts()
-
-        const { select } = mockPrisma.product.findMany.mock.calls[0][0]
-        expect(select._count.select.reviews).toEqual({
-          where: { status: 'APPROVED' },
-        })
-      })
+    it('reports 0 for a product with no rating yet', async () => {
+      catalogue([row('unrated')])
+      expect((await list()).data.products[0].rating).toBe(0)
     })
   })
 })

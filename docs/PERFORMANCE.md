@@ -57,6 +57,7 @@ missed.
 | `GET /api/promotional-data` | `promotional-banners` | admin banner writes |
 | `GET /api/products/featured` | `products` | product writes, payment settlement, review moderation |
 | `/products/[slug]` and `GET /api/products/[slug]` (`loadProductDetail`, per slug) | `products`, `categories` | admin product writes, payment settlement, review moderation, category writes |
+| `GET /api/products` (`loadCatalogue`: every active product; the shop listing filters, sorts and pages it in memory) | `products`, `categories` | admin product and category writes, payment settlement, review moderation |
 | `GET /api/search/suggest` (`loadSearchIndex`: every active saree and category, filtered in memory per keystroke) | `products`, `categories` | admin product and category writes, payment settlement, review moderation |
 | `getStoreSettings()` | `settings` | `PATCH /api/admin/settings` |
 
