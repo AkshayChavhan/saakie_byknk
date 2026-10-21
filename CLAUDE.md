@@ -260,7 +260,7 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 
 ### Backups (`/admin/backup`) — SUPER_ADMIN only
 - **Nightly, automatic**: `.github/workflows/nightly-backup.yml` runs `pnpm backup:nightly` at 02:00 IST (needs the `DATABASE_URL` and `BACKUP_DATABASE_URL` repository secrets); logs are public, so the script prints counts only
-- **Back up now**: copies every collection to a separate backup database as a timestamped snapshot
+- **Back up now**: copies every collection to a separate backup database as a timestamped snapshot — one collection per backup, `backup_<stamp>`, records `{ collection, data }` (snapshots from the first layout, `<stamp>__<collection>`, are still read, restored and pruned)
 - **Snapshots, not a mirror**: every snapshot from the last 14 days, the newest of each week for 8 weeks, never fewer than 5 (`RETENTION` / `snapshotsToDrop` in `lib/server/backup.ts`)
 - **Self-describing**: a `_backup_runs` manifest is written into the backup database, so a restore works even if the live database is gone
 - **Downloads a copy too**: each run also downloads `saakie-backup-<snapshot>.json` to the admin's computer (canonical Extended JSON, so ObjectIds/Dates restore intact); past snapshots have a Download button
