@@ -153,8 +153,10 @@ the per-visitor `pages` cache.
 Images are resized by their own CDN, never by this server. `next.config.mjs`
 sets a custom loader (`lib/image-loader.ts`): a Cloudinary photo's URL gets
 `c_limit,w_<width>` before any existing step (the watermark, so it scales
-with the resized photo) and `f_auto,q_auto` after it, so the browser
-downloads the right size in WebP/AVIF straight from Cloudinary. Unsplash and
+with the resized photo) and `f_auto,q_auto:eco` after it, so the browser
+downloads the right size in WebP/AVIF straight from Cloudinary. "eco" is
+about 30% lighter than Cloudinary's default "good"; uploaded hero banners
+(`/hero-slides/`) keep `q_auto` ("good") so the full-width artwork stays crisp. Unsplash and
 Pexels demo photos and Clerk profile photos use their host's own width
 parameter; the two small files in `/public` are served as they are. Nothing
 goes through `/_next/image` any more. These cross-origin images reach the

@@ -4,9 +4,15 @@ import imageLoader from '@/lib/image-loader'
 const CLD = 'https://res.cloudinary.com/demo/image/upload'
 
 describe('imageLoader: Cloudinary photos are resized by Cloudinary', () => {
-  it('asks for the width first and the best format and quality last', () => {
+  it('asks for the width first and the best format at "eco" quality last', () => {
     expect(imageLoader({ src: `${CLD}/v1760900000/saakie-byknk/products/saree.jpg`, width: 640 })).toBe(
-      `${CLD}/c_limit,w_640/f_auto,q_auto/v1760900000/saakie-byknk/products/saree.jpg`
+      `${CLD}/c_limit,w_640/f_auto,q_auto:eco/v1760900000/saakie-byknk/products/saree.jpg`
+    )
+  })
+
+  it('keeps uploaded hero banners at the higher "good" quality', () => {
+    expect(imageLoader({ src: `${CLD}/v1792472341/saakie-byknk/hero-slides/banner.jpg`, width: 1920 })).toBe(
+      `${CLD}/c_limit,w_1920/f_auto,q_auto/v1792472341/saakie-byknk/hero-slides/banner.jpg`
     )
   })
 
@@ -14,7 +20,7 @@ describe('imageLoader: Cloudinary photos are resized by Cloudinary', () => {
     const marked = `${CLD}/l_saakie-byknk:watermark,o_55,g_center,fl_relative,w_0.7/v1760900000/saakie-byknk/products/saree.jpg`
 
     expect(imageLoader({ src: marked, width: 828 })).toBe(
-      `${CLD}/c_limit,w_828/l_saakie-byknk:watermark,o_55,g_center,fl_relative,w_0.7/f_auto,q_auto/v1760900000/saakie-byknk/products/saree.jpg`
+      `${CLD}/c_limit,w_828/l_saakie-byknk:watermark,o_55,g_center,fl_relative,w_0.7/f_auto,q_auto:eco/v1760900000/saakie-byknk/products/saree.jpg`
     )
   })
 
@@ -26,7 +32,7 @@ describe('imageLoader: Cloudinary photos are resized by Cloudinary', () => {
 
   it('handles a URL without a version', () => {
     expect(imageLoader({ src: `${CLD}/saakie-byknk/categories/silk.png`, width: 256 })).toBe(
-      `${CLD}/c_limit,w_256/f_auto,q_auto/saakie-byknk/categories/silk.png`
+      `${CLD}/c_limit,w_256/f_auto,q_auto:eco/saakie-byknk/categories/silk.png`
     )
   })
 
@@ -34,7 +40,7 @@ describe('imageLoader: Cloudinary photos are resized by Cloudinary', () => {
     const fetched = 'https://res.cloudinary.com/demo/image/fetch/l_logo,o_55/https://images.pexels.com/photos/1/a.jpeg'
 
     expect(imageLoader({ src: fetched, width: 640 })).toBe(
-      'https://res.cloudinary.com/demo/image/fetch/c_limit,w_640/l_logo,o_55/f_auto,q_auto/https://images.pexels.com/photos/1/a.jpeg'
+      'https://res.cloudinary.com/demo/image/fetch/c_limit,w_640/l_logo,o_55/f_auto,q_auto:eco/https://images.pexels.com/photos/1/a.jpeg'
     )
   })
 

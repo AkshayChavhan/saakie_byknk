@@ -16,9 +16,12 @@
  *
  *   - `c_limit,w_<n>` first: shrink to the requested width, never enlarge.
  *     The watermark that follows is sized relative to this resized photo.
- *   - `f_auto,q_auto` last: the best format the browser accepts (AVIF, WebP
- *     or JPEG) at a quality Cloudinary picks per image, or `q_<n>` when the
- *     component asks for a specific quality.
+ *   - `f_auto,q_auto:eco` last: the best format the browser accepts (AVIF,
+ *     WebP or JPEG) at Cloudinary's "eco" automatic quality, about 30%
+ *     lighter than its default "good" with the weave and zari still sharp
+ *     (measured: 19 KB instead of 27 KB for a 640px saree photo). Uploaded
+ *     hero banners keep "good" (`q_auto`), so the full-width artwork stays
+ *     crisp. A component that asks for a specific quality gets `q_<n>`.
  *
  * Images that are not on Cloudinary use their own host's resize parameter
  * (Unsplash and Pexels demo photos, Clerk profile pictures). The few local
@@ -34,6 +37,8 @@ interface LoaderArgs {
 }
 
 const CLOUDINARY_HOST = 'res.cloudinary.com'
+/** Cloudinary folders whose photos keep the higher "good" automatic quality. */
+const HIGH_QUALITY_FOLDERS = ['/hero-slides/']
 const DELIVERY_MARKERS = ['/image/upload/', '/image/fetch/']
 
 /** A Cloudinary transformation component, e.g. `w_640` or `l_logo,o_55,g_center`. */
@@ -64,7 +69,8 @@ function cloudinaryUrl(src: string, width: number, quality?: number): string | n
 
   const existing = segments.slice(0, transformCount)
   const rest = segments.slice(transformCount)
-  const finish = `f_auto,${quality ? `q_${quality}` : 'q_auto'}`
+  const automatic = HIGH_QUALITY_FOLDERS.some((folder) => src.includes(folder)) ? 'q_auto' : 'q_auto:eco'
+  const finish = `f_auto,${quality ? `q_${quality}` : automatic}`
 
   return `${head}${[`c_limit,w_${width}`, ...existing, finish, ...rest].join('/')}`
 }
