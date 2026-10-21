@@ -288,7 +288,10 @@ export const loadCategoryCards = cached(
       id: category.id,
       name: category.name,
       slug: category.slug,
-      image: watermarkImageUrl(category.image || productImage(category) || '/images/placeholder-category.svg'),
+      // An uploaded category image is shop artwork and is shown clean, like
+      // hero banners. A product photo standing in for it is still a product
+      // photo and keeps the watermark (docs/WATERMARK.md).
+      image: category.image || watermarkImageUrl(productImage(category) || '/images/placeholder-category.svg'),
       // Counts the sub-categories too — a top-level category's own product
       // list is usually empty, which is what made every card read "0 Products".
       count: subtreeCounts.get(category.id) ?? 0,

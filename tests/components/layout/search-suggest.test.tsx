@@ -25,11 +25,15 @@ const type = (text: string) => fireEvent.change(screen.getByRole('combobox'), { 
 /** A row by its visible text. The bolded letters split the text across
  *  elements, so role-name queries see "Meh er"; textContent does not. */
 const findOption = (text: string) =>
-  waitFor(() => {
-    const option = screen.queryAllByRole('option').find((o) => o.textContent?.includes(text))
-    expect(option).toBeTruthy()
-    return option as HTMLElement
-  })
+  waitFor(
+    () => {
+      const option = screen.queryAllByRole('option').find((o) => o.textContent?.includes(text))
+      expect(option).toBeTruthy()
+      return option as HTMLElement
+    },
+    // The dropdown waits out the debounce first; give a busy CI box room.
+    { timeout: 3000 }
+  )
 
 describe('SearchSuggest', () => {
   beforeEach(() => {

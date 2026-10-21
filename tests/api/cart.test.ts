@@ -241,6 +241,32 @@ describe('Cart API', () => {
 
       expect(response.status).toBe(200)
       expect(mockDb.cartItem.upsert).toHaveBeenCalled()
+      // Two taps landing at once still leave one piece: the racing upsert
+      // does not increment a pre-booked line.
+      expect(mockDb.cartItem.upsert.mock.calls[0][0].update).toEqual({ price: 1850 })
+    })
+
+    it('does not add a second piece when a pre-booked saree is already in the cart', async () => {
+      mockAuth.mockResolvedValue(createMockSession({ id: 'user_123' }))
+      mockDb.user.findUnique.mockResolvedValue(createMockUser())
+      mockDb.product.findUnique.mockResolvedValue(
+        createMockProduct({ id: '507f1f77bcf86cd799439011', stock: 0, isActive: true, price: 1850 })
+      )
+      mockDb.cart.findUnique.mockResolvedValueOnce(
+        createMockCart({ items: [createMockCartItem({ productId: '507f1f77bcf86cd799439011', quantity: 1 })] })
+      )
+
+      const { POST } = await import('@/app/api/cart/route')
+      const response = await POST(
+        new NextRequest('http://localhost:3000/api/cart', {
+          method: 'POST',
+          body: JSON.stringify({ productId: '507f1f77bcf86cd799439011', quantity: 1 }),
+        })
+      )
+
+      expect(response.status).toBe(409)
+      expect(await response.json()).toEqual({ error: 'Product already in cart', code: 'ALREADY_IN_CART' })
+      expect(mockDb.cartItem.upsert).not.toHaveBeenCalled()
     })
 
     it('adds new item to cart', async () => {

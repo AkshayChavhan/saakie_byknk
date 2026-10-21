@@ -25,10 +25,12 @@ goes through one of them: product list, product page, category pages, home
 page loaders, cart, wishlist, orders, and the admin product, order and
 dashboard endpoints. Admins see the marked photos too.
 
-Not marked: admin-uploaded hero slides (`HeroSlide.image`). They are banner
-artwork, not product photos, and `loadHeroSlides` returns them clean. The
-product-derived fallback slides the hero shows until an admin creates one are
-product photos and keep the mark.
+Not marked: admin-uploaded hero slides (`HeroSlide.image`) and category
+images (`Category.image`). They are shop artwork, not product photos, and
+`loadHeroSlides` / `loadCategoryCards` return them clean. A product photo
+standing in for either (the hero's product-derived fallback slides, or a
+category tile with no uploaded image) is still a product photo and keeps the
+mark.
 
 ## Setup
 

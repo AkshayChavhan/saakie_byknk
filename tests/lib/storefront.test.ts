@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 const mockPrisma = {
   heroSlide: { findMany: vi.fn() },
@@ -78,6 +78,63 @@ describe('loadHeroSlides', () => {
     const [slide] = await loadHeroSlides()
     expect(slide.image).toBe(url)
     expect(mockPrisma.product.findMany).not.toHaveBeenCalled()
+  })
+})
+
+describe('loadCategoryCards', () => {
+  // Cloudinary versions after the watermark cutover (2026-10-19).
+  const CATEGORY_ART = 'https://res.cloudinary.com/demo/image/upload/v1792472341/saakie-byknk/categories/silk.jpg'
+  const PRODUCT_PHOTO = 'https://res.cloudinary.com/demo/image/upload/v1792472341/saakie-byknk/products/saree.jpg'
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockPrisma.product.groupBy.mockResolvedValue([])
+    // tests/setup.tsx switches the watermark off; these tests are about it.
+    vi.stubEnv('WATERMARK_ENABLED', 'true')
+  })
+  afterEach(() => vi.unstubAllEnvs())
+
+  const categories = (rows: unknown[]) =>
+    mockPrisma.category.findMany.mockImplementation(({ select }: { select: Record<string, unknown> }) =>
+      // The tree helper asks for id/parentId only; the cards ask for more.
+      Promise.resolve('products' in select ? rows : [])
+    )
+
+  const tile = (image: string | null, productUrl?: string) => ({
+    id: 'c1',
+    name: 'Silk',
+    slug: 'silk',
+    image,
+    products: productUrl ? [{ images: [{ url: productUrl }] }] : [],
+    children: [],
+  })
+
+  it('shows an uploaded category image without the watermark', async () => {
+    categories([tile(CATEGORY_ART, PRODUCT_PHOTO)])
+    const { loadCategoryCards } = await import('@/lib/server/storefront')
+
+    const [card] = await loadCategoryCards()
+
+    expect(card.image).toBe(CATEGORY_ART)
+  })
+
+  it('keeps the watermark on a product photo standing in for a missing category image', async () => {
+    categories([tile(null, PRODUCT_PHOTO)])
+    const { loadCategoryCards } = await import('@/lib/server/storefront')
+
+    const [card] = await loadCategoryCards()
+
+    expect(card.image).toContain('l_saakie-byknk:watermark')
+    expect(card.image).toContain('saakie-byknk/products/saree.jpg')
+  })
+
+  it('falls back to the placeholder when there is no photo at all', async () => {
+    categories([tile(null)])
+    const { loadCategoryCards } = await import('@/lib/server/storefront')
+
+    const [card] = await loadCategoryCards()
+
+    expect(card.image).toBe('/images/placeholder-category.svg')
   })
 })
 
