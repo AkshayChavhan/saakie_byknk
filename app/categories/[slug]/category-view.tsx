@@ -10,6 +10,8 @@ import { RatingBadge } from '@/components/ui/rating-badge'
 import { formatPrice } from '@/lib/utils'
 import { fetchApi } from '@/lib/api'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { PrebookCapsule } from '@/components/products/prebook-capsule'
+import { isPrebookable } from '@/lib/prebook'
 
 interface Product {
   id: string
@@ -141,8 +143,9 @@ function ProductCard({
               </div>
             )}
             {!product.inStock && (
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-2">
                 <span className="text-white font-medium">Out of Stock</span>
+                {isPrebookable({ stock: product.stock }) && <PrebookCapsule />}
               </div>
             )}
           </div>
@@ -171,8 +174,9 @@ function ProductCard({
               className="object-cover"
             />
             {!product.inStock && (
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-1.5">
                 <span className="text-white text-sm font-medium">Out of Stock</span>
+                {isPrebookable({ stock: product.stock }) && <PrebookCapsule size="sm" />}
               </div>
             )}
           </div>
