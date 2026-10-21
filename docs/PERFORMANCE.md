@@ -86,7 +86,7 @@ their data in the server component and pass it as props:
 
 | Page | Loader | What the client gets |
 |---|---|---|
-| `/` | `lib/server/storefront.ts` (`loadHeroSlides`, `loadPromotionalStats`, `loadCategoryCards`, `loadFeaturedProducts`) | all four sections as props; the hero image is in the first HTML with `priority` |
+| `/` | `lib/server/storefront.ts` (`loadHeroSlides`, `loadBestDeal`, `loadCategoryCards`, `loadFeaturedProducts`) | all four sections as props; the hero image is in the first HTML with `priority` |
 | `/products/[slug]` | `lib/server/products.ts` `loadProductDetail` | `initialProduct`; metadata, JSON-LD and the body share one query via React `cache()` |
 | `/categories/[slug]` | `lib/server/categories.ts` `loadCategoryDetail` | `initialCategory`; the listing request starts immediately |
 | `/cart` | `lib/server/cart.ts` `loadCart` | `initialCart` |

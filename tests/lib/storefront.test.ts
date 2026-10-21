@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mockPrisma = {
   heroSlide: { findMany: vi.fn() },
-  product: { findMany: vi.fn(), findFirst: vi.fn(), count: vi.fn(), groupBy: vi.fn(), fields: { price: 'price' } },
+  product: { findMany: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), count: vi.fn(), groupBy: vi.fn(), fields: { price: 'price' } },
   category: { findMany: vi.fn() },
   promotionalBanner: { findMany: vi.fn() },
 }
@@ -81,43 +81,63 @@ describe('loadHeroSlides', () => {
   })
 })
 
-describe('loadPromotionalStats', () => {
+describe('loadBestDeal', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('builds the three highlight cards from counts and one example each', async () => {
-    mockPrisma.product.count
-      .mockResolvedValueOnce(12) // best sellers
-      .mockResolvedValueOnce(3) // on sale
-      .mockResolvedValueOnce(5) // featured
-    mockPrisma.product.findFirst
-      .mockResolvedValueOnce({ name: 'Top', slug: 'top', price: 999, salesCount: 40 })
-      .mockResolvedValueOnce({ name: 'Feat', slug: 'feat', category: { name: 'Silk' } })
+  it('picks the biggest discount across every product on sale', async () => {
     mockPrisma.product.findMany.mockResolvedValue([
-      { name: 'Small deal', slug: 's', price: 90, comparePrice: 100 },
-      { name: 'Big deal', slug: 'b', price: 50, comparePrice: 100 },
+      { id: 'small', price: 90, comparePrice: 100 },
+      { id: 'big', price: 79, comparePrice: 100 },
+      { id: 'mid', price: 85, comparePrice: 100 },
     ])
+    mockPrisma.product.findUnique.mockResolvedValue({
+      name: 'Floral Handwork Saree',
+      slug: 'floral',
+      price: 79,
+      comparePrice: 100,
+      images: [{ url: 'https://example.com/floral.jpg' }],
+      category: { name: 'Chiffon' },
+    })
 
-    const { loadPromotionalStats } = await import('@/lib/server/storefront')
-    const stats = await loadPromotionalStats()
+    const { loadBestDeal } = await import('@/lib/server/storefront')
+    const deal = await loadBestDeal()
 
-    expect(stats.bestSellers).toEqual({ count: 12, products: [{ name: 'Top', slug: 'top', price: 999, totalSales: 40 }] })
-    expect(stats.saleProducts.count).toBe(3)
-    expect(stats.saleProducts.maxDiscount).toBe(50)
-    expect(stats.saleProducts.products[0].name).toBe('Big deal')
-    expect(stats.featuredProducts).toEqual({ count: 5, products: [{ name: 'Feat', slug: 'feat', category: 'Silk' }] })
+    expect(mockPrisma.product.findUnique.mock.calls[0][0].where).toEqual({ id: 'big' })
+    expect(deal).toMatchObject({
+      name: 'Floral Handwork Saree',
+      slug: 'floral',
+      discount: 21,
+      price: 79,
+      comparePrice: 100,
+      image: 'https://example.com/floral.jpg',
+      category: 'Chiffon',
+      saleCount: 3,
+    })
   })
 
-  it('reports zero counts with no examples on an empty catalogue', async () => {
-    mockPrisma.product.count.mockResolvedValue(0)
-    mockPrisma.product.findFirst.mockResolvedValue(null)
+  it('keeps the newest product on a tie', async () => {
+    // Newest first, as the query orders them.
+    mockPrisma.product.findMany.mockResolvedValue([
+      { id: 'newer', price: 80, comparePrice: 100 },
+      { id: 'older', price: 80, comparePrice: 100 },
+    ])
+    mockPrisma.product.findUnique.mockResolvedValue({
+      name: 'N', slug: 'n', price: 80, comparePrice: 100, images: [], category: null,
+    })
+
+    const { loadBestDeal } = await import('@/lib/server/storefront')
+    const deal = await loadBestDeal()
+
+    expect(mockPrisma.product.findUnique.mock.calls[0][0].where).toEqual({ id: 'newer' })
+    expect(deal?.image).toBeNull()
+  })
+
+  it('returns null when nothing is on sale', async () => {
     mockPrisma.product.findMany.mockResolvedValue([])
 
-    const { loadPromotionalStats } = await import('@/lib/server/storefront')
-    const stats = await loadPromotionalStats()
-
-    expect(stats.bestSellers.products).toEqual([])
-    expect(stats.saleProducts.maxDiscount).toBe(0)
-    expect(stats.featuredProducts.count).toBe(0)
+    const { loadBestDeal } = await import('@/lib/server/storefront')
+    expect(await loadBestDeal()).toBeNull()
+    expect(mockPrisma.product.findUnique).not.toHaveBeenCalled()
   })
 })
 
