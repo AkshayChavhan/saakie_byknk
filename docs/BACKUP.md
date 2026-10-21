@@ -1,8 +1,9 @@
 # Database Backups
 
-Copies the whole live database into a second, independent database, on demand,
-from `/admin/backup`.
+Copies the whole live database into a second, independent database: every
+night automatically, and on demand from `/admin/backup`.
 
+- Nightly: `.github/workflows/nightly-backup.yml` → `pnpm backup:nightly` (`scripts/backup-nightly.ts`)
 - Admin UI: `/admin/backup` (dashboard → Quick Actions → Backups) — **SUPER_ADMIN only**
 - Engine: `lib/server/backup.ts`
 - API: `GET`/`POST /api/admin/backup`
@@ -28,9 +29,25 @@ run — sounds simpler, but if the live database is corrupted and you then press
 "backup", the corruption overwrites the only good copy you had. With snapshots
 you can go back a generation.
 
-The last **5** snapshots are kept (`SNAPSHOTS_KEPT`). Older ones are dropped
-after a successful run. The snapshot just written is never a pruning candidate,
-so a bug in retention cannot eat the backup it has just made.
+### Which snapshots are kept
+
+After every successful run, manual or nightly, the backup database keeps
+(`RETENTION` in `lib/server/backup.ts`):
+
+| Rule | Kept |
+|---|---|
+| Last 14 days | every snapshot |
+| 2 to 8 weeks back | the newest snapshot of each week (Monday to Sunday, UTC) |
+| Always | at least the newest 5, however old |
+
+Everything else is dropped. With nightly runs that is about 22 snapshots; at
+today's size (well under 1 MB each) a few MB of the free cluster's 512 MB.
+
+The "at least 5" rule matters: if backups stop for a while (the nightly job
+paused, a cluster down), a purely time-based rule would age every snapshot out
+and leave nothing. The snapshot just written is never a pruning candidate
+either, so a bug in retention cannot eat the backup it has just made. The rule
+is a pure function (`snapshotsToDrop`) with its own tests.
 
 ## The manifest lives in the backup database
 
@@ -105,12 +122,69 @@ big enough for the download to matter.
 |---|---|
 | `BACKUP_DATABASE_URL` required | No silent no-op backups |
 | **Refuses if it resolves to the live database** | Pointed at itself, a "backup" would duplicate every collection back into the live database and leave no backup at all. Compared on host list + database name, so different credentials for the same cluster are still caught |
+| **Refuses to write into a database that holds shop collections** | A backup database only ever contains `<stamp>__name` snapshots and `_backup_runs`. If the destination has `products`, `users`, ... it is a live database — typically the two connection strings swapped — so the run stops before writing anything and says so |
 | SUPER_ADMIN only | A backup reads every row, customer PII included, and writes it elsewhere |
 | One run at a time | Two admins pressing the button together cannot interleave into the same snapshot. A run still `RUNNING` after 15 minutes is treated as dead, not as in progress |
 | Credentials redacted | Mongo URIs carry the password inline, and driver errors quote the URI back. Everything headed for a log, an API response or the database goes through `redact()` |
 | One bad collection does not abandon the run | A backup missing one collection is worth far more than no backup. The run reports `PARTIAL` and names what failed |
 
 ---
+
+## Nightly backups (automatic)
+
+A GitHub Actions job runs every night at **02:00 India time** (20:30 UTC) and
+does exactly what the admin button does: a new snapshot in the backup
+database, then the retention rule. It runs on GitHub's machines, so the host's
+short serverless time limit does not apply.
+
+### Turning it on
+
+1. Set up the backup database first (next section, steps 1 and 2).
+2. **Atlas network access:** GitHub's machines have no fixed address, so both
+   clusters (live and backup) must accept connections from anywhere
+   (`0.0.0.0/0` in Atlas → Network Access). The live cluster almost certainly
+   already does, because the website's host has no fixed address either. The
+   password in each connection string remains the real lock.
+3. In GitHub: **repository → Settings → Secrets and variables → Actions → New
+   repository secret**, add:
+   - `DATABASE_URL` — the live database (same value as the website's)
+   - `BACKUP_DATABASE_URL` — the backup database
+4. **Actions tab → Nightly backup → Run workflow** to run it once now. It
+   should finish green, and the run appears in `/admin/backup` as
+   "by nightly (GitHub Actions)".
+
+### Knowing it worked
+
+- A failed or partial run turns the job red and GitHub **emails** the account
+  that last edited the workflow's schedule.
+- Every run, nightly or manual, is listed in `/admin/backup` with its status
+  and document counts.
+- Once a month, restore one snapshot into a scratch database (see Restoring) to
+  prove the backups actually restore.
+
+### Things to know
+
+- **The logs are public** while the repository is public. The script prints
+  counts, statuses, collection names and already-redacted errors only — never
+  a document or a connection string — and GitHub masks the secret values
+  themselves. `NODE_ENV=production` in the workflow keeps Prisma from logging
+  queries; do not change it.
+- **GitHub pauses scheduled jobs in a public repository after 60 days without
+  a commit.** It emails a warning first; any commit (or the "Enable workflow"
+  button in the Actions tab) starts it again. Private repositories are not
+  paused.
+- **Forks never run it** (the job checks the repository name), and the job has
+  read-only access to the code.
+- A scheduled run can start some minutes late when GitHub is busy.
+- **Running it by hand** from a computer:
+
+  ```
+  pnpm exec tsx --env-file=.env.local --tsconfig tsconfig.scripts.json scripts/backup-nightly.ts
+  ```
+
+  (`.env.local` needs `BACKUP_DATABASE_URL`.) The script runs the shop's own
+  server code; `tsconfig.scripts.json` stands in for Next.js's `server-only`
+  marker, which only Next.js provides.
 
 ## Setting it up
 
@@ -174,4 +248,7 @@ Restart the app afterwards so nothing is serving cached data.
   another. For a shop this size the window is seconds; it is not a substitute
   for your database provider's own continuous backups.
 - **This is a second line of defence**, not the first. Keep Atlas backups on
-  as well if the plan offers them.
+  as well if the plan offers them (the free plan does not).
+- **One copy, one provider.** Nightly snapshots live in a second Atlas cluster.
+  If the Atlas account itself were lost, the files downloaded by the admin
+  button are the copy that survives; take one now and then.

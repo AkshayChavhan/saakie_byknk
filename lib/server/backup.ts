@@ -21,8 +21,19 @@ import prisma from '@/lib/prisma'
 /** Documents pushed per insert. Small enough to stay well inside the 16MB BSON cap. */
 const BATCH_SIZE = 500
 
-/** Snapshots kept in the backup database; older ones are dropped after a successful run. */
-export const SNAPSHOTS_KEPT = 5
+/**
+ * Which snapshots the backup database keeps, applied after every successful
+ * run (manual or nightly):
+ *   - every snapshot from the last `dailyDays` days;
+ *   - the newest snapshot of each week (Monday to Sunday, UTC) going back
+ *     `weeklyWeeks` weeks;
+ *   - and never fewer than the newest `minimum`, so a gap in backups (the
+ *     nightly job paused, a cluster down for a week) cannot age every snapshot
+ *     out and leave the backup database empty.
+ * At today's size a snapshot is well under 1 MB, so this is a few MB of the
+ * free cluster's 512 MB.
+ */
+export const RETENTION = { dailyDays: 14, weeklyWeeks: 8, minimum: 5 } as const
 
 /** Manifest collection inside the backup database. */
 export const MANIFEST_COLLECTION = '_backup_runs'
@@ -46,6 +57,8 @@ export interface BackupResult {
   totalCollections: number
   totalDocuments: number
   durationMs: number
+  /** Snapshots removed by the retention rule after this run. */
+  pruned?: string[]
   error?: string
 }
 
@@ -177,6 +190,23 @@ export async function runBackup(options: {
     const targetDb = targetClient.db()
     const targetDatabase = targetDb.databaseName
 
+    // Second guard, before anything is written: a backup database only ever
+    // holds snapshot collections (`<stamp>__name`) and its manifest. If the
+    // destination has ordinary shop collections (products, users, ...), it is
+    // a live database — most likely DATABASE_URL and BACKUP_DATABASE_URL were
+    // swapped — so stop rather than write snapshots into it.
+    const shopCollections = (await targetDb.listCollections({}, { nameOnly: true }).toArray())
+      .map((c) => c.name)
+      .filter(isCopyable)
+    if (shopCollections.length > 0) {
+      throw new BackupConfigError(
+        `The backup database already holds shop collections (${shopCollections.slice(0, 3).join(', ')}${
+          shopCollections.length > 3 ? ', ...' : ''
+        }), so it looks like a live database. Check that BACKUP_DATABASE_URL and DATABASE_URL are not swapped. Nothing was written.`,
+        'TARGET_NOT_BACKUP'
+      )
+    }
+
     const names = (await sourceDb.listCollections({}, { nameOnly: true }).toArray())
       .map((c) => c.name)
       .filter(isCopyable)
@@ -233,9 +263,7 @@ export async function runBackup(options: {
       totalDocuments,
     })
 
-    if (status !== 'FAILED') {
-      await pruneSnapshots(targetClient, snapshot)
-    }
+    const pruned = status !== 'FAILED' ? await pruneSnapshots(targetClient, snapshot, now) : []
 
     await prisma.backupRun.update({
       where: { id: run.id },
@@ -260,6 +288,7 @@ export async function runBackup(options: {
       totalCollections: collections.length,
       totalDocuments,
       durationMs,
+      pruned,
     }
   } catch (error) {
     const message = redact(error)
@@ -293,19 +322,72 @@ export async function runBackup(options: {
   }
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/** The time a snapshot stamp (`20260927T101500Z`) stands for, or null if it is not one. */
+export function stampTime(stamp: string): number | null {
+  const m = stamp.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/)
+  if (!m) return null
+  return Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6])
+}
+
+/** Monday-to-Sunday UTC week number. 1 Jan 1970 was a Thursday, hence the +3 days. */
+function weekIndex(timeMs: number): number {
+  return Math.floor((timeMs + 3 * DAY_MS) / (7 * DAY_MS))
+}
+
 /**
- * Drop all but the newest SNAPSHOTS_KEPT snapshots. The snapshot just written
- * is never a candidate, so a pruning bug cannot eat the backup it just made.
+ * The snapshots RETENTION says to drop, oldest first. Pure, so it can be
+ * tested on its own. The snapshot just written (`keepAtLeast`) is never
+ * dropped, and anything that is not a snapshot stamp is left alone.
  */
-export async function pruneSnapshots(client: MongoClient, keepAtLeast: string): Promise<string[]> {
+export function snapshotsToDrop(stamps: string[], now: Date, keepAtLeast: string): string[] {
+  const dated = stamps
+    .map((stamp) => ({ stamp, time: stampTime(stamp) }))
+    .filter((s): s is { stamp: string; time: number } => s.time !== null)
+    .sort((a, b) => b.time - a.time) // newest first
+
+  const keep = new Set<string>([keepAtLeast])
+  for (const s of dated.slice(0, RETENTION.minimum)) keep.add(s.stamp)
+
+  const weeksKept = new Set<number>()
+  for (const s of dated) {
+    const age = now.getTime() - s.time
+    if (age <= RETENTION.dailyDays * DAY_MS) {
+      keep.add(s.stamp)
+    } else if (age <= RETENTION.weeklyWeeks * 7 * DAY_MS) {
+      // Newest first, so the first one seen in a week is that week's newest.
+      const week = weekIndex(s.time)
+      if (!weeksKept.has(week)) {
+        weeksKept.add(week)
+        keep.add(s.stamp)
+      }
+    }
+  }
+
+  return dated
+    .filter((s) => !keep.has(s.stamp))
+    .map((s) => s.stamp)
+    .sort()
+}
+
+/**
+ * Drop the snapshots that fall outside RETENTION. The snapshot just written is
+ * never a candidate, so a pruning bug cannot eat the backup it just made.
+ */
+export async function pruneSnapshots(
+  client: MongoClient,
+  keepAtLeast: string,
+  now: Date = new Date()
+): Promise<string[]> {
   const db = client.db()
   const names = (await db.listCollections({}, { nameOnly: true }).toArray()).map((c) => c.name)
 
   const stamps = Array.from(
     new Set(names.filter((n) => n.includes('__')).map((n) => n.slice(0, n.indexOf('__'))))
-  ).sort()
+  )
 
-  const doomed = stamps.filter((s) => s !== keepAtLeast).slice(0, Math.max(0, stamps.length - SNAPSHOTS_KEPT))
+  const doomed = snapshotsToDrop(stamps, now, keepAtLeast)
 
   for (const stamp of doomed) {
     for (const name of names.filter((n) => n.startsWith(`${stamp}__`))) {

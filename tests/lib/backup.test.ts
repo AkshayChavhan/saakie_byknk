@@ -180,6 +180,88 @@ describe('lib/server/backup', () => {
     })
   })
 
+  describe('retention', () => {
+    // A Wednesday evening; stamps below are relative to it.
+    const now = new Date('2026-10-21T20:30:00.000Z')
+    const stamp = (daysAgo: number) =>
+      new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .replace(/[-:]/g, '')
+        .replace(/\.\d+Z$/, 'Z')
+
+    it('reads a snapshot stamp back into a time, and rejects anything else', async () => {
+      const { stampTime } = await load()
+      expect(stampTime('20260927T101500Z')).toBe(Date.UTC(2026, 8, 27, 10, 15, 0))
+      expect(stampTime('saakie_backup')).toBeNull()
+    })
+
+    it('keeps every snapshot from the last 14 days', async () => {
+      const { snapshotsToDrop } = await load()
+      const recent = Array.from({ length: 14 }, (_, i) => stamp(i + 0.5))
+
+      expect(snapshotsToDrop(recent, now, recent[0])).toEqual([])
+    })
+
+    it('keeps only the newest of each week between 2 and 8 weeks back', async () => {
+      const { snapshotsToDrop } = await load()
+      // Daily snapshots 15 to 56 days old, plus the newest 5 to satisfy the minimum.
+      const recent = [0.5, 1.5, 2.5, 3.5, 4.5].map(stamp)
+      const older = Array.from({ length: 42 }, (_, i) => stamp(i + 15))
+
+      const dropped = snapshotsToDrop([...recent, ...older], now, recent[0])
+      const kept = older.filter((s) => !dropped.includes(s))
+
+      // Between 6 and 7 weeks are touched in that window, one survivor each.
+      expect(kept.length).toBeGreaterThanOrEqual(6)
+      expect(kept.length).toBeLessThanOrEqual(7)
+      const weeks = new Set(kept.map((s) => Math.floor((Date.parse(s.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/, '$1-$2-$3T$4:$5:$6Z')) + 3 * 86400000) / (7 * 86400000))))
+      expect(weeks.size).toBe(kept.length)
+      expect(dropped.some((s) => recent.includes(s))).toBe(false)
+    })
+
+    it('drops snapshots older than 8 weeks once enough newer ones exist', async () => {
+      const { snapshotsToDrop } = await load()
+      const recent = [1, 2, 3, 4, 5].map(stamp)
+      const ancient = [70, 90].map(stamp)
+
+      expect(snapshotsToDrop([...recent, ...ancient], now, recent[0])).toEqual([...ancient].sort())
+    })
+
+    it('never leaves fewer than 5, even after a long gap in backups', async () => {
+      const { snapshotsToDrop } = await load()
+      const allOld = [100, 101, 102, 103, 104, 105].map(stamp)
+
+      // Only the oldest goes; the newest five survive although all are past 8 weeks.
+      expect(snapshotsToDrop(allOld, now, allOld[0])).toEqual([stamp(105)])
+    })
+
+    it('never drops the snapshot just written, and ignores names that are not stamps', async () => {
+      const { snapshotsToDrop } = await load()
+      const recent = [1, 2, 3, 4, 5].map(stamp)
+      const justWritten = stamp(200)
+
+      const dropped = snapshotsToDrop([...recent, justWritten, 'not-a-stamp'], now, justWritten)
+
+      expect(dropped).not.toContain(justWritten)
+      expect(dropped).not.toContain('not-a-stamp')
+    })
+
+    it('removes a dropped snapshot\'s collections and its manifest entry', async () => {
+      const { pruneSnapshots } = await load()
+      const recent = [1, 2, 3, 4, 5].map(stamp)
+      const old = stamp(90)
+      const backup = makeDb(
+        Object.fromEntries([...recent, old].flatMap((st) => [[`${st}__products`, []], [`${st}__orders`, []]])),
+        'saakie_backup'
+      )
+
+      const pruned = await pruneSnapshots({ db: () => backup.db } as never, recent[0], now)
+
+      expect(pruned).toEqual([old])
+      expect(backup.dropped.sort()).toEqual([`${old}__orders`, `${old}__products`])
+    })
+  })
+
   describe('runBackup', () => {
     const now = new Date('2026-09-27T10:15:00.000Z')
     const SNAP = '20260927T101500Z'
@@ -275,6 +357,35 @@ describe('lib/server/backup', () => {
       expect(result.ok).toBe(true)
       expect(result.collections.find((c) => c.collection === 'products')?.documents).toBe(1)
       expect(result.collections.find((c) => c.collection === 'orders')?.error).toContain('disk full')
+    })
+
+    it('refuses to write into a destination that already holds shop collections', async () => {
+      // As if the two connection strings were swapped: the "backup" side is a
+      // live shop database.
+      const src = makeDb({ products: [{ _id: 1 }] }, 'saakie_backup')
+      const dst = makeDb({ products: [{ _id: 9 }], users: [{ _id: 8 }] }, 'saakie')
+      clients.push({ uri: LIVE, db: src.db }, { uri: BACKUP, db: dst.db })
+      const { runBackup } = await load()
+
+      const result = await runBackup({ now })
+
+      expect(result.status).toBe('FAILED')
+      expect(result.error).toContain('looks like a live database')
+      expect(result.error).toContain('Nothing was written')
+      expect(dst.written).toEqual({})
+      expect(dst.dropped).toEqual([])
+      expect(mockPrisma.backupRun.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ status: 'FAILED' }) })
+      )
+    })
+
+    it('accepts a backup database that holds only earlier snapshots and its manifest', async () => {
+      const src = makeDb({ products: [{ _id: 1 }] }, 'saakie')
+      const dst = makeDb({ '20261001T203000Z__products': [{ _id: 1 }], _backup_runs: [{ _id: 'm' }] }, 'saakie_backup')
+      clients.push({ uri: LIVE, db: src.db }, { uri: BACKUP, db: dst.db })
+      const { runBackup } = await load()
+
+      expect((await runBackup({ now })).status).toBe('SUCCESS')
     })
 
     it('refuses to run against the live database', async () => {

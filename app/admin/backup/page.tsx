@@ -49,7 +49,8 @@ interface BackupRun {
 interface Payload {
   configured: boolean
   configError: string | null
-  snapshotsKept: number
+  /** Which snapshots are kept: lib/server/backup.ts RETENTION. */
+  retention: { dailyDays: number; weeklyWeeks: number; minimum: number }
   running: boolean
   runs: BackupRun[]
 }
@@ -245,7 +246,9 @@ export default function BackupPage() {
           </div>
           <p className="text-gray-600 mt-2 text-sm sm:text-base">
             Copies every collection to a separate backup database. Each run is kept as its own snapshot,
-            so you can go back a generation — the last {data?.snapshotsKept ?? 5} are retained. Each run also downloads a copy to this computer.
+            so you can go back in time: every snapshot from the last {data?.retention.dailyDays ?? 14} days,
+            plus one per week for {data?.retention.weeklyWeeks ?? 8} weeks, and never fewer than {data?.retention.minimum ?? 5}.
+            A backup also runs automatically every night (shown as &ldquo;nightly&rdquo; below), and a button run downloads a copy to this computer.
           </p>
         </div>
 

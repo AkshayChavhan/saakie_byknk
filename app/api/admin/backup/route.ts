@@ -7,7 +7,7 @@ import {
   isBackupRunning,
   readBackupConfig,
   BackupConfigError,
-  SNAPSHOTS_KEPT,
+  RETENTION,
 } from '@/lib/server/backup';
 
 export const runtime = 'nodejs';
@@ -45,7 +45,7 @@ export async function GET() {
     return NextResponse.json({
       configured,
       configError,
-      snapshotsKept: SNAPSHOTS_KEPT,
+      retention: RETENTION,
       running: await isBackupRunning(new Date()),
       runs,
     });
