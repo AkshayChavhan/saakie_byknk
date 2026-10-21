@@ -76,6 +76,15 @@ export async function POST(request: Request) {
     }
 
     const existingItem = cart.items.find((i) => i.productId === productId);
+    // A pre-booked saree already in the cart: another tap (Pre-book pressed
+    // twice, or from the wishlist) must not add a second piece. The cart page
+    // can still change the quantity on purpose.
+    if (prebook && existingItem) {
+      return NextResponse.json(
+        { error: 'Product already in cart', code: 'ALREADY_IN_CART' },
+        { status: 409 }
+      );
+    }
     const newQuantity = (existingItem?.quantity ?? 0) + quantity;
     if (!prebook && product.stock < newQuantity) {
       // The cart already holds every piece there is (with one-off sarees,
@@ -95,11 +104,14 @@ export async function POST(request: Request) {
 
     // One line per product per cart (unique on cartId+productId). An upsert
     // makes two simultaneous adds merge into that line instead of racing the
-    // read above and creating a duplicate.
+    // read above and creating a duplicate. For a pre-booking the racing add
+    // leaves the quantity alone, so two taps at once still mean one piece.
     await prisma.cartItem.upsert({
       where: { cartId_productId: { cartId: cart.id, productId } },
       create: { cartId: cart.id, productId, quantity, price: product.price },
-      update: { quantity: { increment: quantity }, price: product.price },
+      update: prebook
+        ? { price: product.price }
+        : { quantity: { increment: quantity }, price: product.price },
     });
 
     const updatedCart = await prisma.cart.findUnique({

@@ -1,6 +1,6 @@
 import { Header } from '@/components/layout/header'
 import { HeroSection } from '@/components/home/hero-section'
-import { PromotionalBanner } from '@/components/home/promotional-banner'
+import { BestDealBanner } from '@/components/home/best-deal-banner'
 import { CategoryGrid } from '@/components/home/category-grid'
 import { FeaturedProducts } from '@/components/home/featured-products'
 import { NewArrivals } from '@/components/home/new-arrivals'
@@ -9,7 +9,7 @@ import { requestDevice } from '@/lib/server/device'
 import {
   loadHeroSlides,
   heroSlideSets,
-  loadPromotionalStats,
+  loadBestDeal,
   loadCategoryCards,
   loadFeaturedProducts,
   loadNewArrivals,
@@ -37,10 +37,10 @@ export default async function HomePage() {
   // goes into the first HTML (the component re-checks against the viewport).
   const device = await requestDevice()
 
-  const [slides, newArrivals, promotional, categories, shelves, featured] = await Promise.allSettled([
+  const [slides, newArrivals, bestDeal, categories, shelves, featured] = await Promise.allSettled([
     loadHeroSlides(),
     loadNewArrivals(),
-    loadPromotionalStats(),
+    loadBestDeal(),
     loadCategoryCards(),
     loadCategoryShelves(),
     loadFeaturedProducts(),
@@ -59,7 +59,8 @@ export default async function HomePage() {
         <HeroSection slides={heroSlideSets(settled(slides, [], 'hero slides'))} initialDevice={device} />
         {/* Omitted entirely (no heading) when nothing was added in the last two weeks. */}
         <NewArrivals products={settled(newArrivals, [], 'new arrivals')} />
-        <PromotionalBanner data={settled(promotional, null, 'promotional stats')} />
+        {/* The single biggest discount, its photo behind a dark wash. Hidden when nothing is on sale. */}
+        <BestDealBanner deal={settled(bestDeal, null, 'best deal')} />
         <CategoryGrid categories={settled(categories, [], 'categories')} />
         {/* Every category's latest sarees, under a "— NAME ———" rule heading. */}
         <CategoryShelves shelves={settled(shelves, [], 'category shelves')} />

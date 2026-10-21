@@ -431,6 +431,11 @@ export function ProductDetail({ initialProduct = null }: ProductDetailProps) {
       window.dispatchEvent(new CustomEvent('cartUpdated'))
       router.push('/checkout')
     } catch (error) {
+      // Already pre-booked in this cart: nothing to add, the checkout has it.
+      if (hasApiErrorCode(error, 'ALREADY_IN_CART')) {
+        router.push('/checkout')
+        return
+      }
       console.error('Pre-book failed:', error)
       toast.error("Couldn't start your pre-booking", error instanceof Error ? error.message : 'Please try again.')
       setAddingToCart(false)

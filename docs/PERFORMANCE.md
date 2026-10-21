@@ -56,6 +56,9 @@ missed.
 | `GET /api/hero-slides` | `hero-slides`, `products` | admin hero slide writes, product writes |
 | `GET /api/promotional-data` | `promotional-banners` | admin banner writes |
 | `GET /api/products/featured` | `products` | product writes, payment settlement, review moderation |
+| `/products/[slug]` and `GET /api/products/[slug]` (`loadProductDetail`, per slug) | `products`, `categories` | admin product writes, payment settlement, review moderation, category writes |
+| `GET /api/products` (`loadCatalogue`: every active product; the shop listing filters, sorts and pages it in memory) | `products`, `categories` | admin product and category writes, payment settlement, review moderation |
+| `GET /api/search/suggest` (`loadSearchIndex`: every active saree and category, filtered in memory per keystroke) | `products`, `categories` | admin product and category writes, payment settlement, review moderation |
 | `getStoreSettings()` | `settings` | `PATCH /api/admin/settings` |
 
 Under Vitest the wrapper is a pass-through so tests see every query.
@@ -86,8 +89,8 @@ their data in the server component and pass it as props:
 
 | Page | Loader | What the client gets |
 |---|---|---|
-| `/` | `lib/server/storefront.ts` (`loadHeroSlides`, `loadPromotionalStats`, `loadCategoryCards`, `loadFeaturedProducts`) | all four sections as props; the hero image is in the first HTML with `priority` |
-| `/products/[slug]` | `lib/server/products.ts` `loadProductDetail` | `initialProduct`; metadata, JSON-LD and the body share one query via React `cache()` |
+| `/` | `lib/server/storefront.ts` (`loadHeroSlides`, `loadBestDeal`, `loadCategoryCards`, `loadFeaturedProducts`) | all four sections as props; the hero image is in the first HTML with `priority` |
+| `/products/[slug]` | `lib/server/products.ts` `loadProductDetail` | `initialProduct`; tagged cache per slug, so a repeat view reads no database; metadata, JSON-LD and the body share one lookup via React `cache()` |
 | `/categories/[slug]` | `lib/server/categories.ts` `loadCategoryDetail` | `initialCategory`; the listing request starts immediately |
 | `/cart` | `lib/server/cart.ts` `loadCart` | `initialCart` |
 | `/checkout` | cart + addresses + settings in `app/checkout/page.tsx` | `initial` for `CheckoutView` |
@@ -146,5 +149,17 @@ are server components.
 to account, cart, checkout, admin, wishlist or the auth pages (rules in
 `lib/sw-rules.ts`). Cloudinary responses are cached only with status 200;
 opaque responses cost several megabytes of quota each. `signOut()` deletes
-the per-visitor `pages` cache. `next.config.mjs` enables AVIF ahead of WebP
-and keeps optimised variants for 30 days.
+the per-visitor `pages` cache.
+
+Images are resized by their own CDN, never by this server. `next.config.mjs`
+sets a custom loader (`lib/image-loader.ts`): a Cloudinary photo's URL gets
+`c_limit,w_<width>` before any existing step (the watermark, so it scales
+with the resized photo) and `f_auto,q_auto:eco` after it, so the browser
+downloads the right size in WebP/AVIF straight from Cloudinary. "eco" is
+about 30% lighter than Cloudinary's default "good"; uploaded hero banners
+(`/hero-slides/`) keep `q_auto` ("good") so the full-width artwork stays crisp. Unsplash and
+Pexels demo photos and Clerk profile photos use their host's own width
+parameter; the two small files in `/public` are served as they are. Nothing
+goes through `/_next/image` any more. These cross-origin images reach the
+service worker as opaque responses, so it leaves them to the browser's HTTP
+cache, which Cloudinary fills for 30 days.

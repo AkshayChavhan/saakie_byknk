@@ -6,6 +6,16 @@ const mockPrisma = {
 }
 vi.mock('@/lib/prisma', () => ({ prisma: mockPrisma, default: mockPrisma }))
 
+// Record how the loader is cached; otherwise pass straight through, as tests do.
+const cacheCalls = vi.hoisted(() => [] as Array<{ key: string; tags: string[] }>)
+vi.mock('@/lib/server/cache', () => ({
+  TAG: { products: 'products', categories: 'categories' },
+  cached: (fn: unknown, key: string, opts: { tags: string[] }) => {
+    cacheCalls.push({ key, tags: opts.tags })
+    return fn
+  },
+}))
+
 describe('loadProductDetail', () => {
   beforeEach(() => vi.clearAllMocks())
 
@@ -56,5 +66,28 @@ describe('loadProductDetail', () => {
       slug: 'related',
       image: '/images/placeholder-product.svg',
     })
+  })
+
+  it('is cached per product and cleared by any product or category change', async () => {
+    await import('@/lib/server/products')
+    expect(cacheCalls).toContainEqual({ key: 'product-detail', tags: ['products', 'categories'] })
+  })
+
+  it('returns dates as ISO strings, the same shape a cache hit has', async () => {
+    const created = new Date('2026-10-01T10:00:00Z')
+    mockPrisma.product.findUnique.mockResolvedValue(
+      createMockProduct({
+        createdAt: created,
+        reviews: [{ id: 'r1', rating: 5, createdAt: created, user: { name: 'Asha', imageUrl: null } }],
+        _count: { reviews: 1 },
+      })
+    )
+    mockPrisma.product.findMany.mockResolvedValue([])
+    const { loadProductDetail } = await import('@/lib/server/products')
+
+    const detail = await loadProductDetail('dated-saree')
+
+    expect(detail?.createdAt).toBe('2026-10-01T10:00:00.000Z')
+    expect(detail?.reviews[0].createdAt).toBe('2026-10-01T10:00:00.000Z')
   })
 })

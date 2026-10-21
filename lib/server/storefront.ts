@@ -288,7 +288,10 @@ export const loadCategoryCards = cached(
       id: category.id,
       name: category.name,
       slug: category.slug,
-      image: watermarkImageUrl(category.image || productImage(category) || '/images/placeholder-category.svg'),
+      // An uploaded category image is shop artwork and is shown clean, like
+      // hero banners. A product photo standing in for it is still a product
+      // photo and keeps the watermark (docs/WATERMARK.md).
+      image: category.image || watermarkImageUrl(productImage(category) || '/images/placeholder-category.svg'),
       // Counts the sub-categories too — a top-level category's own product
       // list is usually empty, which is what made every card read "0 Products".
       count: subtreeCounts.get(category.id) ?? 0,
@@ -504,84 +507,68 @@ export const loadPromotionalData = cached(
   { tags: [TAG.promos] }
 );
 
-export interface PromotionalStats {
-  bestSellers: {
-    count: number;
-    products: Array<{ name: string; slug: string; price: number; totalSales: number }>;
-  };
-  saleProducts: {
-    count: number;
-    maxDiscount: number;
-    products: Array<{ name: string; slug: string; price: number; comparePrice: number; discount: number }>;
-  };
-  featuredProducts: {
-    count: number;
-    products: Array<{ name: string; slug: string; category: string }>;
-  };
+export interface BestDeal {
+  name: string;
+  slug: string;
+  price: number;
+  comparePrice: number;
+  /** Whole-number percentage off the compare-at price. */
+  discount: number;
+  /** First product photo (watermarked), or null when the product has none. */
+  image: string | null;
+  category: string | null;
+  /** How many products are on sale right now, for the "see all" link. */
+  saleCount: number;
 }
 
 /**
- * The three highlight cards under the hero (best sellers, sale, featured).
- * `PromotionalBanner` always expected this shape but was wired to the
- * banners endpoint, so it rendered nothing; the home page now feeds it from
- * here. Cards with a zero count stay hidden.
+ * The single biggest markdown in the shop, shown as the deal banner under
+ * the hero. Every on-sale product is compared (three numbers each, the
+ * catalogue is small), then the winner is loaded with its first photo. The
+ * newest product wins a tie. Null when nothing is on sale; the banner hides.
  */
-export const loadPromotionalStats = cached(
-  async (): Promise<PromotionalStats> => {
-    const onSale = { isActive: true, comparePrice: { gt: prisma.product.fields.price } };
-    const [bestSellerCount, topSeller, saleCount, saleSample, featuredCount, latestFeatured] =
-      await Promise.all([
-        prisma.product.count({ where: { isActive: true, salesCount: { gt: 0 } } }),
-        prisma.product.findFirst({
-          where: { isActive: true, salesCount: { gt: 0 } },
-          orderBy: { salesCount: 'desc' },
-          select: { name: true, slug: true, price: true, salesCount: true },
-        }),
-        prisma.product.count({ where: onSale }),
-        prisma.product.findMany({
-          where: onSale,
-          select: { name: true, slug: true, price: true, comparePrice: true },
-          orderBy: { createdAt: 'desc' },
-          take: 50,
-        }),
-        prisma.product.count({ where: { isActive: true, isFeatured: true } }),
-        prisma.product.findFirst({
-          where: { isActive: true, isFeatured: true },
-          orderBy: { createdAt: 'desc' },
-          select: { name: true, slug: true, category: { select: { name: true } } },
-        }),
-      ]);
+export const loadBestDeal = cached(
+  async (): Promise<BestDeal | null> => {
+    const onSale = await prisma.product.findMany({
+      where: { isActive: true, comparePrice: { gt: prisma.product.fields.price } },
+      select: { id: true, price: true, comparePrice: true },
+      orderBy: { createdAt: 'desc' },
+    });
 
-    const sale = saleSample
-      .map((p) => ({
-        name: p.name,
-        slug: p.slug,
-        price: p.price,
-        comparePrice: p.comparePrice as number,
-        discount: Math.round(((p.comparePrice! - p.price) / p.comparePrice!) * 100),
-      }))
-      .sort((a, b) => b.discount - a.discount);
+    let best: { id: string; discount: number } | null = null;
+    for (const p of onSale) {
+      if (p.comparePrice == null || p.comparePrice <= p.price) continue;
+      const discount = Math.round(((p.comparePrice - p.price) / p.comparePrice) * 100);
+      // Strictly greater: with newest-first order, the newest keeps a tie.
+      if (!best || discount > best.discount) best = { id: p.id, discount };
+    }
+    if (!best) return null;
 
+    const product = await prisma.product.findUnique({
+      where: { id: best.id },
+      select: {
+        name: true,
+        slug: true,
+        price: true,
+        comparePrice: true,
+        images: { select: { url: true }, take: 1, orderBy: IMAGE_ORDER },
+        category: { select: { name: true } },
+      },
+    });
+    if (!product || product.comparePrice == null) return null;
+
+    const photo = product.images[0]?.url;
     return {
-      bestSellers: {
-        count: bestSellerCount,
-        products: topSeller
-          ? [{ name: topSeller.name, slug: topSeller.slug, price: topSeller.price, totalSales: topSeller.salesCount }]
-          : [],
-      },
-      saleProducts: {
-        count: saleCount,
-        maxDiscount: sale[0]?.discount ?? 0,
-        products: sale.slice(0, 1),
-      },
-      featuredProducts: {
-        count: featuredCount,
-        products: latestFeatured
-          ? [{ name: latestFeatured.name, slug: latestFeatured.slug, category: latestFeatured.category?.name ?? '' }]
-          : [],
-      },
+      name: product.name,
+      slug: product.slug,
+      price: product.price,
+      comparePrice: product.comparePrice,
+      discount: best.discount,
+      image: photo ? watermarkImageUrl(photo) : null,
+      category: product.category?.name ?? null,
+      saleCount: onSale.length,
     };
   },
-  'promotional-stats',
+  'best-deal',
   { tags: [TAG.products] }
 );

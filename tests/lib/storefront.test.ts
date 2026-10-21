@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 const mockPrisma = {
   heroSlide: { findMany: vi.fn() },
-  product: { findMany: vi.fn(), findFirst: vi.fn(), count: vi.fn(), groupBy: vi.fn(), fields: { price: 'price' } },
+  product: { findMany: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), count: vi.fn(), groupBy: vi.fn(), fields: { price: 'price' } },
   category: { findMany: vi.fn() },
   promotionalBanner: { findMany: vi.fn() },
 }
@@ -81,43 +81,120 @@ describe('loadHeroSlides', () => {
   })
 })
 
-describe('loadPromotionalStats', () => {
-  beforeEach(() => vi.clearAllMocks())
+describe('loadCategoryCards', () => {
+  // Cloudinary versions after the watermark cutover (2026-10-19).
+  const CATEGORY_ART = 'https://res.cloudinary.com/demo/image/upload/v1792472341/saakie-byknk/categories/silk.jpg'
+  const PRODUCT_PHOTO = 'https://res.cloudinary.com/demo/image/upload/v1792472341/saakie-byknk/products/saree.jpg'
 
-  it('builds the three highlight cards from counts and one example each', async () => {
-    mockPrisma.product.count
-      .mockResolvedValueOnce(12) // best sellers
-      .mockResolvedValueOnce(3) // on sale
-      .mockResolvedValueOnce(5) // featured
-    mockPrisma.product.findFirst
-      .mockResolvedValueOnce({ name: 'Top', slug: 'top', price: 999, salesCount: 40 })
-      .mockResolvedValueOnce({ name: 'Feat', slug: 'feat', category: { name: 'Silk' } })
-    mockPrisma.product.findMany.mockResolvedValue([
-      { name: 'Small deal', slug: 's', price: 90, comparePrice: 100 },
-      { name: 'Big deal', slug: 'b', price: 50, comparePrice: 100 },
-    ])
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockPrisma.product.groupBy.mockResolvedValue([])
+    // tests/setup.tsx switches the watermark off; these tests are about it.
+    vi.stubEnv('WATERMARK_ENABLED', 'true')
+  })
+  afterEach(() => vi.unstubAllEnvs())
 
-    const { loadPromotionalStats } = await import('@/lib/server/storefront')
-    const stats = await loadPromotionalStats()
+  const categories = (rows: unknown[]) =>
+    mockPrisma.category.findMany.mockImplementation(({ select }: { select: Record<string, unknown> }) =>
+      // The tree helper asks for id/parentId only; the cards ask for more.
+      Promise.resolve('products' in select ? rows : [])
+    )
 
-    expect(stats.bestSellers).toEqual({ count: 12, products: [{ name: 'Top', slug: 'top', price: 999, totalSales: 40 }] })
-    expect(stats.saleProducts.count).toBe(3)
-    expect(stats.saleProducts.maxDiscount).toBe(50)
-    expect(stats.saleProducts.products[0].name).toBe('Big deal')
-    expect(stats.featuredProducts).toEqual({ count: 5, products: [{ name: 'Feat', slug: 'feat', category: 'Silk' }] })
+  const tile = (image: string | null, productUrl?: string) => ({
+    id: 'c1',
+    name: 'Silk',
+    slug: 'silk',
+    image,
+    products: productUrl ? [{ images: [{ url: productUrl }] }] : [],
+    children: [],
   })
 
-  it('reports zero counts with no examples on an empty catalogue', async () => {
-    mockPrisma.product.count.mockResolvedValue(0)
-    mockPrisma.product.findFirst.mockResolvedValue(null)
+  it('shows an uploaded category image without the watermark', async () => {
+    categories([tile(CATEGORY_ART, PRODUCT_PHOTO)])
+    const { loadCategoryCards } = await import('@/lib/server/storefront')
+
+    const [card] = await loadCategoryCards()
+
+    expect(card.image).toBe(CATEGORY_ART)
+  })
+
+  it('keeps the watermark on a product photo standing in for a missing category image', async () => {
+    categories([tile(null, PRODUCT_PHOTO)])
+    const { loadCategoryCards } = await import('@/lib/server/storefront')
+
+    const [card] = await loadCategoryCards()
+
+    expect(card.image).toContain('l_saakie-byknk:watermark')
+    expect(card.image).toContain('saakie-byknk/products/saree.jpg')
+  })
+
+  it('falls back to the placeholder when there is no photo at all', async () => {
+    categories([tile(null)])
+    const { loadCategoryCards } = await import('@/lib/server/storefront')
+
+    const [card] = await loadCategoryCards()
+
+    expect(card.image).toBe('/images/placeholder-category.svg')
+  })
+})
+
+describe('loadBestDeal', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('picks the biggest discount across every product on sale', async () => {
+    mockPrisma.product.findMany.mockResolvedValue([
+      { id: 'small', price: 90, comparePrice: 100 },
+      { id: 'big', price: 79, comparePrice: 100 },
+      { id: 'mid', price: 85, comparePrice: 100 },
+    ])
+    mockPrisma.product.findUnique.mockResolvedValue({
+      name: 'Floral Handwork Saree',
+      slug: 'floral',
+      price: 79,
+      comparePrice: 100,
+      images: [{ url: 'https://example.com/floral.jpg' }],
+      category: { name: 'Chiffon' },
+    })
+
+    const { loadBestDeal } = await import('@/lib/server/storefront')
+    const deal = await loadBestDeal()
+
+    expect(mockPrisma.product.findUnique.mock.calls[0][0].where).toEqual({ id: 'big' })
+    expect(deal).toMatchObject({
+      name: 'Floral Handwork Saree',
+      slug: 'floral',
+      discount: 21,
+      price: 79,
+      comparePrice: 100,
+      image: 'https://example.com/floral.jpg',
+      category: 'Chiffon',
+      saleCount: 3,
+    })
+  })
+
+  it('keeps the newest product on a tie', async () => {
+    // Newest first, as the query orders them.
+    mockPrisma.product.findMany.mockResolvedValue([
+      { id: 'newer', price: 80, comparePrice: 100 },
+      { id: 'older', price: 80, comparePrice: 100 },
+    ])
+    mockPrisma.product.findUnique.mockResolvedValue({
+      name: 'N', slug: 'n', price: 80, comparePrice: 100, images: [], category: null,
+    })
+
+    const { loadBestDeal } = await import('@/lib/server/storefront')
+    const deal = await loadBestDeal()
+
+    expect(mockPrisma.product.findUnique.mock.calls[0][0].where).toEqual({ id: 'newer' })
+    expect(deal?.image).toBeNull()
+  })
+
+  it('returns null when nothing is on sale', async () => {
     mockPrisma.product.findMany.mockResolvedValue([])
 
-    const { loadPromotionalStats } = await import('@/lib/server/storefront')
-    const stats = await loadPromotionalStats()
-
-    expect(stats.bestSellers.products).toEqual([])
-    expect(stats.saleProducts.maxDiscount).toBe(0)
-    expect(stats.featuredProducts.count).toBe(0)
+    const { loadBestDeal } = await import('@/lib/server/storefront')
+    expect(await loadBestDeal()).toBeNull()
+    expect(mockPrisma.product.findUnique).not.toHaveBeenCalled()
   })
 })
 

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { useSession } from '@/lib/auth-client'
 import { useQuery } from '@tanstack/react-query'
 import { Search, Heart, User, ChevronDown } from 'lucide-react'
@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 import { fetchApi } from '@/lib/api'
 import { CartIcon } from '@/components/cart'
 import { socialLinks } from '@/components/layout/social-links'
+import { SearchSuggest } from '@/components/layout/search-suggest'
 
 /** A category as GET /api/categories/nav returns it, already pruned of
  *  anything whose subtree holds no active product. */
@@ -359,13 +360,11 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
   // Which variant's Categories dropdown is open, if any. One at a time: the
   // desktop bar and the mobile strip are never on screen together, and the
   // drawer sits above both.
   const [openMenu, setOpenMenu] = useState<NavVariant | null>(null)
   const pathname = usePathname()
-  const router = useRouter()
   const { data: session, status } = useSession()
   const isSignedIn = status === 'authenticated'
   const role = session?.user?.role
@@ -428,16 +427,6 @@ export function Header() {
     } else {
       setMobileMenuOpen(true)
     }
-  }
-
-  // Submit the header search — navigates to the products page filtered by query.
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const query = searchQuery.trim()
-    if (!query) return
-    router.push(`/products?search=${encodeURIComponent(query)}`)
-    setSearchOpen(false)
-    setSearchQuery('')
   }
 
   // Close menu when pressing Escape key
@@ -647,23 +636,8 @@ export function Header() {
 
         {searchOpen && (
           <div className="py-4 border-t">
-            <form onSubmit={handleSearchSubmit} className="relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for fashion, colors, styles..."
-                className="w-full px-4 py-2 pr-12 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                autoFocus
-              />
-              <button
-                type="submit"
-                aria-label="Search"
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-500 hover:text-primary"
-              >
-                <Search size={20} />
-              </button>
-            </form>
+            {/* Live suggestions as each letter is typed; Enter searches everything. */}
+            <SearchSuggest autoFocus onNavigate={() => setSearchOpen(false)} />
           </div>
         )}
 

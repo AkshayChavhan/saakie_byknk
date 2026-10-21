@@ -18,28 +18,28 @@ const withSerwist = withSerwistInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    // Hosts allowed through the Next.js image optimizer. `images.pexels.com`
-    // is required for the royalty-free demo saree photos (see scripts/
-    // seed-sample-sarees.mjs); without it the optimizer blocks them and every
-    // product image renders broken.
+    // Images are resized by their own CDN, not by this server: product,
+    // category and hero photos by Cloudinary (the size and best format are
+    // written into the Cloudinary URL), demo and profile photos by their
+    // hosts. See lib/image-loader.ts. This used to run every photo through
+    // the platform's image optimizer, which re-downloaded it from Cloudinary
+    // and re-encoded it per width.
+    loader: 'custom',
+    loaderFile: './lib/image-loader.ts',
+    // Hosts next/image may show. Not enforced for a custom loader, kept as
+    // the list of where images come from. `images.pexels.com` serves the
+    // royalty-free demo saree photos (scripts/seed-sample-sarees.mjs);
+    // `img.clerk.com` the profile photo copied from a Google/GitHub sign-up
+    // (lib/server/clerk-users.ts).
     remotePatterns: [
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'images.pexels.com' },
       { protocol: 'https', hostname: 'saakie.vercel.app' },
-      // Profile photos Clerk hosts — a Google/GitHub sign-up's picture is
-      // copied onto the store user (lib/server/clerk-users.ts) and rendered
-      // with next/image in the header and on the account page.
       { protocol: 'https', hostname: 'img.clerk.com' },
     ],
-    // Allow SVG sources (e.g. /images/placeholder-category.svg) through the
-    // image optimizer. Hardened so a served SVG can never execute scripts:
-    // it is sandboxed with a strict CSP and sent as an attachment.
-    // AVIF first (roughly 20% smaller than WebP for these photos), WebP for
-    // browsers without it. The optimizer keeps a rendered variant for 30 days
-    // instead of the 60 s default, so repeat visits are served from its cache.
-    formats: ['image/avif', 'image/webp'],
-    minimumCacheTTL: 60 * 60 * 24 * 30,
+    // Allow SVG sources (e.g. /images/placeholder-category.svg), hardened so
+    // a served SVG can never execute scripts.
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",

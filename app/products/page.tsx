@@ -27,6 +27,8 @@ import { SareeLoader } from '@/components/ui/saree-loader'
 import { RatingBadge } from '@/components/ui/rating-badge'
 import { fetchApi } from '@/lib/api'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { PrebookCapsule } from '@/components/products/prebook-capsule'
+import { isPrebookable } from '@/lib/prebook'
 
 interface Product {
   id: string
@@ -555,10 +557,12 @@ function ProductsContent() {
 
                           {/* Out of Stock Overlay */}
                           {!product.inStock && (
-                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm">
+                            <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2 backdrop-blur-sm">
                               <span className="text-white font-semibold bg-black/50 px-4 py-2 rounded-full">
                                 Out of Stock
                               </span>
+                              {/* Still orderable: say so, so a sold-out saree is not written off. */}
+                              {isPrebookable({ stock: product.stock }) && <PrebookCapsule />}
                             </div>
                           )}
 

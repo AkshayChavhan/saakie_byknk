@@ -305,8 +305,10 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - Relation fields are indexed in `prisma/schema.prisma` (Prisma does not do this on MongoDB). Add an `@@index` when adding a relation or a new filter/sort field.
 - Pages load their data in the server component and pass it as `initial*` props (home, product, category, cart, checkout, wishlist); the loaders live in `lib/server/*.ts` and the public API routes call the same functions. Do not add a `useEffect` fetch for data the server page can load.
 - Typed filters go through `useDebouncedValue` with an `AbortController`; keep current rows on screen during a refetch.
+- The shop listing (`GET /api/products`, used by /products and category pages) filters, sorts and pages the cached catalogue in memory (`lib/server/catalogue.ts`); a filter change reads no database. Add new listing filters there.
 - `GET /api/admin/products` and `/api/admin/users` search, filter and page on the server and return `stats`; admin tables must not filter the rows they loaded.
 - The service worker never caches `/api/*`, Clerk or payment hosts, or private page navigations (`lib/sw-rules.ts`).
+- Images: `next/image` uses the custom loader in `lib/image-loader.ts`, so Cloudinary resizes and re-encodes (`c_limit,w_<n>` … `f_auto,q_auto:eco`; hero banners keep `q_auto`) and the server's image optimizer is never used. Keep new image hosts handled there.
 - Product image order: the admin form sets a sequence (drag or arrows; `lib/image-sequence.ts`), stored as `Image.order` with image 1 flagged `isPrimary`. Every query that loads product images must use `orderBy: IMAGE_ORDER` from `lib/server/image-order.ts`, never an unordered `images: true` or `take: 1`.
 - Full details: `docs/PERFORMANCE.md`
 
@@ -316,6 +318,10 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 - Any API response or server loader that returns a product image must pass it through `markProduct` / `markLines` from `lib/server/watermark.ts`. Components never see clean URLs.
 - The overlay asset is uploaded once with `node scripts/upload-watermark.mjs` (source: `assets/branding/saakie-watermark.png`); run it before deploying.
 - Full details: `docs/WATERMARK.md`
+
+## Customer Issues and Incidents
+
+- `docs/INCIDENTS.md` is the support playbook built from the tools that exist today: paid-but-unconfirmed orders, refunds, sign-in problems, rollback, restore, and the list of known gaps. Update it whenever one of those tools or flows changes.
 
 ## Webhook Integration
 
