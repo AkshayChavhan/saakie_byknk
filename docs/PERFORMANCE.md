@@ -56,6 +56,7 @@ missed.
 | `GET /api/hero-slides` | `hero-slides`, `products` | admin hero slide writes, product writes |
 | `GET /api/promotional-data` | `promotional-banners` | admin banner writes |
 | `GET /api/products/featured` | `products` | product writes, payment settlement, review moderation |
+| `/products/[slug]` and `GET /api/products/[slug]` (`loadProductDetail`, per slug) | `products`, `categories` | admin product writes, payment settlement, review moderation, category writes |
 | `GET /api/search/suggest` (`loadSearchIndex`: every active saree and category, filtered in memory per keystroke) | `products`, `categories` | admin product and category writes, payment settlement, review moderation |
 | `getStoreSettings()` | `settings` | `PATCH /api/admin/settings` |
 
@@ -88,7 +89,7 @@ their data in the server component and pass it as props:
 | Page | Loader | What the client gets |
 |---|---|---|
 | `/` | `lib/server/storefront.ts` (`loadHeroSlides`, `loadBestDeal`, `loadCategoryCards`, `loadFeaturedProducts`) | all four sections as props; the hero image is in the first HTML with `priority` |
-| `/products/[slug]` | `lib/server/products.ts` `loadProductDetail` | `initialProduct`; metadata, JSON-LD and the body share one query via React `cache()` |
+| `/products/[slug]` | `lib/server/products.ts` `loadProductDetail` | `initialProduct`; tagged cache per slug, so a repeat view reads no database; metadata, JSON-LD and the body share one lookup via React `cache()` |
 | `/categories/[slug]` | `lib/server/categories.ts` `loadCategoryDetail` | `initialCategory`; the listing request starts immediately |
 | `/cart` | `lib/server/cart.ts` `loadCart` | `initialCart` |
 | `/checkout` | cart + addresses + settings in `app/checkout/page.tsx` | `initial` for `CheckoutView` |
