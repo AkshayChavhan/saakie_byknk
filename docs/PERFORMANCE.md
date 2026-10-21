@@ -147,5 +147,15 @@ are server components.
 to account, cart, checkout, admin, wishlist or the auth pages (rules in
 `lib/sw-rules.ts`). Cloudinary responses are cached only with status 200;
 opaque responses cost several megabytes of quota each. `signOut()` deletes
-the per-visitor `pages` cache. `next.config.mjs` enables AVIF ahead of WebP
-and keeps optimised variants for 30 days.
+the per-visitor `pages` cache.
+
+Images are resized by their own CDN, never by this server. `next.config.mjs`
+sets a custom loader (`lib/image-loader.ts`): a Cloudinary photo's URL gets
+`c_limit,w_<width>` before any existing step (the watermark, so it scales
+with the resized photo) and `f_auto,q_auto` after it, so the browser
+downloads the right size in WebP/AVIF straight from Cloudinary. Unsplash and
+Pexels demo photos and Clerk profile photos use their host's own width
+parameter; the two small files in `/public` are served as they are. Nothing
+goes through `/_next/image` any more. These cross-origin images reach the
+service worker as opaque responses, so it leaves them to the browser's HTTP
+cache, which Cloudinary fills for 30 days.
