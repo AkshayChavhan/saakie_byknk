@@ -1,0 +1,12 @@
+{
+  // For standalone scripts that run the shop's server code with tsx, e.g.
+  // scripts/backup-nightly.ts. Same settings as the app, plus a stand-in for
+  // Next.js's `server-only` marker, which only Next.js itself provides.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./*"],
+      "server-only": ["./scripts/lib/server-only.ts"]
+    }
+  }
+}
