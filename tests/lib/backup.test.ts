@@ -15,18 +15,27 @@ vi.mock('@/lib/prisma', () => ({ prisma: mockPrisma, default: mockPrisma }))
 function makeDb(collections: Record<string, unknown[]>, databaseName: string) {
   const written: Record<string, unknown[]> = {}
   const dropped: string[] = []
+  const indexes: string[] = []
+  /** Top-level equality match, the only kind of filter the backup uses. */
+  const matches = (doc: unknown, filter: Record<string, unknown> = {}) =>
+    Object.entries(filter).every(([k, v]) => (doc as Record<string, unknown>)[k] === v)
   const db = {
     databaseName,
     listCollections: () => ({
       toArray: async () => Object.keys(collections).map((name) => ({ name })),
     }),
     collection: (name: string) => ({
-      find: () => ({
-        [Symbol.asyncIterator]: async function* () {
-          for (const doc of collections[name] ?? []) yield doc
-        },
-        toArray: async () => collections[name] ?? [],
-      }),
+      find: (filter: Record<string, unknown> = {}) => {
+        const docs = (collections[name] ?? []).filter((d) => matches(d, filter))
+        return {
+          [Symbol.asyncIterator]: async function* () {
+            for (const doc of docs) yield doc
+          },
+          toArray: async () => docs,
+        }
+      },
+      distinct: async (field: string) =>
+        Array.from(new Set((collections[name] ?? []).map((d) => (d as Record<string, unknown>)[field]))),
       insertMany: async (docs: unknown[]) => {
         written[name] = [...(written[name] ?? []), ...docs]
         return { insertedCount: docs.length }
@@ -35,13 +44,21 @@ function makeDb(collections: Record<string, unknown[]>, databaseName: string) {
         written[name] = [...(written[name] ?? []), doc]
         return { insertedId: 'x' }
       },
-      deleteMany: async () => ({ deletedCount: 0 }),
+      deleteMany: async (filter: Record<string, unknown> = {}) => {
+        const before = written[name] ?? []
+        written[name] = before.filter((d) => !matches(d, filter))
+        return { deletedCount: before.length - written[name].length }
+      },
+      createIndex: async (spec: Record<string, number>) => {
+        indexes.push(`${name}:${Object.keys(spec).join(',')}`)
+        return 'idx'
+      },
       drop: async () => {
         dropped.push(name)
       },
     }),
   }
-  return { db, written, dropped }
+  return { db, written, dropped, indexes }
 }
 
 const clients: Array<{ uri: string; db: unknown }> = []
@@ -273,7 +290,7 @@ describe('lib/server/backup', () => {
       return { src, dst }
     }
 
-    it('copies every document into snapshot-named collections', async () => {
+    it('copies every document into one collection named after the snapshot', async () => {
       const { dst } = wire({
         products: [{ _id: 1 }, { _id: 2 }],
         orders: [{ _id: 3 }],
@@ -285,8 +302,15 @@ describe('lib/server/backup', () => {
       expect(result.status).toBe('SUCCESS')
       expect(result.totalDocuments).toBe(3)
       expect(result.totalCollections).toBe(2)
-      expect(dst.written[`${SNAP}__products`]).toHaveLength(2)
-      expect(dst.written[`${SNAP}__orders`]).toHaveLength(1)
+      // One backup = one collection, each record tagged with where it came from.
+      expect(Object.keys(dst.written).filter((n) => n.startsWith('backup_'))).toEqual([`backup_${SNAP}`])
+      expect(dst.written[`backup_${SNAP}`]).toEqual([
+        { collection: 'orders', data: { _id: 3 } },
+        { collection: 'products', data: { _id: 1 } },
+        { collection: 'products', data: { _id: 2 } },
+      ])
+      // Indexed on the collection name for restores and Atlas's filter box.
+      expect(dst.indexes).toContain(`backup_${SNAP}:collection`)
     })
 
     it('writes its manifest into the BACKUP database, not the live one', async () => {
@@ -305,6 +329,7 @@ describe('lib/server/backup', () => {
         products: [{ _id: 1 }],
         'system.views': [{ _id: 9 }],
         '20260101T000000Z__products': [{ _id: 8 }],
+        backup_20260102T000000Z: [{ _id: 6 }],
         _backup_runs: [{ _id: 7 }],
       })
       const { runBackup } = await load()
@@ -343,10 +368,17 @@ describe('lib/server/backup', () => {
       const dst = makeDb({}, 'saakie_backup')
       const realCollection = dst.db.collection.bind(dst.db)
       dst.db.collection = (name: string) => {
-        if (name.endsWith('__orders')) {
-          return { ...realCollection(name), insertMany: async () => { throw new Error('disk full') } }
+        const real = realCollection(name)
+        return {
+          ...real,
+          // Writing the orders records fails part-way.
+          insertMany: async (docs: unknown[]) => {
+            if ((docs as Array<{ collection: string }>).some((d) => d.collection === 'orders')) {
+              throw new Error('disk full')
+            }
+            return real.insertMany(docs)
+          },
         }
-        return realCollection(name)
       }
       clients.push({ uri: LIVE, db: src.db }, { uri: BACKUP, db: dst.db })
       const { runBackup } = await load()
@@ -357,6 +389,8 @@ describe('lib/server/backup', () => {
       expect(result.ok).toBe(true)
       expect(result.collections.find((c) => c.collection === 'products')?.documents).toBe(1)
       expect(result.collections.find((c) => c.collection === 'orders')?.error).toContain('disk full')
+      // No half-copied orders left in the snapshot.
+      expect(dst.written[`backup_${SNAP}`]).toEqual([{ collection: 'products', data: { _id: 1 } }])
     })
 
     it('refuses to write into a destination that already holds shop collections', async () => {
@@ -381,7 +415,14 @@ describe('lib/server/backup', () => {
 
     it('accepts a backup database that holds only earlier snapshots and its manifest', async () => {
       const src = makeDb({ products: [{ _id: 1 }] }, 'saakie')
-      const dst = makeDb({ '20261001T203000Z__products': [{ _id: 1 }], _backup_runs: [{ _id: 'm' }] }, 'saakie_backup')
+      const dst = makeDb(
+        {
+          '20261001T203000Z__products': [{ _id: 1 }],
+          backup_20261002T203000Z: [{ collection: 'products', data: { _id: 1 } }],
+          _backup_runs: [{ _id: 'm' }],
+        },
+        'saakie_backup'
+      )
       clients.push({ uri: LIVE, db: src.db }, { uri: BACKUP, db: dst.db })
       const { runBackup } = await load()
 
@@ -421,6 +462,45 @@ describe('lib/server/backup', () => {
       for await (const chunk of gen) out += chunk
       return out
     }
+
+    it('exports a one-collection snapshot grouped by shop collection', async () => {
+      const dst = makeDb(
+        {
+          [`backup_${SNAP}`]: [
+            { collection: 'products', data: { _id: 1, name: 'Silk' } },
+            { collection: 'orders', data: { _id: 3 } },
+            { collection: 'products', data: { _id: 2, name: 'Cotton' } },
+          ],
+        },
+        'saakie_backup'
+      )
+      clients.push({ uri: BACKUP, db: dst.db })
+      const { streamSnapshotExport, EXPORT_FORMAT } = await load()
+
+      const parsed = JSON.parse(await collect(streamSnapshotExport(SNAP, now)))
+
+      expect(parsed.format).toBe(EXPORT_FORMAT)
+      expect(Object.keys(parsed.collections)).toEqual(['orders', 'products'])
+      expect(parsed.collections.products.map((d: { _id: { $numberInt: string } }) => d._id)).toEqual([
+        { $numberInt: '1' },
+        { $numberInt: '2' },
+      ])
+    })
+
+    it('round-trips ObjectIds and Dates from a one-collection snapshot', async () => {
+      const { ObjectId, BSON } = await import('mongodb')
+      const id = new ObjectId()
+      const placed = new Date('2026-10-01T09:30:00Z')
+      const dst = makeDb({ [`backup_${SNAP}`]: [{ collection: 'orders', data: { _id: id, placedAt: placed } }] }, 'saakie_backup')
+      clients.push({ uri: BACKUP, db: dst.db })
+      const { streamSnapshotExport } = await load()
+
+      const parsed = BSON.EJSON.parse(await collect(streamSnapshotExport(SNAP, now)), { relaxed: false })
+
+      expect(parsed.collections.orders[0]._id).toBeInstanceOf(ObjectId)
+      expect(parsed.collections.orders[0]._id.equals(id)).toBe(true)
+      expect(parsed.collections.orders[0].placedAt).toEqual(placed)
+    })
 
     it('emits a single parseable JSON document', async () => {
       const dst = makeDb(
@@ -548,6 +628,31 @@ describe('lib/server/backup', () => {
       const dropped = await pruneSnapshots({ db: () => dst.db } as never, '20260101T000000Z')
 
       expect(dropped).not.toContain('20260101T000000Z')
+    })
+
+    it('drops a whole snapshot in either layout: one collection now, several in the first', async () => {
+      // Six very old snapshots: the oldest goes, the newest five stay.
+      const collections: Record<string, unknown[]> = {
+        '20260101T000000Z__products': [],
+        '20260101T000000Z__orders': [],
+        backup_20260102T000000Z: [],
+        backup_20260103T000000Z: [],
+        backup_20260104T000000Z: [],
+        backup_20260105T000000Z: [],
+        backup_20260106T000000Z: [],
+      }
+      const dst = makeDb(collections, 'saakie_backup')
+      const { pruneSnapshots } = await load()
+
+      expect(await pruneSnapshots({ db: () => dst.db } as never, '20260106T000000Z')).toEqual(['20260101T000000Z'])
+      expect(dst.dropped.sort()).toEqual(['20260101T000000Z__orders', '20260101T000000Z__products'])
+
+      dst.dropped.length = 0
+      collections['backup_20260107T000000Z'] = []
+      delete collections['20260101T000000Z__products']
+      delete collections['20260101T000000Z__orders']
+      expect(await pruneSnapshots({ db: () => dst.db } as never, '20260107T000000Z')).toEqual(['20260102T000000Z'])
+      expect(dst.dropped).toEqual(['backup_20260102T000000Z'])
     })
 
     it('keeps everything when under the limit', async () => {

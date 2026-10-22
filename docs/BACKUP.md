@@ -15,14 +15,37 @@ night automatically, and on demand from `/admin/backup`.
 
 ## Snapshots, not a mirror
 
-Every run writes a new **snapshot**. Collections land in the backup database as
-`<snapshot>__<collection>`, where the snapshot is a UTC stamp:
+Every run writes a new **snapshot**: one collection in the backup database,
+named after the UTC time of the run, holding every document of every shop
+collection:
 
 ```
-20260927T101500Z__products
-20260927T101500Z__orders
-20260927T101500Z__users
+saakie_backup
+  _backup_runs                    list of all snapshots (the manifest)
+  backup_20261021T125504Z         one backup
+  backup_20261021T203012Z         the next one
 ```
+
+Inside a snapshot, each record says which shop collection it came from:
+
+```
+{ collection: "products", data: { name: "Manika", price: 7650, ... } }
+{ collection: "orders",   data: { orderNumber: "ORD-…", total: 2350, ... } }
+```
+
+To look at one shop collection inside a backup in Atlas's Data Explorer, type
+`{ collection: "products" }` in the filter box (the field is indexed).
+
+**Why one collection per backup:** the backup database reads as a tidy list of
+dated backups, and it stays far below the free Atlas plan's limit of 500
+collections per cluster. One collection per *shop* collection per backup
+(about 22 × 22 with nightly runs) would have reached that limit and made
+backups fail.
+
+**The first layout is still supported.** Snapshots taken before this change
+are stored as one collection per shop collection (`20261021T125504Z__products`,
+`20261021T125504Z__orders`, ...). Download, restore and retention read both
+layouts, so those snapshots stay usable until the retention rule removes them.
 
 This is the important design decision. A mirror — one copy, overwritten each
 run — sounds simpler, but if the live database is corrupted and you then press
@@ -219,7 +242,7 @@ working shop with an older copy of itself.
 node scripts/restore-backup.mjs --file ~/Downloads/saakie-backup-20260927T101500Z.json
 node scripts/restore-backup.mjs --file ~/Downloads/saakie-backup-20260927T101500Z.json --apply
 
-# List what snapshots exist in the backup database (reads only)
+# List what snapshots exist in the backup database (reads only; both layouts)
 node scripts/restore-backup.mjs
 
 # Show what WOULD change, without writing

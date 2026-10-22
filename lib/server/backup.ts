@@ -6,11 +6,19 @@ import prisma from '@/lib/prisma'
  * Copies the whole live database into a second, independent database so the
  * shop can be rebuilt if the live one is lost.
  *
- * Each run writes a SNAPSHOT rather than overwriting a mirror: collections land
- * in the backup database as `<snapshot>__<collection>`, where `<snapshot>` is a
- * UTC stamp. That matters — a mirror refreshed over a live database that has
- * just been corrupted would copy the corruption over the only good copy. With
- * snapshots you can go back a generation.
+ * Each run writes a SNAPSHOT rather than overwriting a mirror: one collection
+ * in the backup database named `backup_<stamp>` (a UTC stamp), holding every
+ * document of every shop collection as `{ collection, data }`. That matters — a
+ * mirror refreshed over a live database that has just been corrupted would copy
+ * the corruption over the only good copy. With snapshots you can go back a
+ * generation.
+ *
+ * One collection per backup, not one per shop collection, so the backup
+ * database reads as a tidy list of dated backups and stays far below the free
+ * Atlas plan's 500-collection limit however many backups are kept. The first
+ * layout (`<stamp>__<collection>`, one collection each) is still read,
+ * exported, restored and pruned, so snapshots taken before the change keep
+ * working.
  *
  * The backup database also keeps its own `_backup_runs` manifest. If the live
  * database is the thing that was lost, that manifest is what tells a restore
@@ -37,6 +45,29 @@ export const RETENTION = { dailyDays: 14, weeklyWeeks: 8, minimum: 5 } as const
 
 /** Manifest collection inside the backup database. */
 export const MANIFEST_COLLECTION = '_backup_runs'
+
+/** Name of the one collection that holds a snapshot: `backup_20261021T125504Z`. */
+export function snapshotCollection(stamp: string): string {
+  return `backup_${stamp}`
+}
+
+/** One document of a snapshot: the shop collection it came from, and the document. */
+export interface SnapshotRecord {
+  collection: string
+  data: Document
+}
+
+/**
+ * The stamp a backup-database collection belongs to, in either layout:
+ * `backup_<stamp>` (current) or `<stamp>__<collection>` (first layout).
+ * null for anything else, such as the manifest.
+ */
+export function snapshotOf(name: string): string | null {
+  const current = name.match(/^backup_(\d{8}T\d{6}Z)$/)
+  if (current) return current[1]
+  const first = name.match(/^(\d{8}T\d{6}Z)__.+$/)
+  return first ? first[1] : null
+}
 
 /** A run still RUNNING after this long is treated as dead, not as "in progress". */
 const STALE_RUN_MS = 15 * 60 * 1000
@@ -110,9 +141,14 @@ export function snapshotStamp(now: Date): string {
   return now.toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z')
 }
 
-/** Collections that are backup bookkeeping rather than shop data. */
+/** Shop collections, as opposed to system collections or backup bookkeeping. */
 function isCopyable(name: string): boolean {
-  return !name.startsWith('system.') && !name.startsWith('_backup') && !name.includes('__')
+  return (
+    !name.startsWith('system.') &&
+    !name.startsWith('_backup') &&
+    !name.includes('__') &&
+    snapshotOf(name) === null
+  )
 }
 
 export class BackupConfigError extends Error {
@@ -191,7 +227,8 @@ export async function runBackup(options: {
     const targetDatabase = targetDb.databaseName
 
     // Second guard, before anything is written: a backup database only ever
-    // holds snapshot collections (`<stamp>__name`) and its manifest. If the
+    // holds snapshot collections (`backup_<stamp>`, or `<stamp>__name` from the
+    // first layout) and its manifest. If the
     // destination has ordinary shop collections (products, users, ...), it is
     // a live database — most likely DATABASE_URL and BACKUP_DATABASE_URL were
     // swapped — so stop rather than write snapshots into it.
@@ -213,20 +250,19 @@ export async function runBackup(options: {
       .sort()
 
     const collections: CollectionResult[] = []
+    const destination = targetDb.collection<SnapshotRecord>(snapshotCollection(snapshot))
+    // A snapshot name is unique per run, but a retried run in the same second
+    // must not append to a half-written snapshot.
+    await destination.deleteMany({})
 
     for (const name of names) {
       try {
-        const destination = targetDb.collection(`${snapshot}__${name}`)
-        // A snapshot name is unique per run, but a retried run in the same
-        // second must not append to a half-written collection.
-        await destination.deleteMany({})
-
         const cursor = sourceDb.collection(name).find({})
-        let batch: Document[] = []
+        let batch: SnapshotRecord[] = []
         let copied = 0
 
         for await (const doc of cursor) {
-          batch.push(doc)
+          batch.push({ collection: name, data: doc })
           if (batch.length >= BATCH_SIZE) {
             await destination.insertMany(batch, { ordered: false })
             copied += batch.length
@@ -240,9 +276,16 @@ export async function runBackup(options: {
 
         collections.push({ collection: name, documents: copied })
       } catch (error) {
+        // Never leave half a collection in the snapshot: a restore would then
+        // replace a full live collection with a partial one.
+        await destination.deleteMany({ collection: name }).catch(() => undefined)
         collections.push({ collection: name, documents: 0, error: redact(error) })
       }
     }
+
+    // Lets a restore, and Atlas's filter box ({ collection: "products" }),
+    // pick out one shop collection's records without scanning the snapshot.
+    await destination.createIndex({ collection: 1 }).catch(() => undefined)
 
     const failed = collections.filter((c) => c.error)
     const totalDocuments = collections.reduce((sum, c) => sum + c.documents, 0)
@@ -383,14 +426,17 @@ export async function pruneSnapshots(
   const db = client.db()
   const names = (await db.listCollections({}, { nameOnly: true }).toArray()).map((c) => c.name)
 
-  const stamps = Array.from(
-    new Set(names.filter((n) => n.includes('__')).map((n) => n.slice(0, n.indexOf('__'))))
-  )
+  // Collections per snapshot: one in the current layout, several in the first.
+  const byStamp = new Map<string, string[]>()
+  for (const name of names) {
+    const stamp = snapshotOf(name)
+    if (stamp) byStamp.set(stamp, [...(byStamp.get(stamp) ?? []), name])
+  }
 
-  const doomed = snapshotsToDrop(stamps, now, keepAtLeast)
+  const doomed = snapshotsToDrop(Array.from(byStamp.keys()), now, keepAtLeast)
 
   for (const stamp of doomed) {
-    for (const name of names.filter((n) => n.startsWith(`${stamp}__`))) {
+    for (const name of byStamp.get(stamp) ?? []) {
       await db.collection(name).drop().catch(() => undefined)
     }
     await db.collection(MANIFEST_COLLECTION).deleteMany({ snapshot: stamp }).catch(() => undefined)
@@ -429,12 +475,12 @@ export async function* streamSnapshotExport(
     await client.connect()
     const db = client.db()
 
-    const names = (await db.listCollections({}, { nameOnly: true }).toArray())
-      .map((c) => c.name)
-      .filter((n) => n.startsWith(`${snapshot}__`))
-      .sort()
+    const all = (await db.listCollections({}, { nameOnly: true }).toArray()).map((c) => c.name)
+    const single = all.includes(snapshotCollection(snapshot))
+    // First layout: one backup collection per shop collection.
+    const names = all.filter((n) => n.startsWith(`${snapshot}__`)).sort()
 
-    if (names.length === 0) {
+    if (!single && names.length === 0) {
       throw new BackupConfigError(`Snapshot "${snapshot}" was not found.`, 'NO_SNAPSHOT')
     }
 
@@ -444,14 +490,33 @@ export async function* streamSnapshotExport(
       `  "database": ${JSON.stringify(db.databaseName)},\n` +
       `  "collections": {`
 
+    // Same file either way: { collection name: [documents] }.
+    const sources: Array<{ collection: string; docs: () => AsyncIterable<Document> }> = single
+      ? (
+          (await db.collection<SnapshotRecord>(snapshotCollection(snapshot)).distinct('collection')) as string[]
+        )
+          .sort()
+          .map((collection) => ({
+            collection,
+            docs: async function* () {
+              const records = db
+                .collection<SnapshotRecord>(snapshotCollection(snapshot))
+                .find({ collection })
+              for await (const record of records) yield record.data
+            },
+          }))
+      : names.map((name) => ({
+          collection: name.slice(snapshot.length + 2),
+          docs: () => db.collection(name).find({}),
+        }))
+
     let firstCollection = true
-    for (const name of names) {
-      const collection = name.slice(snapshot.length + 2)
+    for (const { collection, docs } of sources) {
       yield `${firstCollection ? '' : ','}\n    ${JSON.stringify(collection)}: [`
       firstCollection = false
 
       let firstDoc = true
-      for await (const doc of db.collection(name).find({})) {
+      for await (const doc of docs()) {
         yield `${firstDoc ? '' : ','}\n      ${BSON.EJSON.stringify(doc, { relaxed: false })}`
         firstDoc = false
       }

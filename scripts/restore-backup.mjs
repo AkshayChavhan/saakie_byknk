@@ -17,6 +17,10 @@
 //
 // --file needs only DATABASE_URL: it is the path you use when the backup
 // cluster is unreachable too, and all you still have is the downloaded file.
+//
+// Snapshots come in two layouts, both read here: `backup_<stamp>`, one
+// collection holding { collection, data } records (current), and
+// `<stamp>__<collection>`, one collection per shop collection (first layout).
 import { MongoClient, BSON } from 'mongodb';
 import { readFileSync, existsSync } from 'node:fs';
 import { createInterface } from 'node:readline/promises';
@@ -31,6 +35,14 @@ const SNAPSHOT = valueOf('--snapshot');
 const FILE = valueOf('--file');
 const MANIFEST = '_backup_runs';
 const EXPORT_FORMAT = 'saakie-backup/v1';
+
+/** Stamp of a snapshot collection in either layout, or null. */
+function snapshotOf(name) {
+  const current = name.match(/^backup_(\d{8}T\d{6}Z)$/);
+  if (current) return current[1];
+  const first = name.match(/^(\d{8}T\d{6}Z)__.+$/);
+  return first ? first[1] : null;
+}
 
 function readEnv(key) {
   for (const file of ['.env.local', '.env']) {
@@ -101,7 +113,7 @@ try {
   // ---- list mode -----------------------------------------------------------
   if (!SNAPSHOT && !FILE) {
     const names = (await backupDb.listCollections({}, { nameOnly: true }).toArray()).map((c) => c.name);
-    const stamps = [...new Set(names.filter((n) => n.includes('__')).map((n) => n.slice(0, n.indexOf('__'))))].sort().reverse();
+    const stamps = [...new Set(names.map(snapshotOf).filter(Boolean))].sort().reverse();
     console.log(`\nSnapshots in "${backupDb.databaseName}":\n`);
     if (stamps.length === 0) {
       console.log('  (none — run a backup from /admin/backup first)\n');
@@ -109,7 +121,9 @@ try {
       const manifest = await backupDb.collection(MANIFEST).find({}).toArray();
       for (const stamp of stamps) {
         const entry = manifest.find((m) => m.snapshot === stamp);
-        const count = names.filter((n) => n.startsWith(`${stamp}__`)).length;
+        const count = names.includes(`backup_${stamp}`)
+          ? (await backupDb.collection(`backup_${stamp}`).distinct('collection')).length
+          : names.filter((n) => n.startsWith(`${stamp}__`)).length;
         console.log(`  ${stamp}  ${count} collections  ${entry ? `${entry.totalDocuments} docs  ${entry.status}` : ''}`);
       }
       console.log(`\nRestore one with:\n  node scripts/restore-backup.mjs --snapshot ${stamps[0]} --apply\n`);
@@ -130,17 +144,27 @@ try {
     }
   } else {
     const names = (await backupDb.listCollections({}, { nameOnly: true }).toArray()).map((c) => c.name);
+    const single = `backup_${SNAPSHOT}`;
     const mine = names.filter((n) => n.startsWith(`${SNAPSHOT}__`)).sort();
-    if (mine.length === 0) {
+    if (!names.includes(single) && mine.length === 0) {
       console.error(`ERROR: snapshot "${SNAPSHOT}" not found. Run without --snapshot to list.`);
       process.exit(1);
     }
     label = `snapshot ${SNAPSHOT} in ${backupDb.databaseName}`;
-    for (const name of mine) {
-      const target = name.slice(SNAPSHOT.length + 2);
-      const incoming = await backupDb.collection(name).countDocuments();
-      const current = await liveDb.collection(target).countDocuments().catch(() => 0);
-      plan.push({ target, sourceCollection: name, incoming, current });
+    if (names.includes(single)) {
+      // Current layout: one collection, records tagged with their collection.
+      for (const target of (await backupDb.collection(single).distinct('collection')).sort()) {
+        const incoming = await backupDb.collection(single).countDocuments({ collection: target });
+        const current = await liveDb.collection(target).countDocuments().catch(() => 0);
+        plan.push({ target, records: single, incoming, current });
+      }
+    } else {
+      for (const name of mine) {
+        const target = name.slice(SNAPSHOT.length + 2);
+        const incoming = await backupDb.collection(name).countDocuments();
+        const current = await liveDb.collection(target).countDocuments().catch(() => 0);
+        plan.push({ target, sourceCollection: name, incoming, current });
+      }
     }
   }
 
@@ -166,7 +190,11 @@ try {
   }
 
   for (const entry of plan) {
-    const docs = entry.docs ?? (await backupDb.collection(entry.sourceCollection).find({}).toArray());
+    const docs =
+      entry.docs ??
+      (entry.records
+        ? (await backupDb.collection(entry.records).find({ collection: entry.target }).toArray()).map((r) => r.data)
+        : await backupDb.collection(entry.sourceCollection).find({}).toArray());
     await liveDb.collection(entry.target).deleteMany({});
     for (let i = 0; i < docs.length; i += 500) {
       const slice = docs.slice(i, i + 500);
