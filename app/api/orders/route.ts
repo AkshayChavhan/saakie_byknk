@@ -17,9 +17,19 @@ export async function GET() {
     if (r instanceof NextResponse) return r;
 
     const orders = await prisma.order.findMany({
-      // Orders the customer has cleared away are hidden from them but still
-      // exist for admin and reporting — see DELETE /api/orders/[id].
-      where: { userId: r.id, customerHiddenAt: null },
+      where: {
+        userId: r.id,
+        // Only orders that were paid for. Checkout saves the order before the
+        // payment window opens, so an abandoned or failed payment would
+        // otherwise show up here; admin still sees those. REFUNDED stays so
+        // the customer can see their refund.
+        paymentStatus: { in: ['PAID', 'REFUNDED'] },
+        // Orders the customer has cleared away are hidden from them but still
+        // exist for admin and reporting — see DELETE /api/orders/[id]. On
+        // MongoDB `null` only matches a field saved as null, not one that was
+        // never written, so both are checked.
+        OR: [{ customerHiddenAt: null }, { customerHiddenAt: { isSet: false } }],
+      },
       include: {
         items: {
           include: {

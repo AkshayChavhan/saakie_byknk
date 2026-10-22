@@ -22,6 +22,9 @@ nobody assumes a safety net that is not there.
 ### A. The customer paid, but the order shows unpaid or pending
 
 The most important case. Money has left the customer, so treat it as urgent.
+Until the order is marked paid it does not appear on the customer's orders
+page at all (only paid and refunded orders are listed there), so they may
+report it as "my order disappeared".
 
 1. In the gateway dashboard, confirm the payment is captured.
 2. **Resend the payment event** from the gateway's webhook event log
@@ -51,8 +54,9 @@ abandoned attempt and can be cancelled. Two paid orders need a refund of one
 
 ### D. Customer wants to cancel
 
-- **Not paid and not dispatched:** the customer can do it themselves from
-  their orders page, or you set Status to CANCELLED.
+- **Not paid:** there is nothing to cancel from the customer's side. Unpaid
+  orders are abandoned checkouts; they show in the admin but not on the
+  customer's orders page. Set Status to CANCELLED if you want it out of the way.
 - **Paid:** they cannot cancel it themselves. If it has not shipped, cancel in
   the admin and refund (playbook E). Stock is not put back automatically.
 - **Dispatched or delivered:** it becomes a return. Follow the return policy
@@ -196,3 +200,11 @@ Knowing these keeps expectations honest:
 - **Backups are manual,** taken when someone presses "Back up now".
 - **No site-wide notice banner,** and no switch to pause online payments.
 - **Refunds and returns stock-keeping are manual,** as described above.
+- **Unpaid orders never expire.** Every "Place order" click saves an order
+  before payment, and an abandoned one stays PENDING in the admin until
+  someone cancels it.
+- **No automatic payment check.** If both the customer's browser and the
+  gateway's webhook miss a successful payment, nothing asks the gateway
+  later; playbook A is the only fix.
+- **No order confirmation email or SMS.** The confirmation page is the
+  customer's only receipt.

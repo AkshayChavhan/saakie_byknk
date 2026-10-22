@@ -274,12 +274,28 @@ describe('Orders API', () => {
       const { GET } = await import('@/app/api/orders/route')
       await GET()
 
-      // Orders the customer cleared away are filtered out here rather than
-      // deleted — see DELETE /api/orders/[id] and tests/api/orders-remove.
       expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { userId: 'user_123', customerHiddenAt: null },
+          where: expect.objectContaining({ userId: 'user_123' }),
           orderBy: { createdAt: 'desc' },
+        })
+      )
+    })
+
+    it('lists only paid or refunded orders', async () => {
+      signIn()
+      mockPrisma.order.findMany.mockResolvedValue([])
+
+      const { GET } = await import('@/app/api/orders/route')
+      await GET()
+
+      // Checkout saves an order before payment, so an abandoned checkout must
+      // not appear on the customer's list.
+      expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            paymentStatus: { in: ['PAID', 'REFUNDED'] },
+          }),
         })
       )
     })

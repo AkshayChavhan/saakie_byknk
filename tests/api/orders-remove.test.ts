@@ -217,9 +217,14 @@ describe('GET /api/orders', () => {
     const { GET } = await import('@/app/api/orders/route')
     await GET()
 
+    // A field that was never written does not match `null` on MongoDB, so the
+    // filter must accept both "saved as null" and "never set".
     expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { userId: 'user_123', customerHiddenAt: null },
+        where: expect.objectContaining({
+          userId: 'user_123',
+          OR: [{ customerHiddenAt: null }, { customerHiddenAt: { isSet: false } }],
+        }),
       })
     )
   })
