@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { requireAuth, requireAdmin, requireSuperAdmin } from '@/lib/server/auth';
+import { requireAuth, requireSuperAdmin } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
 import { deleteClerkUser } from '@/lib/server/clerk-users';
 import { userRoleSchema, validateBody } from '@/lib/server/validation';
@@ -21,8 +21,8 @@ export async function GET(
   try {
     const r = await requireAuth();
     if (r instanceof NextResponse) return r;
-    const admin = requireAdmin(r);
-    if (admin) return admin;
+    const guard = requireSuperAdmin(r);
+    if (guard) return guard;
     const { id } = await context.params;
 
     const user = await prisma.user.findUnique({
@@ -63,8 +63,8 @@ export async function PATCH(
   try {
     const r = await requireAuth();
     if (r instanceof NextResponse) return r;
-    const admin = requireAdmin(r);
-    if (admin) return admin;
+    const guard = requireSuperAdmin(r);
+    if (guard) return guard;
     const { id } = await context.params;
 
     const parsed = validateBody(userRoleSchema, await request.json().catch(() => null));

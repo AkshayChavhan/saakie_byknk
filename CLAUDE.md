@@ -148,8 +148,8 @@ types/               # TypeScript type definitions
 
 ### User Roles & Permissions
 - **USER** (default) - Standard customer access
-- **ADMIN** - Admin dashboard access, can manage users/products/orders
-- **SUPER_ADMIN** - Full access including user deletion
+- **ADMIN** - Admin dashboard access, can manage products/orders/categories; cannot open `/admin/users` or `/api/admin/users*` (customer details are SUPER_ADMIN only)
+- **SUPER_ADMIN** - Full access: user directory and role changes, user deletion, backups, analytics
 
 ### Order Status Flow
 PENDING → CONFIRMED → PROCESSING → SHIPPED → OUT_FOR_DELIVERY → DELIVERED

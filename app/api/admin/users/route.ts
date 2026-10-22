@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { requireAuth, requireAdmin } from '@/lib/server/auth';
+import { requireAuth, requireSuperAdmin } from '@/lib/server/auth';
 import { apiError } from '@/lib/server/errors';
 import { parseLimit, parsePage } from '@/lib/server/validation';
 
@@ -11,8 +11,8 @@ export async function GET(request: Request) {
   try {
     const r = await requireAuth();
     if (r instanceof NextResponse) return r;
-    const admin = requireAdmin(r);
-    if (admin) return admin;
+    const guard = requireSuperAdmin(r);
+    if (guard) return guard;
 
     const { searchParams } = new URL(request.url);
     const pageNum = parsePage(searchParams.get('page'));

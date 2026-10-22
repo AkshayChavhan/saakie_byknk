@@ -3,10 +3,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import Link from 'next/link'
 import { Search, Filter, Edit, Trash2, Eye, UserPlus, MoreVertical, ArrowLeft, Users, ShieldCheck, Crown, ShoppingBag } from 'lucide-react'
 import { SareeLoader } from '@/components/ui/saree-loader'
 import { fetchApi } from '@/lib/api'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { useSession } from '@/lib/auth-client'
 
 interface User {
   id: string
@@ -25,6 +27,9 @@ interface User {
 
 export default function UsersManagement() {
   const router = useRouter()
+  const { data: session, status } = useSession()
+  // Customer names, emails and roles are SUPER_ADMIN only, matching the API.
+  const authorized = session?.user?.role === 'SUPER_ADMIN'
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -58,8 +63,13 @@ export default function UsersManagement() {
   }, [currentPage, usersPerPage, debouncedSearch, roleFilter])
 
   useEffect(() => {
+    if (status === 'loading') return
+    if (!authorized) {
+      setLoading(false)
+      return
+    }
     fetchUsers()
-  }, [fetchUsers])
+  }, [status, authorized, fetchUsers])
 
   // A changed search or role filter starts again from the first page.
   useEffect(() => {
@@ -111,6 +121,22 @@ export default function UsersManagement() {
       case 'ADMIN': return 'bg-blue-100 text-blue-800'
       default: return 'bg-gray-100 text-gray-800'
     }
+  }
+
+  if (status !== 'loading' && !authorized) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-2xl w-full">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
+          <p className="text-gray-600 mb-4">
+            Customer details are visible to a Super Admin only.
+          </p>
+          <Link href="/admin" className="inline-block bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700">
+            Back to dashboard
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   if (loading) {

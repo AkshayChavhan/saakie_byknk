@@ -32,18 +32,16 @@ describe('PATCH /api/admin/users/[id] role changes', () => {
   // previous test did not consume must not leak into the next one.
   beforeEach(() => vi.resetAllMocks())
 
-  it('lets an ADMIN change an ordinary user', async () => {
+  it('keeps role changes away from an ADMIN, even for an ordinary user', async () => {
     signedInAs('ADMIN', 'USER')
     const { PATCH } = await import('@/app/api/admin/users/[id]/route')
     const response = await PATCH(patch('ADMIN'), ctx)
 
-    expect(response.status).toBe(200)
-    const body = await response.json()
-    expect(body.role).toBe('ADMIN')
-    expect(body).not.toHaveProperty('password')
+    expect(response.status).toBe(403)
+    expect(mockPrisma.user.update).not.toHaveBeenCalled()
   })
 
-  it('stops an ADMIN from demoting a SUPER_ADMIN', async () => {
+  it('keeps an ADMIN from touching a SUPER_ADMIN', async () => {
     signedInAs('ADMIN', 'SUPER_ADMIN')
     const { PATCH } = await import('@/app/api/admin/users/[id]/route')
     const response = await PATCH(patch('USER'), ctx)
@@ -52,11 +50,15 @@ describe('PATCH /api/admin/users/[id] role changes', () => {
     expect(mockPrisma.user.update).not.toHaveBeenCalled()
   })
 
-  it('stops an ADMIN from changing another ADMIN', async () => {
-    signedInAs('ADMIN', 'ADMIN')
+  it('lets a SUPER_ADMIN change an ordinary user without exposing the password', async () => {
+    signedInAs('SUPER_ADMIN', 'USER')
     const { PATCH } = await import('@/app/api/admin/users/[id]/route')
-    const response = await PATCH(patch('USER'), ctx)
-    expect(response.status).toBe(403)
+    const response = await PATCH(patch('ADMIN'), ctx)
+
+    expect(response.status).toBe(200)
+    const body = await response.json()
+    expect(body.role).toBe('ADMIN')
+    expect(body).not.toHaveProperty('password')
   })
 
   it('never demotes the last SUPER_ADMIN', async () => {

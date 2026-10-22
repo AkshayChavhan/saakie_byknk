@@ -82,7 +82,7 @@ pre-booked, delivery 15 to 20 days) or refund.
    `saakie-byknk-auth`. If every Google attempt fails, check that the OAuth
    client still exists there and the app is published.
 3. If sign-in works but the site shows an error or the wrong access, check the
-   person's role in `/admin/users`. Roles must be exactly USER, ADMIN or
+   person's role in `/admin/users` (a Super Admin only; ADMINs cannot open it). Roles must be exactly USER, ADMIN or
    SUPER_ADMIN.
 4. Meanwhile the customer can use email and password or an email code.
 

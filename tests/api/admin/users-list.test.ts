@@ -18,7 +18,7 @@ describe('GET /api/admin/users', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockAuth.mockResolvedValue(createMockSession({ id: 'admin_1' }))
-    mockPrisma.user.findUnique.mockResolvedValue(createMockUser({ id: 'admin_1', role: 'ADMIN' }))
+    mockPrisma.user.findUnique.mockResolvedValue(createMockUser({ id: 'admin_1', role: 'SUPER_ADMIN' }))
     mockPrisma.user.findMany.mockResolvedValue([])
     mockPrisma.user.count.mockResolvedValue(1)
     mockPrisma.order.count.mockResolvedValue(57)
@@ -26,6 +26,15 @@ describe('GET /api/admin/users', () => {
       { role: 'USER', _count: { _all: 120 } },
       { role: 'ADMIN', _count: { _all: 3 } },
     ])
+  })
+
+  it('refuses an ADMIN: customer details are SUPER_ADMIN only', async () => {
+    mockPrisma.user.findUnique.mockResolvedValue(createMockUser({ id: 'admin_1', role: 'ADMIN' }))
+    const { GET } = await import('@/app/api/admin/users/route')
+    const response = await GET()
+
+    expect(response.status).toBe(403)
+    expect(mockPrisma.user.findMany).not.toHaveBeenCalled()
   })
 
   it('filters by role on the server and reports directory-wide counts', async () => {

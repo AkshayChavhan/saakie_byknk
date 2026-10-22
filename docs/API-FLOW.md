@@ -89,7 +89,7 @@ req.userId = session.sub;
 | Role | Access Level |
 |------|--------------|
 | `USER` | Standard customer access |
-| `ADMIN` | Admin dashboard + user management |
+| `ADMIN` | Admin dashboard (products, orders, categories); not the user directory |
 | `SUPER_ADMIN` | Full access including user deletion |
 
 ---

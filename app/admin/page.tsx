@@ -210,7 +210,8 @@ export default function AdminDashboard() {
   ]
 
   const quickActions = [
-    { name: 'Manage Users', href: '/admin/users', icon: Users },
+    // Customer details are SUPER_ADMIN only, matching /api/admin/users.
+    ...(role === 'SUPER_ADMIN' ? [{ name: 'Manage Users', href: '/admin/users', icon: Users }] : []),
     { name: 'Manage Products', href: '/admin/products', icon: Package },
     { name: 'Manage Orders', href: '/admin/orders', icon: ShoppingBag },
     { name: 'Manage Categories', href: '/admin/categories', icon: Calendar },
