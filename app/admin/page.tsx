@@ -29,6 +29,7 @@ import {
   Store,
   Settings,
   DatabaseBackup,
+  BarChart3,
 } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
 import { fetchApi } from '@/lib/api'
@@ -219,6 +220,10 @@ export default function AdminDashboard() {
     { name: 'Manage Blog', href: '/admin/blog', icon: BookOpen },
     { name: 'Store Settings', href: '/admin/settings', icon: Settings },
     { name: 'Backups', href: '/admin/backup', icon: DatabaseBackup },
+    // Traffic stats are SUPER_ADMIN only, matching /api/admin/analytics.
+    ...(role === 'SUPER_ADMIN'
+      ? [{ name: 'Analytics', href: '/api/admin/analytics', icon: BarChart3, external: true }]
+      : []),
   ]
 
   // Helper function to format time ago
@@ -447,12 +452,25 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {quickActions.map((action, index) => {
               const Icon = action.icon
+              const cardClass =
+                'flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200'
+              // Analytics redirects off-site, so it is a plain link in a new tab (no prefetch).
+              if (action.external) {
+                return (
+                  <a
+                    key={index}
+                    href={action.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cardClass}
+                  >
+                    <Icon className="h-8 w-8 text-red-600 mr-3" />
+                    <span className="text-gray-900 font-medium">{action.name}</span>
+                  </a>
+                )
+              }
               return (
-                <Link
-                  key={index}
-                  href={action.href}
-                  className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
-                >
+                <Link key={index} href={action.href} className={cardClass}>
                   <Icon className="h-8 w-8 text-red-600 mr-3" />
                   <span className="text-gray-900 font-medium">{action.name}</span>
                 </Link>

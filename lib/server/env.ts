@@ -28,6 +28,7 @@ const OPTIONAL_GROUPS: Record<string, readonly string[]> = {
   'Cloudinary uploads': ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'],
   'AI chat (/api/chat)': ['ANTHROPIC_API_KEY'],
   'Shared rate limiting': ['UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN'],
+  'Traffic analytics (Umami)': ['NEXT_PUBLIC_UMAMI_WEBSITE_ID', 'UMAMI_SHARE_URL'],
 };
 
 export interface EnvReport {

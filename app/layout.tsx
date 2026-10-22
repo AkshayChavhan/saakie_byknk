@@ -2,8 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Jost } from 'next/font/google'
 import { Suspense } from 'react'
 import { ClerkProvider } from '@clerk/nextjs'
-import { Analytics } from '@vercel/analytics/next'
-import { SpeedInsights } from '@vercel/speed-insights/next'
+import { UmamiAnalytics } from '@/components/analytics/umami-analytics'
 import './globals.css'
 import { Providers } from '@/components/providers'
 import { NavigationProgress } from '@/components/ui/navigation-progress'
@@ -98,10 +97,11 @@ export default function RootLayout({
             </SiteFooter>
           </Providers>
         </ClerkProvider>
-        {/* Vercel Analytics (page views) + Speed Insights (Web Vitals).
-            No-ops outside Vercel; no keys or cookie banner required. */}
-        <Analytics />
-        <SpeedInsights />
+        {/* Traffic analytics (Umami): page views, visitors, referrers, devices.
+            Loads only when NEXT_PUBLIC_UMAMI_WEBSITE_ID is set; see docs/ANALYTICS.md.
+            The Vercel Analytics / Speed Insights scripts that used to sit here only
+            report to Vercel, so on Netlify they collected nothing. */}
+        <UmamiAnalytics />
       </body>
     </html>
   )

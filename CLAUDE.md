@@ -188,6 +188,10 @@ PENDING → PAID → FAILED/REFUNDED/CANCELLED
 
 ### Rate Limiting
 - `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` - Optional. When set, `checkRateLimit()` counts across all serverless instances; otherwise it falls back to per-instance memory (see docs/RELIABILITY.md)
+### Analytics
+- `NEXT_PUBLIC_UMAMI_WEBSITE_ID` - Optional. Enables Umami traffic analytics (page views only; no events or tracking of shoppers). Nothing loads while unset; set it in the host's environment and redeploy. See docs/ANALYTICS.md
+- `UMAMI_SHARE_URL` - Optional, server-only. Umami share link behind the admin dashboard's Analytics card (SUPER_ADMIN only) (`GET /api/admin/analytics` redirects a SUPER_ADMIN to it). Never commit it: the repo is public
+
 - `instrumentation.ts` validates the environment at server start (`lib/server/env.ts`): required variables throw in production, optional integrations only warn
 
 ## Tech Stack
