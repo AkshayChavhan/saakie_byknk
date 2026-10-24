@@ -38,7 +38,7 @@ export async function GET(
     const { snapshot } = await params;
     // The value lands in a collection-name prefix and a filename, so keep it to
     // the shape snapshotStamp() produces and nothing else.
-    if (!/^\d{8}T\d{6}Z$/.test(snapshot)) {
+    if (!/^\d{8}T\d{6}(?:IST|Z)$/.test(snapshot)) {
       return NextResponse.json({ error: 'Invalid snapshot id' }, { status: 400 });
     }
 

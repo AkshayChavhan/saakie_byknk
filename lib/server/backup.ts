@@ -46,7 +46,7 @@ export const RETENTION = { dailyDays: 14, weeklyWeeks: 8, minimum: 5 } as const
 /** Manifest collection inside the backup database. */
 export const MANIFEST_COLLECTION = '_backup_runs'
 
-/** Name of the one collection that holds a snapshot: `backup_20261021T125504Z`. */
+/** Name of the one collection that holds a snapshot: `backup_20261024T104500IST`. */
 export function snapshotCollection(stamp: string): string {
   return `backup_${stamp}`
 }
@@ -60,12 +60,14 @@ export interface SnapshotRecord {
 /**
  * The stamp a backup-database collection belongs to, in either layout:
  * `backup_<stamp>` (current) or `<stamp>__<collection>` (first layout).
- * null for anything else, such as the manifest.
+ * A stamp ends in `IST` (India time, current) or `Z` (UTC, snapshots taken
+ * before the change; they stay readable). null for anything else, such as
+ * the manifest.
  */
 export function snapshotOf(name: string): string | null {
-  const current = name.match(/^backup_(\d{8}T\d{6}Z)$/)
+  const current = name.match(/^backup_(\d{8}T\d{6}(?:IST|Z))$/)
   if (current) return current[1]
-  const first = name.match(/^(\d{8}T\d{6}Z)__.+$/)
+  const first = name.match(/^(\d{8}T\d{6}(?:IST|Z))__.+$/)
   return first ? first[1] : null
 }
 
@@ -136,9 +138,21 @@ export function isSameDatabase(sourceUri: string, targetUri: string): boolean {
   return a.hosts === b.hosts && a.database === b.database
 }
 
-/** UTC stamp used to name a snapshot: `20260927T101500Z`. */
+/** India Standard Time is UTC+5:30, with no daylight saving. */
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000
+
+/**
+ * Stamp used to name a snapshot, in India time: `20260927T154500IST`.
+ *
+ * Snapshots used to carry a UTC stamp (`…Z`). Moving to IST keeps plain string
+ * order correct: the IST stamp of any later moment is greater than the UTC
+ * stamp of an earlier one, so old and new snapshots still sort together.
+ */
 export function snapshotStamp(now: Date): string {
-  return now.toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z')
+  return new Date(now.getTime() + IST_OFFSET_MS)
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d+Z$/, 'IST')
 }
 
 /** Shop collections, as opposed to system collections or backup bookkeeping. */
@@ -367,11 +381,15 @@ export async function runBackup(options: {
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
-/** The time a snapshot stamp (`20260927T101500Z`) stands for, or null if it is not one. */
+/**
+ * The moment a snapshot stamp (`20260927T154500IST` or `20260927T101500Z`)
+ * stands for, as epoch milliseconds, or null if it is not one.
+ */
 export function stampTime(stamp: string): number | null {
-  const m = stamp.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/)
+  const m = stamp.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(IST|Z)$/)
   if (!m) return null
-  return Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6])
+  const wallClock = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6])
+  return m[7] === 'IST' ? wallClock - IST_OFFSET_MS : wallClock
 }
 
 /** Monday-to-Sunday UTC week number. 1 Jan 1970 was a Thursday, hence the +3 days. */
