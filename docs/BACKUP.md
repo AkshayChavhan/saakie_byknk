@@ -16,15 +16,20 @@ night automatically, and on demand from `/admin/backup`.
 ## Snapshots, not a mirror
 
 Every run writes a new **snapshot**: one collection in the backup database,
-named after the UTC time of the run, holding every document of every shop
-collection:
+named after the **India time** (IST, UTC+5:30) the run started, holding every
+document of every shop collection:
 
 ```
 saakie_backup
   _backup_runs                    list of all snapshots (the manifest)
-  backup_20261021T125504Z         one backup
-  backup_20261021T203012Z         the next one
+  backup_20261024T104500IST       one backup: 24 Oct 2026, 10:45:00 AM India time
+  backup_20261025T050130IST       the next one: 25 Oct, 5:01:30 AM
 ```
+
+Read the name as `date T time IST`. Snapshots taken before 24 Oct 2026 end in
+`Z` instead (UTC, for example `backup_20261023T232114Z`); add 5 hours 30
+minutes to read those as India time. Both endings are read, downloaded,
+restored and pruned the same way, and they sort in time order together.
 
 Inside a snapshot, each record says which shop collection it came from:
 
@@ -105,7 +110,7 @@ any time.
 ```json
 {
   "format": "saakie-backup/v1",
-  "snapshot": "20260927T101500Z",
+  "snapshot": "20260927T154500IST",
   "exportedAt": "2026-09-27T12:00:00.000Z",
   "database": "saakie_backup",
   "collections": {
