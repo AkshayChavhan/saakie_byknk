@@ -20,6 +20,7 @@ const PUBLIC_PAGES = [
   '/terms-of-service',
   '/return-policy',
   '/disclaimer',
+  '/dev', // developer credit page (embeds the portfolio)
   // Clerk's forms route their own steps beneath these (/sign-in/factor-one,
   // /sign-up/verify-email-address, /sign-in/sso-callback …).
   '/sign-in',

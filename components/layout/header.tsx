@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useSession } from '@/lib/auth-client'
 import { useQuery } from '@tanstack/react-query'
-import { Search, Heart, User, ChevronDown } from 'lucide-react'
+import { Search, Heart, User, ChevronDown, ArrowUpRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { fetchApi } from '@/lib/api'
 import { CartIcon } from '@/components/cart'
@@ -791,6 +791,19 @@ export function Header() {
               </ul>
               <p className="text-xs text-gray-500 text-center">
                 © 2024 Saakie_byknk. All rights reserved.
+              </p>
+              <p className="mt-1 text-xs text-gray-500 text-center">
+                <Link
+                  href="/dev"
+                  className="group inline-flex items-center gap-1 transition-colors hover:text-white"
+                >
+                  Developed by Akshay Chavhan
+                  <ArrowUpRight
+                    size={14}
+                    aria-hidden="true"
+                    className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                  />
+                </Link>
               </p>
             </div>
           </div>
