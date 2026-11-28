@@ -38,9 +38,9 @@ const EXPORT_FORMAT = 'saakie-backup/v1';
 
 /** Stamp of a snapshot collection in either layout, or null. */
 function snapshotOf(name) {
-  const current = name.match(/^backup_(\d{8}T\d{6}Z)$/);
+  const current = name.match(/^backup_(\d{8}T\d{6}(?:IST|Z))$/);
   if (current) return current[1];
-  const first = name.match(/^(\d{8}T\d{6}Z)__.+$/);
+  const first = name.match(/^(\d{8}T\d{6}(?:IST|Z))__.+$/);
   return first ? first[1] : null;
 }
 

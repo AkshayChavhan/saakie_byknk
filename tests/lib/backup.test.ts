@@ -182,10 +182,26 @@ describe('lib/server/backup', () => {
   })
 
   describe('snapshotStamp', () => {
-    it('is a compact sortable UTC stamp', async () => {
+    it('is a compact stamp in India time (UTC+5:30), ending in IST', async () => {
       const { snapshotStamp } = await load()
 
-      expect(snapshotStamp(new Date('2026-09-27T10:15:00.000Z'))).toBe('20260927T101500Z')
+      expect(snapshotStamp(new Date('2026-09-27T10:15:00.000Z'))).toBe('20260927T154500IST')
+    })
+
+    it('rolls over to the next India date after 18:30 UTC', async () => {
+      const { snapshotStamp } = await load()
+
+      // The nightly run starts near 23:20 UTC: already the next morning in India.
+      expect(snapshotStamp(new Date('2026-10-23T23:21:14.000Z'))).toBe('20261024T045114IST')
+    })
+
+    it('keeps old UTC snapshots and new India-time ones in time order as plain strings', async () => {
+      const { snapshotStamp } = await load()
+      const oldUtc = '20261023T232114Z' // 24 Oct 04:51 IST
+      const newer = snapshotStamp(new Date('2026-10-24T20:00:00Z'))
+      const muchOlderUtc = '20261021T125504Z'
+
+      expect([newer, oldUtc, muchOlderUtc].sort()).toEqual([muchOlderUtc, oldUtc, newer])
     })
 
     it('sorts chronologically as a plain string', async () => {
@@ -210,6 +226,24 @@ describe('lib/server/backup', () => {
       const { stampTime } = await load()
       expect(stampTime('20260927T101500Z')).toBe(Date.UTC(2026, 8, 27, 10, 15, 0))
       expect(stampTime('saakie_backup')).toBeNull()
+    })
+
+    it('reads an India-time stamp back to the same moment as its UTC twin', async () => {
+      const { stampTime } = await load()
+
+      expect(stampTime('20260927T154500IST')).toBe(Date.UTC(2026, 8, 27, 10, 15, 0))
+      expect(stampTime('20261024T045114IST')).toBe(stampTime('20261023T232114Z'))
+    })
+
+    it('finds the stamp of a collection in the India-time, UTC and first layouts', async () => {
+      const { snapshotOf } = await load()
+
+      expect(snapshotOf('backup_20261024T045114IST')).toBe('20261024T045114IST')
+      expect(snapshotOf('backup_20261023T232114Z')).toBe('20261023T232114Z')
+      expect(snapshotOf('20261021T125504Z__orders')).toBe('20261021T125504Z')
+      expect(snapshotOf('20261024T045114IST__orders')).toBe('20261024T045114IST')
+      expect(snapshotOf('_backup_runs')).toBeNull()
+      expect(snapshotOf('backup_20261024T045114XYZ')).toBeNull()
     })
 
     it('keeps every snapshot from the last 14 days', async () => {
@@ -281,7 +315,8 @@ describe('lib/server/backup', () => {
 
   describe('runBackup', () => {
     const now = new Date('2026-09-27T10:15:00.000Z')
-    const SNAP = '20260927T101500Z'
+    // 10:15 UTC is 15:45 India time, and the snapshot is named in India time.
+    const SNAP = '20260927T154500IST'
 
     function wire(source: Record<string, unknown[]>) {
       const src = makeDb(source, 'saakie')
